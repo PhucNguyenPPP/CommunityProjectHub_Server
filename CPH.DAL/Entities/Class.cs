@@ -7,6 +7,8 @@ public partial class Class
 {
     public Guid ClassId { get; set; }
 
+    public string ClassCode { get; set; } = null!;
+
     public string ClassName { get; set; } = null!;
 
     public string? ReportContent { get; set; }

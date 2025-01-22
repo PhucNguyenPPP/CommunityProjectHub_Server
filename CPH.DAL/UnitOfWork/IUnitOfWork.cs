@@ -12,5 +12,6 @@ namespace CPH.DAL.UnitOfWork
         public void Dispose();
         public Task<bool> SaveChangeAsync();
         IAccountRepository Account { get; }
+        IRefreshTokenRepository RefreshToken { get; }
     }
 }
