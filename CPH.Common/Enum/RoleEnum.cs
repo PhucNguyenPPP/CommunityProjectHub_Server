@@ -11,8 +11,9 @@ namespace CPH.Common.Enum
         Student = 1,
         Lecturer = 2,
         Trainee = 3,
-        Associate = 4,
-        BusinessRelation = 5,
-        Admin = 6
+        DepartmentHead = 4,
+        Associate = 5,
+        BusinessRelation = 6,
+        Admin = 7
     }
 }
