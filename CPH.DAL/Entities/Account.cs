@@ -35,7 +35,7 @@ public partial class Account
 
     public bool Status { get; set; }
 
-    public Guid RoleId { get; set; }
+    public int RoleId { get; set; }
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
@@ -46,6 +46,8 @@ public partial class Account
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
+
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     public virtual ICollection<Registration> Registrations { get; set; } = new List<Registration>();
 

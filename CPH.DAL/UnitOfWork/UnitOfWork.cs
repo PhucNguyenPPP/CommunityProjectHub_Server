@@ -1,5 +1,4 @@
 ﻿using CPH.DAL.Context;
-using CPH.DAL.Entities;
 using CPH.DAL.Interfaces;
 using CPH.DAL.Repositories;
 using System;
@@ -17,7 +16,7 @@ namespace CPH.DAL.UnitOfWork
         {
             _context = new CphDbContext();
             Account = new AccountRepository(_context);
-           
+            RefreshToken = new RefreshTokenRepository(_context);
         }
 
 
@@ -32,6 +31,7 @@ namespace CPH.DAL.UnitOfWork
         }
 
         public IAccountRepository Account { get; private set; }
+        public IRefreshTokenRepository RefreshToken { get; private set; }
 
     }
 }
