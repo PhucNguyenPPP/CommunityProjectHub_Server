@@ -17,6 +17,7 @@ namespace CPH.DAL.UnitOfWork
             _context = new CphDbContext();
             Account = new AccountRepository(_context);
             RefreshToken = new RefreshTokenRepository(_context);
+            Project = new ProjectRepository(_context);
         }
 
 
@@ -32,6 +33,7 @@ namespace CPH.DAL.UnitOfWork
 
         public IAccountRepository Account { get; private set; }
         public IRefreshTokenRepository RefreshToken { get; private set; }
+        public IProjectRepository Project { get; private set; }
 
     }
 }
