@@ -1,4 +1,7 @@
-﻿using CPH.DAL.Entities;
+﻿using CPH.Common.DTO.Account;
+using CPH.Common.DTO.General;
+using CPH.DAL.Entities;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,5 +18,11 @@ namespace CPH.BLL.Interfaces
         bool CheckPhoneExist(string phone);
         bool CheckAccountCodeExist(string accountCode);
         string GenerateAccountCode(int role);
+        byte[] GenerateSalt();
+        byte[] GenerateHashedPassword(string password, byte[] saltBytes);
+        Task<ResponseDTO> ImportAccountFromExcel(IFormFile file);
+        List<string> CheckValidationImportAccountFromExcel(List<ImportAccountDTO> listAccount);
+        List<string> CheckDuplicatedInDbImportAccountFromExcel(List<ImportAccountDTO> listAccount);
+
     }
 }

@@ -39,8 +39,8 @@ namespace CPH.BLL.Services
         {
             var account = _mapper.Map<Account>(model);
 
-            var salt = GenerateSalt();
-            var passwordHash = GenerateHashedPassword(model.Password, salt);
+            var salt = _accountService.GenerateSalt();
+            var passwordHash = _accountService.GenerateHashedPassword(model.Password, salt);
             //var avatarLink = await _imageService.StoreImageAndGetLink(model.AvatarLink, FileNameFirebaseStorage.UserImage);
 
             account.AccountId = Guid.NewGuid();
@@ -51,35 +51,6 @@ namespace CPH.BLL.Services
 
             await _unitOfWork.Account.AddAsync(account);
             return await _unitOfWork.SaveChangeAsync();
-        }
-
-        public byte[] GenerateSalt()
-        {
-            byte[] saltBytes = new byte[32];
-            var rng = RandomNumberGenerator.Create();
-            rng.GetNonZeroBytes(saltBytes);
-            return saltBytes;
-        }
-
-        public byte[] GenerateHashedPassword(string password, byte[] saltBytes)
-        {
-            byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-            byte[] passwordWithSaltBytes = new byte[passwordBytes.Length + saltBytes.Length];
-
-            for (int i = 0; i < passwordBytes.Length; i++)
-            {
-                passwordWithSaltBytes[i] = passwordBytes[i];
-            }
-
-            for (int i = 0; i < saltBytes.Length; i++)
-            {
-                passwordWithSaltBytes[passwordBytes.Length + i] = saltBytes[i];
-            }
-
-            var cryptoProvider = SHA512.Create();
-            byte[] hashedBytes = cryptoProvider.ComputeHash(passwordWithSaltBytes);
-
-            return hashedBytes;
         }
 
         public async Task<ResponseDTO> CheckValidationSignUp(SignUpRequestDTO model)
@@ -157,7 +128,7 @@ namespace CPH.BLL.Services
 
         private bool VerifyPasswordHash(string password, byte[] passwordHashDb, byte[] salt)
         {
-            var passwordHash = GenerateHashedPassword(password, salt);
+            var passwordHash = _accountService.GenerateHashedPassword(password, salt);
             bool areEqual = passwordHashDb.SequenceEqual(passwordHash);
             return areEqual;
         }
