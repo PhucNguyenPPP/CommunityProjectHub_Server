@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Auth;
+using CPH.Common.DTO.Message;
 using CPH.DAL.Entities;
 
 namespace CPH.Api.Profiles
@@ -14,6 +15,10 @@ namespace CPH.Api.Profiles
                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
                .ReverseMap();
             CreateMap<ImportAccountDTO, Account>().ReverseMap();
+            CreateMap<Message, MessageResponseDTO>()
+                .ForMember(dest => dest.SendAccountId, opt => opt.MapFrom(src => src.AccountId))
+                .ReverseMap();
+            CreateMap<Message, MessageDTO>().ReverseMap();
         }
     }
 }
