@@ -25,6 +25,8 @@ public partial class Class
 
     public virtual ICollection<Member> Members { get; set; } = new List<Member>();
 
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+
     public virtual Project Project { get; set; } = null!;
 
     public virtual ICollection<Registration> Registrations { get; set; } = new List<Registration>();

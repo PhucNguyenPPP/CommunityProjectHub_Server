@@ -12,8 +12,6 @@ namespace CPH.BLL.Interfaces
     {
         Task<bool> SignUp(SignUpRequestDTO model);
         Task<ResponseDTO> CheckValidationSignUp(SignUpRequestDTO model);
-        byte[] GenerateSalt();
-        byte[] GenerateHashedPassword(string password, byte[] saltBytes);
         Task<LoginResponseDTO?> CheckLogin(LoginRequestDTO loginRequestDTO);
         Task<TokenDTO> RefreshAccessToken(RequestTokenDTO model);
         Task<ResponseDTO> GetAccountByAccessToken(string token);

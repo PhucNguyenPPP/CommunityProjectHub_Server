@@ -13,6 +13,9 @@ namespace CPH.DAL.UnitOfWork
         public Task<bool> SaveChangeAsync();
         IAccountRepository Account { get; }
         IRefreshTokenRepository RefreshToken { get; }
+        IMessageRepository Message { get; }
+        INotificationRepository Notification { get; }
+        IClassRepository Class { get; }
         IProjectRepository Project { get; }
     }
 }
