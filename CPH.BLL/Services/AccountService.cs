@@ -178,7 +178,7 @@ namespace CPH.BLL.Services
             }
 
             var resultCheckDuplicatedInDb = CheckDuplicatedInDbImportAccountFromExcel(accounts);
-            if(resultCheckDuplicatedInDb.Count > 0)
+            if (resultCheckDuplicatedInDb.Count > 0)
             {
                 return new ResponseDTO("File excel không hợp lệ", 400, false, resultCheckDuplicatedInDb);
             }
@@ -194,7 +194,7 @@ namespace CPH.BLL.Services
 
                 if (accounts[i].RoleName.ToLower().Equals("student"))
                 {
-                    mapList[i].RoleId = (int) RoleEnum.Student;
+                    mapList[i].RoleId = (int)RoleEnum.Student;
                 }
 
                 if (accounts[i].RoleName.ToLower().Equals("trainee"))
@@ -220,8 +220,7 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Import tài khoản thành công", 201, true);
             }
 
-            return new ResponseDTO("Import tài khoản thất bại", 400, true);
-
+            return new ResponseDTO("Import tài khoản thất bại", 400, false);
         }
 
         public List<string> CheckValidationImportAccountFromExcel(List<ImportAccountDTO> listAccount)
@@ -438,7 +437,7 @@ namespace CPH.BLL.Services
                 }
                 else
                 {
-                    if(accountListDb.Any(c => c.AccountCode == account.AccountCode))
+                    if (accountListDb.Any(c => c.AccountCode == account.AccountCode))
                     {
                         listResult.Add($"Mã số tài khoản của tài khoản số {accountNumber} đã tồn tại");
                     }
@@ -484,5 +483,193 @@ namespace CPH.BLL.Services
             }
             return listResult;
         }
+
+        public async Task<ResponseDTO> ImportTraineeFromExcel(IFormFile file)
+        {
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+
+            var allClasses = new Dictionary<string, List<ImportAccountDTO>>();
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            var accounts = new List<ImportTraineeDTO>();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                foreach (var worksheet in package.Workbook.Worksheets)
+                {
+                    int rowCount = worksheet.Dimension.Rows;
+
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        var account = new ImportTraineeDTO
+                        {
+                            AccountCode = worksheet.Cells[row, 2].Text,
+                            AccountName = worksheet.Cells[row, 3].Text,
+                            FullName = worksheet.Cells[row, 4].Text,
+                            Phone = worksheet.Cells[row, 5].Text,
+                            Email = worksheet.Cells[row, 6].Text,
+                            Address = worksheet.Cells[row, 7].Text,
+                            DateOfBirth = worksheet.Cells[row, 8].Text,
+                            Gender = worksheet.Cells[row, 9].Text,
+                            ClassCode = worksheet.Name,
+                        };
+                        accounts.Add(account);
+                    }
+                }
+            }
+
+            var checkValidation = CheckValidationImportTraineeFromExcel(accounts);
+
+            if (checkValidation.Count > 0)
+            {
+                return new ResponseDTO("File excel học viên không hợp lệ", 400, false, checkValidation);
+            }
+
+            var checkInfoTraineeInDb = await CheckInfoTraineeInDb(accounts);
+            if(checkInfoTraineeInDb.Count > 0)
+            {
+                return new ResponseDTO("File excel học viên không hợp lệ", 400, false, checkInfoTraineeInDb);
+            }
+
+            return new ResponseDTO("Import học viên thành công", 201, true, accounts);
+        }
+
+        public List<string> CheckValidationImportTraineeFromExcel(List<ImportTraineeDTO> listTrainee)
+        {
+            var listResult = new List<string>();
+
+            if (listTrainee == null || listTrainee.Count == 0)
+            {
+                listResult.Add("Danh sách tài khoản trống");
+                return listResult;
+            }
+
+            // Dictionary để kiểm tra mỗi học viên chỉ được tồn tại ở 1 lớp duy nhất
+            var studentClassMap = new Dictionary<string, string>();
+
+            // Dictionary để kiểm tra học viên trùng trong cùng 1 lớp
+            var classTraineeMap = new Dictionary<string, HashSet<string>>();
+
+            for (int i = 0; i < listTrainee.Count; i++)
+            {
+                var trainee = listTrainee[i];
+                int traineeNumber = i + 1;
+
+                // Kiểm tra dữ liệu trống
+                if (string.IsNullOrEmpty(trainee.AccountCode))
+                {
+                    listResult.Add($"Mã số tài khoản của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.AccountName))
+                {
+                    listResult.Add($"Tên tài khoản của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.FullName))
+                {
+                    listResult.Add($"Họ và tên của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.Phone))
+                {
+                    listResult.Add($"Số điện thoại của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.Email))
+                {
+                    listResult.Add($"Email của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.Address))
+                {
+                    listResult.Add($"Địa chỉ của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.DateOfBirth))
+                {
+                    listResult.Add($"Ngày sinh của học viên số {traineeNumber} không có dữ liệu");
+                }
+                if (string.IsNullOrEmpty(trainee.Gender))
+                {
+                    listResult.Add($"Giới tính của học viên số {traineeNumber} không có dữ liệu");
+                }
+
+                // Kiểm tra mỗi học viên chỉ có thể thuộc 1 lớp duy nhất
+                if (!string.IsNullOrEmpty(trainee.AccountCode) && !string.IsNullOrEmpty(trainee.ClassCode))
+                {
+                    if (studentClassMap.ContainsKey(trainee.AccountCode))
+                    {
+                        if (studentClassMap[trainee.AccountCode] != trainee.ClassCode)
+                        {
+                            listResult.Add($"Học viên {trainee.FullName} (Mã: {trainee.AccountCode}) đã tồn tại trong lớp {studentClassMap[trainee.AccountCode]}, không thể đăng ký vào lớp {trainee.ClassCode}");
+                        }
+                    }
+                    else
+                    {
+                        studentClassMap[trainee.AccountCode] = trainee.ClassCode;
+                    }
+
+                    // Kiểm tra học viên trùng trong cùng 1 lớp
+                    if (!classTraineeMap.ContainsKey(trainee.ClassCode))
+                    {
+                        classTraineeMap[trainee.ClassCode] = new HashSet<string>();
+                    }
+
+                    if (!classTraineeMap[trainee.ClassCode].Add(trainee.AccountCode))
+                    {
+                        listResult.Add($"Học viên {trainee.FullName} (Mã: {trainee.AccountCode}) đã tồn tại trong lớp {trainee.ClassCode}");
+                    }
+                }
+            }
+
+            return listResult;
+        }
+
+        public async Task<List<string>> CheckInfoTraineeInDb(List<ImportTraineeDTO> listTrainee)
+        {
+            var listResult = new List<string>();
+
+            if (listTrainee == null || listTrainee.Count == 0)
+            {
+                listResult.Add("Danh sách tài khoản trống");
+                return listResult;
+            }
+
+            for (int i = 0; i < listTrainee.Count; i++)
+            {
+                var trainee = listTrainee[i];
+                int traineeNumber = i + 1;
+                
+                var traineeDb = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == trainee.AccountCode);
+                if(traineeDb == null)
+                {
+                    listResult.Add($"Học viên {trainee.FullName} (Mã: {trainee.AccountCode}) không tồn tại trong hệ thống");
+                } else
+                {
+                    if (!traineeDb.AccountName.Equals(trainee.AccountName))
+                    {
+                        listResult.Add($"Tên tài khoản của học viên {trainee.FullName} (Mã: {trainee.AccountCode}) bị sai lệch");
+                    }
+
+                    if (!traineeDb.FullName.Equals(trainee.FullName))
+                    {
+                        listResult.Add($"Họ và tên của học viên {trainee.FullName} (Mã: {trainee.AccountCode}) bị sai lệch");
+                    }
+
+                    if (!traineeDb.Phone.Equals(trainee.Phone))
+                    {
+                        listResult.Add($"Số điện thoại của học viên {trainee.FullName} (Mã: {trainee.AccountCode}) bị sai lệch");
+                    }
+
+                    if (!traineeDb.Address.ToLower().Equals(trainee.Address.ToLower()))
+                    {
+                        listResult.Add($"Địa chỉ của học viên {trainee.FullName} (Mã: {trainee.AccountCode}) bị sai lệch");
+                    }
+
+                    if (!traineeDb.Gender.ToLower().Equals(trainee.Gender.ToLower()))
+                    {
+                        listResult.Add($"Giới tính của học viên {trainee.FullName} (Mã: {trainee.AccountCode}) bị sai lệch");
+                    }
+                }
+            }
+
+             return listResult;
+        }
+
     }
 }

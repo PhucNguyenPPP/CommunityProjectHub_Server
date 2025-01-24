@@ -23,6 +23,9 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> ImportAccountFromExcel(IFormFile file);
         List<string> CheckValidationImportAccountFromExcel(List<ImportAccountDTO> listAccount);
         List<string> CheckDuplicatedInDbImportAccountFromExcel(List<ImportAccountDTO> listAccount);
+        Task<ResponseDTO> ImportTraineeFromExcel(IFormFile file);
+        List<string> CheckValidationImportTraineeFromExcel(List<ImportTraineeDTO> listAccount);
+        Task<List<string>> CheckInfoTraineeInDb(List<ImportTraineeDTO> listTrainee);
 
     }
 }

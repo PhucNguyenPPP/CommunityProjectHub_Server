@@ -6,19 +6,13 @@ using System.Threading.Tasks;
 
 namespace CPH.Common.DTO.Account
 {
-    public class ImportAccountDTO
+    public class ImportTraineeDTO
     {
-        public Guid AccountId { get; set; }
-
         public string? AccountCode { get; set; } = null!;
 
         public string? AccountName { get; set; } = null!;
 
-        public string? Password { get; set; } = null!;
-
         public string? FullName { get; set; } = null!;
-
-        public string? AvatarLink { get; set; }
 
         public string? Phone { get; set; } = null!;
 
@@ -30,6 +24,6 @@ namespace CPH.Common.DTO.Account
 
         public string? Gender { get; set; } = null!;
 
-        public string? RoleName { get; set; } = null!;
+        public string? ClassCode { get; set; } = null!;
     }
 }

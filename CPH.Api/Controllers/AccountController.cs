@@ -41,5 +41,21 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpPost("import-trainee-test")]
+        public async Task<IActionResult> ImportTrainee(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new ResponseDTO("File không hợp lệ", 400, false, null));
+            }
+
+            var result = await _accountService.ImportTraineeFromExcel(file);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

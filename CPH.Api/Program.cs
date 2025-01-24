@@ -71,7 +71,8 @@ builder.Services.AddCors(options =>
         builder => builder
             .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .SetPreflightMaxAge(TimeSpan.Zero));
 });
 
 var app = builder.Build();
