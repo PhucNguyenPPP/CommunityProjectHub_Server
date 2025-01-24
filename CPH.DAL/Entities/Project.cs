@@ -29,7 +29,7 @@ public partial class Project
 
     public bool Status { get; set; }
 
-    public Guid ProjectManagerId { get; set; }
+    public Guid? ProjectManagerId { get; set; }
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
@@ -37,5 +37,5 @@ public partial class Project
 
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
-    public virtual Account ProjectManager { get; set; } = null!;
+    public virtual Account? ProjectManager { get; set; }
 }
