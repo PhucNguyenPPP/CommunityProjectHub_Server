@@ -14,5 +14,7 @@ namespace CPH.DAL.UnitOfWork
         IAccountRepository Account { get; }
         IRefreshTokenRepository RefreshToken { get; }
         IMessageRepository Message { get; }
+        INotificationRepository Notification { get; }
+        IClassRepository Class { get; }
     }
 }

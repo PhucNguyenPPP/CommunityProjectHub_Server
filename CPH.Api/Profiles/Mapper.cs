@@ -2,6 +2,7 @@
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Message;
+using CPH.Common.DTO.Notification;
 using CPH.DAL.Entities;
 
 namespace CPH.Api.Profiles
@@ -19,6 +20,7 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.SendAccountId, opt => opt.MapFrom(src => src.AccountId))
                 .ReverseMap();
             CreateMap<Message, MessageDTO>().ReverseMap();
+            CreateMap<Notification, NotificationResponseDTO>().ReverseMap();
         }
     }
 }

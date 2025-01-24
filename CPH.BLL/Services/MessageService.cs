@@ -17,11 +17,16 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IAccountService _accountService;
+        private readonly IClassService _classService;
 
-        public MessageService(IUnitOfWork unitOfWork, IMapper mapper)
+        public MessageService(IUnitOfWork unitOfWork, IMapper mapper, IAccountService accountService,
+            IClassService classService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _accountService = accountService;
+            _classService = classService;
         }
 
         public async Task<ResponseDTO> CreateMessage(MessageDTO newMessage)
@@ -46,6 +51,12 @@ namespace CPH.BLL.Services
 
         public List<ClassChatDTO?> GetAllClassChat(Guid accountId)
         {
+            var checkAccountId = _accountService.CheckAccountIdExist(accountId);
+            if(!checkAccountId)
+            {
+                return new List<ClassChatDTO?>();
+            }
+
             var listMessage = _unitOfWork.Message
                 .GetAllByCondition(m => m.AccountId == accountId)
                 .Include(c => c.Account)
@@ -75,6 +86,18 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetMessages(Guid accountId, Guid classId)
         {
+            var checkAccountId = _accountService.CheckAccountIdExist(accountId);
+            if (!checkAccountId)
+            {
+                return new ResponseDTO("AccountId không tồn tại", 400, false);
+            }
+
+            var checkClassId = await _classService.CheckClassIdExist(classId);
+            if(!checkClassId)
+            {
+                return new ResponseDTO("ClassId không tồn tại", 400, false);
+            }
+
             var list = _unitOfWork.Message
               .GetAllByCondition(m => m.ClassId.Equals(classId))
               .OrderBy(c => c.CreatedDate)

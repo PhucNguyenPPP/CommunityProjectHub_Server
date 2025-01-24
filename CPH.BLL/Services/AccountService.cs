@@ -671,5 +671,14 @@ namespace CPH.BLL.Services
              return listResult;
         }
 
+        public bool CheckAccountIdExist(Guid accountId)
+        {
+            var accountList = _unitOfWork.Account.GetAll();
+            if (accountList.Any(c => c.AccountId == accountId))
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

@@ -26,6 +26,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> ImportTraineeFromExcel(IFormFile file);
         List<string> CheckValidationImportTraineeFromExcel(List<ImportTraineeDTO> listAccount);
         Task<List<string>> CheckInfoTraineeInDb(List<ImportTraineeDTO> listTrainee);
-
+        bool CheckAccountIdExist(Guid accountId);
     }
 }

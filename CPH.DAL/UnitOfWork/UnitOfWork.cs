@@ -19,6 +19,8 @@ namespace CPH.DAL.UnitOfWork
             Account = new AccountRepository(_context);
             RefreshToken = new RefreshTokenRepository(_context);
             Message = new MessageRepository(_context);
+            Notification = new NotificationRepository(_context);
+            Class = new ClassRepository(_context);
         }
 
 
@@ -35,6 +37,7 @@ namespace CPH.DAL.UnitOfWork
         public IAccountRepository Account { get; private set; }
         public IRefreshTokenRepository RefreshToken { get; private set; }
         public IMessageRepository Message { get; private set; }
-
+        public INotificationRepository Notification { get; private set; }
+        public IClassRepository Class { get; private set; }
     }
 }
