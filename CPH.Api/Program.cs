@@ -19,6 +19,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);
