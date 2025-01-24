@@ -54,7 +54,7 @@ public partial class CphDbContext : DbContext
     {
         modelBuilder.Entity<Account>(entity =>
         {
-            entity.HasKey(e => e.AccountId).HasName("PK__Account__349DA5A6C21274AD");
+            entity.HasKey(e => e.AccountId).HasName("PK__Account__349DA5A60D9A04E2");
 
             entity.ToTable("Account");
 
@@ -76,7 +76,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Attendance>(entity =>
         {
-            entity.HasKey(e => e.AttendanceId).HasName("PK__Attendan__8B69261CEC713CC9");
+            entity.HasKey(e => e.AttendanceId).HasName("PK__Attendan__8B69261CEB86A6E2");
 
             entity.ToTable("Attendance");
 
@@ -95,7 +95,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Class>(entity =>
         {
-            entity.HasKey(e => e.ClassId).HasName("PK__Class__CB1927C00E487A65");
+            entity.HasKey(e => e.ClassId).HasName("PK__Class__CB1927C0D09ACC40");
 
             entity.ToTable("Class");
 
@@ -117,7 +117,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<EmailSetting>(entity =>
         {
-            entity.HasKey(e => e.EmailId).HasName("PK__EmailSet__7ED91ACF094EEF08");
+            entity.HasKey(e => e.EmailId).HasName("PK__EmailSet__7ED91ACF89D9EB33");
 
             entity.ToTable("EmailSetting");
 
@@ -128,7 +128,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Lesson>(entity =>
         {
-            entity.HasKey(e => e.LessonId).HasName("PK__Lesson__B084ACD0128255D1");
+            entity.HasKey(e => e.LessonId).HasName("PK__Lesson__B084ACD071F4F718");
 
             entity.ToTable("Lesson");
 
@@ -142,7 +142,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<LessonClass>(entity =>
         {
-            entity.HasKey(e => e.LessonClassId).HasName("PK__LessonCl__8CD4294823DC6DD5");
+            entity.HasKey(e => e.LessonClassId).HasName("PK__LessonCl__8CD429481A47A332");
 
             entity.ToTable("LessonClass");
 
@@ -164,7 +164,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Material>(entity =>
         {
-            entity.HasKey(e => e.MaterialId).HasName("PK__Material__C50610F7AB0F9BDF");
+            entity.HasKey(e => e.MaterialId).HasName("PK__Material__C50610F79C115F36");
 
             entity.ToTable("Material");
 
@@ -180,7 +180,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Member>(entity =>
         {
-            entity.HasKey(e => e.MemberId).HasName("PK__Member__0CF04B18516402B2");
+            entity.HasKey(e => e.MemberId).HasName("PK__Member__0CF04B1830ECC9DB");
 
             entity.ToTable("Member");
 
@@ -199,7 +199,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Message__C87C0C9C4AA01EC6");
+            entity.HasKey(e => e.MessageId).HasName("PK__Message__C87C0C9C94CA614B");
 
             entity.ToTable("Message");
 
@@ -219,7 +219,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E129023659D");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E124173826B");
 
             entity.ToTable("Notification");
 
@@ -234,7 +234,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Project>(entity =>
         {
-            entity.HasKey(e => e.ProjectId).HasName("PK__Project__761ABEF0467D19B3");
+            entity.HasKey(e => e.ProjectId).HasName("PK__Project__761ABEF0D12D7BC1");
 
             entity.ToTable("Project");
 
@@ -248,13 +248,12 @@ public partial class CphDbContext : DbContext
 
             entity.HasOne(d => d.ProjectManager).WithMany(p => p.Projects)
                 .HasForeignKey(d => d.ProjectManagerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Project__Project__2C3393D0");
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {
-            entity.HasKey(e => e.RefreshTokenId).HasName("PK__RefreshT__F5845E39BEF72E73");
+            entity.HasKey(e => e.RefreshTokenId).HasName("PK__RefreshT__F5845E3980479CFD");
 
             entity.ToTable("RefreshToken");
 
@@ -270,7 +269,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Registration>(entity =>
         {
-            entity.HasKey(e => e.RegistrationId).HasName("PK__Registra__6EF588108CF47C24");
+            entity.HasKey(e => e.RegistrationId).HasName("PK__Registra__6EF5881036FA5EF6");
 
             entity.ToTable("Registration");
 
@@ -291,7 +290,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__8AFACE1AB1F58C2F");
+            entity.HasKey(e => e.RoleId).HasName("PK__Role__8AFACE1A9F611F47");
 
             entity.ToTable("Role");
 
@@ -301,7 +300,7 @@ public partial class CphDbContext : DbContext
 
         modelBuilder.Entity<Trainee>(entity =>
         {
-            entity.HasKey(e => e.TraineeId).HasName("PK__Trainee__3BA911CAAC71DE39");
+            entity.HasKey(e => e.TraineeId).HasName("PK__Trainee__3BA911CAF50B78F8");
 
             entity.ToTable("Trainee");
 
