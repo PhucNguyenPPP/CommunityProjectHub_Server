@@ -61,5 +61,23 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("project-detail")]
+        public async Task<IActionResult> GetProjectDetail([Required] Guid projectId)
+        {
+            ResponseDTO responseDTO = await _projectService.GetProjectDetail(projectId);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }
