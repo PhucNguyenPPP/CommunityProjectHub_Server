@@ -1,4 +1,5 @@
 ﻿using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Email;
 using CPH.Common.DTO.General;
 using CPH.DAL.Entities;
 using Microsoft.AspNetCore.Http;
@@ -27,5 +28,9 @@ namespace CPH.BLL.Interfaces
         List<string> CheckValidationImportTraineeFromExcel(List<ImportTraineeDTO> listAccount);
         Task<List<string>> CheckInfoTraineeInDb(List<ImportTraineeDTO> listTrainee);
         bool CheckAccountIdExist(Guid accountId);
+        Task<Account?> GetAccountByEmail(string email);
+        Task<bool> SetOtp(string email, OtpCodeDTO model);
+        Task<bool> VerifyingOtp(string email, string otp);
+        Task<bool> ChangePassword(ForgotPasswordDTO model);
     }
 }

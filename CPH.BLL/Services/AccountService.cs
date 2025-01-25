@@ -2,6 +2,7 @@
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Email;
 using CPH.Common.DTO.General;
 using CPH.Common.Enum;
 using CPH.DAL.Entities;
@@ -679,6 +680,51 @@ namespace CPH.BLL.Services
                 return true;
             }
             return false;
+        }
+
+        public Task<Account?> GetAccountByEmail(string email)
+        {
+            return _unitOfWork.Account.GetByCondition(c => c.Email == email);
+        }
+
+        public async Task<bool> SetOtp(string email, OtpCodeDTO model)
+        {
+            var account = await GetAccountByEmail(email);
+            if (account != null)
+            {
+                account.OtpCode = Int32.Parse(model.OTPCode);
+                account.OtpExpiredTime = model.ExpiredTime;
+                return await _unitOfWork.SaveChangeAsync();
+            }
+            return false;
+        }
+
+        public async Task<bool> VerifyingOtp(string email, string otp)
+        {
+            var account = await GetAccountByEmail(email);
+            if (account != null)
+            {
+                if (account.OtpCode == Int32.Parse(otp) && account.OtpExpiredTime > DateTime.Now)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> ChangePassword(ForgotPasswordDTO model)
+        {
+            var account = await GetAccountByEmail(model.Email);
+            if (account == null)
+            {
+                return false;
+            }
+
+            var salt = GenerateSalt();
+            var passwordHash = GenerateHashedPassword(model.Password, salt);
+            account.Salt = salt;
+            account.PasswordHash = passwordHash;
+            return await _unitOfWork.SaveChangeAsync();
         }
     }
 }
