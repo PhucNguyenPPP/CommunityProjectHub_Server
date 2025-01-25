@@ -1,4 +1,5 @@
-﻿using CPH.BLL.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using Microsoft.AspNetCore.Http;
@@ -24,6 +25,29 @@ namespace CPH.Api.Controllers
                                                         [FromQuery] string? filterOrder)
         {
             ResponseDTO responseDTO = await _projectService.GetAllProject(searchValue, pageNumber, rowsPerPage, filterField, filterOrder);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("all-related-project")]
+        public async Task<IActionResult> GetAllRelatedProject([FromQuery] string? searchValue,
+                                                        [FromQuery] int? pageNumber,
+                                                        [FromQuery] int? rowsPerPage,
+                                                        [FromQuery] string? filterField,
+                                                        [FromQuery] string? filterOrder,
+                                                        [FromQuery][Required] Guid userId)
+        {
+            ResponseDTO responseDTO = await _projectService.GetAllRelatedProject(searchValue, pageNumber, rowsPerPage, filterField, filterOrder, userId);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)
