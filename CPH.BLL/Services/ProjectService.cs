@@ -214,6 +214,20 @@ namespace CPH.BLL.Services
             }
         }
 
+        public async Task<ResponseDTO> GetProjectDetail(Guid projectId)
+        {
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(pm => pm.ProjectManager)
+                .Include(cl => cl.Classes)
+                .Include(l => l.Lessons).ThenInclude(lcl => lcl.LessonClasses).FirstOrDefault();
+            if (project == null)
+            {
+                return new ResponseDTO("Không tìm thấy dự án tương ứng", 400, false);
+            }
+            var projectDTO = _mapper.Map<ProjectDetailDTO>(project);
+            return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, projectDTO);
+        }
 
         private IQueryable<Project> ApplySorting(IQueryable<Project> list, string filterField, string filterOrder)
         {
