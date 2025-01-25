@@ -288,11 +288,6 @@ namespace CPH.BLL.Services
                 }
                 else
                 {
-                    if (!passwordSet.ContainsKey(account.Password))
-                    {
-                        passwordSet[account.Password] = new List<int>();
-                    }
-                    passwordSet[account.Password].Add(accountNumber);
 
                     Regex regexPassword = new Regex("^(?=.*[!@#$%^&*(),.?\":{}|<>]).+$");
                     if (account.Password.Length < 8 || !regexPassword.IsMatch(account.Password))
