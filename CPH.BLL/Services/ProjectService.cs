@@ -11,6 +11,7 @@ using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,6 +25,25 @@ namespace CPH.BLL.Services
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+        }
+
+        public async Task<ResponseDTO> CheckProjectExisted(Guid projectID)
+        {
+            try
+            {
+                var project = await _unitOfWork.Project
+                    .GetByCondition(c => c.Status == true && c.ProjectId.Equals(projectID));
+                if (project == null)
+                {
+                    return new ResponseDTO("Dự án cộng đồng không tồn tại",404, false);
+                }
+                return new ResponseDTO("Dự án cộng đồng tồn tại", 200, true, project);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO(ex.Message, 500, false);
+            }
+
         }
 
         public async Task<ResponseDTO> GetAllProject(string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
@@ -227,6 +247,31 @@ namespace CPH.BLL.Services
             }
             var projectDTO = _mapper.Map<ProjectDetailDTO>(project);
             return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, projectDTO);
+        }
+
+        public async Task<ResponseDTO> InActivateProject(Guid projectID)
+        {
+            try
+            {
+                var check  = await CheckProjectExisted(projectID);
+                if (!check.IsSuccess)
+                {
+                    return check;
+                }
+                var project = (Project)check.Result;
+                project.Status= false;
+                _unitOfWork.Project.Update(project);
+                var updated = await _unitOfWork.SaveChangeAsync();
+                if (!updated)
+                {
+                    return new ResponseDTO("Vô hiệu hoá dự án thất bại", 500, false);
+                }
+                return new ResponseDTO("Vô hiệu hoá dự án thành công", 200, true);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO(ex.Message, 500, false); 
+            }
         }
 
         private IQueryable<Project> ApplySorting(IQueryable<Project> list, string filterField, string filterOrder)
