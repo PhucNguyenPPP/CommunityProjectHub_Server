@@ -136,6 +136,119 @@ namespace CPH.BLL.Services
             }
         }
 
+
+        public async Task<ResponseDTO> GetAllRelatedProject(string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder, Guid userId)
+        {
+            try
+            {
+                IQueryable<Project> list = _unitOfWork.Project
+                    .GetAllByCondition(c => c.Status == true && 
+                        (c.ProjectManagerId == userId ||
+                        c.Classes.Any(cl => cl.LecturerId == userId) || 
+                        c.Classes.Any(c=> c.Members.Any(mem => mem.AccountId == userId))))
+                    .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
+                    .Include(c => c.ProjectManager);
+                if (!list.Any())
+                {
+                    return new ResponseDTO("Không có dự án trùng khớp", 400, false);
+                }
+                if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null && filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
+                {
+                    var listDTO = _mapper.Map<List<GetAllProjectDTO>>(list);
+                    return new ResponseDTO("Lấy thông tin dự án cộng đồng thành công", 200, true, listDTO);
+                }
+                else
+                {
+                    if (!searchValue.IsNullOrEmpty())
+                    {
+                        list = list.Where(c =>
+                            c.Title.ToLower().Contains(searchValue.ToLower()) ||
+                            c.ProjectManager.FullName.ToLower().Contains(searchValue.ToLower()) ||
+                            (c.Classes != null && c.Classes.Any(cl => cl.Lecturer.FullName.ToLower().Contains(searchValue.ToLower())))
+                        );
+                    }
+
+                    if (filterField.IsNullOrEmpty() && !filterOrder.IsNullOrEmpty())
+                    {
+                        return new ResponseDTO("Vui lòng chọn trường lọc!", 400, false);
+                    }
+                    if (!filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
+                    {
+                        return new ResponseDTO("Vui lòng chọn thứ tự lọc!", 400, false);
+                    }
+
+                    if (!filterField.IsNullOrEmpty() && !filterOrder.IsNullOrEmpty())
+                    {
+                        if (!filterField.Equals("Title") && !filterField.Equals("StartDate") && !filterField.Equals("EndDate") && !filterField.Equals("CreatedDate"))
+                        {
+                            return new ResponseDTO("Trường lọc không hợp lệ", 400, false);
+                        }
+
+                        if (!filterOrder.Equals(FilterConstant.Ascending) && !filterOrder.Equals(FilterConstant.Descending))
+                        {
+                            return new ResponseDTO("Thứ tự lọc không hợp lệ", 400, false);
+                        }
+
+                        list = ApplySorting(list, filterField, filterOrder);
+                    }
+
+
+                    if (!list.Any())
+                    {
+                        return new ResponseDTO("Không có dự án trùng khớp", 400, false);
+                    }
+
+                    if (pageNumber == null && rowsPerPage != null)
+                    {
+                        return new ResponseDTO("Vui lòng chọn số trang", 400, false);
+                    }
+                    if (pageNumber != null && rowsPerPage == null)
+                    {
+                        return new ResponseDTO("Vui lòng chọn số dòng mỗi trang", 400, false);
+                    }
+                    if (pageNumber <= 0 || rowsPerPage <= 0)
+                    {
+                        return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
+                    }
+
+                    var listDTO = _mapper.Map<List<GetAllProjectDTO>>(list);
+                    if (pageNumber != null && rowsPerPage != null)
+                    {
+                        var pagedList = PagedList<GetAllProjectDTO>.ToPagedList(listDTO.AsQueryable(), pageNumber, rowsPerPage);
+                        var result = new ListProjectDTO
+                        {
+                            GetAllProjectDTOs = pagedList,
+                            CurrentPage = pageNumber,
+                            RowsPerPages = rowsPerPage,
+                            TotalCount = listDTO.Count,
+                            TotalPages = (int)Math.Ceiling(listDTO.Count / (double)rowsPerPage)
+                        };
+                        return new ResponseDTO("Tìm kiếm dự án thành công", 200, true, result);
+                    }
+                    return new ResponseDTO("Tìm kiếm dự án thành công", 200, true, listDTO);
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO("Tìm kiếm dự án thất bại", 500, false);
+            }
+        }
+
+        public async Task<ResponseDTO> GetProjectDetail(Guid projectId)
+        {
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(pm => pm.ProjectManager)
+                .Include(cl => cl.Classes)
+                .Include(l => l.Lessons).ThenInclude(lcl => lcl.LessonClasses).FirstOrDefault();
+            if (project == null)
+            {
+                return new ResponseDTO("Không tìm thấy dự án tương ứng", 400, false);
+            }
+            var projectDTO = _mapper.Map<ProjectDetailDTO>(project);
+            return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, projectDTO);
+        }
+
         public async Task<ResponseDTO> InActivateProject(Guid projectID)
         {
             try
