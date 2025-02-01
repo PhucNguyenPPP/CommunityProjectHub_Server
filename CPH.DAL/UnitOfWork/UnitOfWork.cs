@@ -21,6 +21,9 @@ namespace CPH.DAL.UnitOfWork
             Notification = new NotificationRepository(_context);
             Class = new ClassRepository(_context);
             Project = new ProjectRepository(_context);
+            Trainee = new TraineeRepository(_context);
+           Lesson = new LessonRepository(_context);
+            LessonClass = new LessonClassRepository(_context);  
         }
 
 
@@ -40,5 +43,11 @@ namespace CPH.DAL.UnitOfWork
         public INotificationRepository Notification { get; private set; }
         public IClassRepository Class { get; private set; }
         public IProjectRepository Project { get; private set; }
+
+        public ITraineeRepository Trainee { get; private set; }
+
+        public ILessonRepository Lesson { get; private set; }
+
+        public ILessonClassRepository LessonClass { get; private set; }
     }
 }

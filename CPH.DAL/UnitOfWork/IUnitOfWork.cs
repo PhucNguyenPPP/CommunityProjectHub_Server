@@ -17,5 +17,8 @@ namespace CPH.DAL.UnitOfWork
         INotificationRepository Notification { get; }
         IClassRepository Class { get; }
         IProjectRepository Project { get; }
+        ITraineeRepository Trainee { get; }
+        ILessonRepository Lesson { get; }
+        ILessonClassRepository LessonClass { get; }
     }
 }
