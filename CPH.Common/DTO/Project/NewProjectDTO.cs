@@ -32,7 +32,9 @@ namespace CPH.Common.DTO.Project
         [Required(ErrorMessage = "Vui lòng nhập ngày hết hạn ứng tuyển của dự án")]
         public DateTime ApplicationEndDate { get; set; }
         public Guid? ProjectManagerId { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập file học viên của dự án")]
         public IFormFile Trainees { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập danh sách bài học của dự án")]
         public List<string> LessonList { get; set; }
     }
 }

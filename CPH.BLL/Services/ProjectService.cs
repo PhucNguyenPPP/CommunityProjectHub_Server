@@ -101,7 +101,6 @@ namespace CPH.BLL.Services
                 for (var i = 0; i < classCodes.Count; i++)
                 {
                     var c = new DAL.Entities.Class();
-                    c.ClassName = classCodes[i]; //xoa sau
                     c.ClassId = Guid.NewGuid();
                     c.ProjectId = projectId;
                     c.ClassCode = classCodes[i];
@@ -138,8 +137,11 @@ namespace CPH.BLL.Services
                 List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
                 for (var i = 0; i < trainees.Count; i++)
                 {
-                    var c = await _unitOfWork.Class.GetByCondition(c => c.Equals(importTraineeDTOs[i].ClassCode));
+                    var c = await _unitOfWork.Class.GetByCondition(c => c.ClassCode.Equals(importTraineeDTOs[i].ClassCode));
                     trainees[i].ClassId = c.ClassId;
+                    trainees[i].TraineeId = Guid.NewGuid();
+                    var a = await _unitOfWork.Account.GetByCondition(a => a.AccountCode.Equals(importTraineeDTOs[i].AccountCode));
+                    trainees[i].AccountId = a.AccountId;
                 }                
                 for (var i = 0; i < classId.Count; i++)
                 {
@@ -161,9 +163,11 @@ namespace CPH.BLL.Services
                         }
                         foreach(var t in trainees)
                         {
+     
                             if (t.TraineeId.Equals(traineeClass[j].TraineeId))
                             {
                                 t.GroupNo = traineeClass[j].GroupNo;
+                                break;
                             }    
                         }    
                     }
@@ -176,7 +180,7 @@ namespace CPH.BLL.Services
                     return new ResponseDTO("Import học viên thất bại", 500, false);
                 }
                
-                return new ResponseDTO("Tạo project thành công", 500, false);
+                return new ResponseDTO("Tạo project thành công", 200, true);
             }
             catch (Exception ex)
             {
@@ -188,37 +192,38 @@ namespace CPH.BLL.Services
         {
             try
             {
+                List<string> errors = new List<string>();
                 if (projectDTO.StartDate < DateTime.Now)
                 {
-                    return new ResponseDTO("Thời gian bắt đầu của dự án phải ở tương lai", 400, false);
+                    errors.Add("Thời gian bắt đầu của dự án phải ở tương lai");
                 }
                 if (projectDTO.EndDate < projectDTO.StartDate)
                 {
-                    return new ResponseDTO("Thời gian kết thúc phải xa hơn thời gian bắt đầu", 400, false);
+                    errors.Add("Thời gian kết thúc phải xa hơn thời gian bắt đầu");
                 }
                 if (projectDTO.ApplicationStartDate < DateTime.Now)
                 {
-                    return new ResponseDTO("Thời gian bắt đầu ứng tuyển vào dự án phải ở tương lai", 400, false);
+                    errors.Add("Thời gian bắt đầu ứng tuyển vào dự án phải ở tương lai");
                 }
                 if (projectDTO.ApplicationEndDate < projectDTO.ApplicationStartDate)
                 {
-                    return new ResponseDTO("Thời gian hết hạn ứng tuyển phải xa hơn thời gian bắt đầu ứng tuyển", 400, false);
+                    errors.Add("Thời gian hết hạn ứng tuyển phải xa hơn thời gian bắt đầu ứng tuyển");
                 }
                 if (projectDTO.ApplicationEndDate > projectDTO.EndDate)
                 {
-                    return new ResponseDTO("Thời gian hết hạn ứng tuyển không được xa hơn thời gian kết thúc dự án", 400, false);
+                    errors.Add("Thời gian hết hạn ứng tuyển không được xa hơn thời gian kết thúc dự án");
                 }
                 var projectName = await _unitOfWork.Project.GetByCondition(c => c.Title == projectDTO.Title);
                 if (projectName != null)
                 {
-                    return new ResponseDTO("Tên dự án đã tồn tại", 400, false);
+                    errors.Add("Tên dự án đã tồn tại");
                 }
                 if (projectDTO.ProjectManagerId != null)
                 {
                     var projectManager = await _unitOfWork.Account.GetByCondition(a => a.AccountId == projectDTO.ProjectManagerId && a.RoleId.Equals((int)RoleEnum.Lecturer));
                     if (projectManager == null)
                     {
-                        return new ResponseDTO("Thông tin người quản lý dự án không hợp lệ", 400, false);
+                        errors.Add("Thông tin người quản lý dự án không hợp lệ");
                     }
                 }
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
@@ -229,12 +234,8 @@ namespace CPH.BLL.Services
                     {
                         if (projectDTO.NumberTraineeEachGroup > listTrainee.Count)
                         {
-                            return new ResponseDTO("Số học viên mỗi nhóm không thể lớn hơn tổng số học viên", 400, false);
+                            errors.Add("Số học viên mỗi nhóm không thể lớn hơn tổng số học viên");
                         }
-                    }
-                    if(projectDTO.LessonList == null)
-                    {
-                        return new ResponseDTO("Vui lòng bổ sung các bài học cho dự án", 400, false);
                     }
      
                     for (int i = 0; i < projectDTO.LessonList.Count; i++)
@@ -243,10 +244,14 @@ namespace CPH.BLL.Services
                         {
                             if (projectDTO.LessonList[i] == projectDTO.LessonList[j] && i != j)
                             {
-                                return new ResponseDTO("Có 2 bài học nội dung" + projectDTO.LessonList.ToString() + " trùng nhau", 400, false);
+                                errors.Add("Có 2 bài học nội dung" + projectDTO.LessonList.ToString() + " trùng nhau");
                             }
                         }
                     }
+                    if(errors.Count>0)
+                    {
+                        return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
+                    }    
                     return new ResponseDTO("Thông tin dự án hợp lệ", 200, true, listTrainee);
                 }
                 return response;
