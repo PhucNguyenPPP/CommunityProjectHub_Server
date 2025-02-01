@@ -9,17 +9,15 @@ public partial class Class
 
     public string ClassCode { get; set; } = null!;
 
-    public string ClassName { get; set; } = null!;
-
     public string? ReportContent { get; set; }
 
     public DateTime? ReportCreatedDate { get; set; }
 
     public Guid ProjectId { get; set; }
 
-    public Guid LecturerId { get; set; }
+    public Guid? LecturerId { get; set; }
 
-    public virtual Account Lecturer { get; set; } = null!;
+    public virtual Account? Lecturer { get; set; }
 
     public virtual ICollection<LessonClass> LessonClasses { get; set; } = new List<LessonClass>();
 
