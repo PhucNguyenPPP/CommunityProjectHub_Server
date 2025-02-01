@@ -13,6 +13,7 @@
     <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
