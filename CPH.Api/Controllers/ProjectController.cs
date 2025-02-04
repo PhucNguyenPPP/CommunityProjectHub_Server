@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Lesson;
+using CPH.Common.DTO.Project;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -95,6 +97,19 @@ namespace CPH.Api.Controllers
                 {
                     return BadRequest(responseDTO);
                 }
+            }
+            return Ok(responseDTO);
+        }
+        [HttpPost("new-project")]
+        public async Task<IActionResult> CreateProject([FromForm]NewProjectDTO projectDTO)
+        {
+   
+            ResponseDTO responseDTO = await _projectService.CreateProject(projectDTO);
+            if (responseDTO.IsSuccess == false)
+            {                
+                
+                    return BadRequest(responseDTO);
+                     
             }
             return Ok(responseDTO);
         }
