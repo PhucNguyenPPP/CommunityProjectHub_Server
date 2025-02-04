@@ -25,9 +25,8 @@ namespace CPH.Common.DTO.Auth
         [RegularExpression("^[\\p{L}]+([\\s\\p{L}]+)*$",
             ErrorMessage = "Full name is invalid")]
         public string FullName { get; set; } = null!;
-
-        [Required(ErrorMessage = "Please choose avatar")]
-        public IFormFile AvatarLink { get; set; } = null!;
+       
+        public IFormFile? AvatarLink { get; set; } = null!;
 
         [Required(ErrorMessage = "Please input phone number")]
         [RegularExpression("^0\\d{9}$",
