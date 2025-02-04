@@ -8,6 +8,7 @@ using CPH.Common.Enum;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using System;
@@ -63,9 +64,14 @@ namespace CPH.BLL.Services
             return false;
         }
 
-        public List<Account> GetAllAccounts()
+        public List<AccountResponseDTO> GetAllAccounts()
         {
-            return _unitOfWork.Account.GetAll().ToList();
+            var list = _unitOfWork.Account.GetAllByCondition(c => c.RoleId != (int)RoleEnum.Admin)
+                .Include(c => c.Role)
+                .ToList();
+            var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
+
+            return mapList;
         }
 
         public bool CheckAccountCodeExist(string code)

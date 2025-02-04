@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
 using CPH.Common.Enum;
@@ -60,8 +61,8 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Date of birth is invalid", 400, false);
             }
 
-            if (model.Gender != GenderEnum.Male.ToString()
-                && model.Gender != GenderEnum.Female.ToString())
+            if (model.Gender != GenderConstant.Male
+                && model.Gender != GenderConstant.Female)
             {
                 return new ResponseDTO("Gender is invalid", 400, false);
             }

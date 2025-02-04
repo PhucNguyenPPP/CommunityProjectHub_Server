@@ -13,7 +13,7 @@ namespace CPH.BLL.Interfaces
 {
     public interface IAccountService
     {
-        List<Account> GetAllAccounts();
+        List<AccountResponseDTO> GetAllAccounts();
         bool CheckAccountNameExist(string accountName);
         bool CheckEmailExist(string email);
         bool CheckPhoneExist(string phone);

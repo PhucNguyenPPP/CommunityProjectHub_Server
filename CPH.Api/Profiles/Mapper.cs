@@ -43,6 +43,9 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons))
                 .ForMember(dest => dest.Classes, opt => opt.MapFrom(src => src.Classes))
                 .ReverseMap();
+            CreateMap<Account, AccountResponseDTO>()
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
+                .ReverseMap();  
 
         }
     }
