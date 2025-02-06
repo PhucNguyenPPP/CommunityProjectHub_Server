@@ -27,11 +27,13 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
-        public AccountService(IUnitOfWork unitOfWork, IMapper mapper)
+        public AccountService(IUnitOfWork unitOfWork, IMapper mapper, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         public bool CheckEmailExist(string email)
@@ -165,14 +167,13 @@ namespace CPH.BLL.Services
                     {
                         AccountCode = worksheet.Cells[row, 2].Text,
                         AccountName = worksheet.Cells[row, 3].Text,
-                        Password = worksheet.Cells[row, 4].Text,
-                        FullName = worksheet.Cells[row, 5].Text,
-                        Phone = worksheet.Cells[row, 6].Text,
-                        Email = worksheet.Cells[row, 7].Text,
-                        Address = worksheet.Cells[row, 8].Text,
-                        DateOfBirth = worksheet.Cells[row, 9].Text,
-                        Gender = worksheet.Cells[row, 10].Text,
-                        RoleName = worksheet.Cells[row, 11].Text
+                        FullName = worksheet.Cells[row, 4].Text,
+                        Phone = worksheet.Cells[row, 5].Text,
+                        Email = worksheet.Cells[row, 6].Text,
+                        Address = worksheet.Cells[row, 7].Text,
+                        DateOfBirth = worksheet.Cells[row, 8].Text,
+                        Gender = worksheet.Cells[row, 9].Text,
+                        RoleName = worksheet.Cells[row, 10].Text
                     };
                     accounts.Add(account);
                 }
@@ -191,13 +192,15 @@ namespace CPH.BLL.Services
             }
 
             var mapList = _mapper.Map<List<Account>>(accounts);
+            var accountEmail = new List<AccountEmailDTO>();
 
             for (var i = 0; i < mapList.Count; i++)
             {
                 mapList[i].AccountId = Guid.NewGuid();
                 mapList[i].Status = true;
                 mapList[i].Salt = GenerateSalt();
-                mapList[i].PasswordHash = GenerateHashedPassword(accounts[i].Password, mapList[i].Salt);
+                var passwordString = GeneratePasswordString();
+                mapList[i].PasswordHash = GenerateHashedPassword(passwordString, mapList[i].Salt);
 
                 if (accounts[i].RoleName.ToLower().Equals("student"))
                 {
@@ -218,12 +221,24 @@ namespace CPH.BLL.Services
                 {
                     mapList[i].RoleId = (int)RoleEnum.Associate;
                 }
+
+                var accountEmailDto = new AccountEmailDTO
+                {
+                    Email = mapList[i].Email,
+                    AccountName = mapList[i].AccountName,
+                    Password = passwordString
+                };
+                accountEmail.Add(accountEmailDto);
             }
 
             await _unitOfWork.Account.AddRangeAsync(mapList);
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
             {
+                foreach( var account in accountEmail)
+                {
+                    await _emailService.SendAccountEmail(account.Email, account.AccountName, account.Password, "The Community Project Hub's account");
+                }
                 return new ResponseDTO("Import tài khoản thành công", 201, true);
             }
 
@@ -286,20 +301,6 @@ namespace CPH.BLL.Services
                         listResult.Add($"Tên tài khoản của tài khoản số {accountNumber} phải có ít nhất 5 ký tự");
                     }
 
-                }
-
-                if (string.IsNullOrEmpty(account.Password))
-                {
-                    listResult.Add($"Mật khẩu của tài khoản số {accountNumber} không có dữ liệu");
-                }
-                else
-                {
-
-                    Regex regexPassword = new Regex("^(?=.*[!@#$%^&*(),.?\":{}|<>]).+$");
-                    if (account.Password.Length < 8 || !regexPassword.IsMatch(account.Password))
-                    {
-                        listResult.Add($"Mật khẩu của tài khoản số {accountNumber} phải có ít nhất 8 ký tự và có ít nhất 1 ký tự đặc biệt");
-                    }
                 }
 
                 if (string.IsNullOrEmpty(account.FullName))
@@ -726,6 +727,20 @@ namespace CPH.BLL.Services
             account.Salt = salt;
             account.PasswordHash = passwordHash;
             return await _unitOfWork.SaveChangeAsync();
+        }
+
+        private string GeneratePasswordString()
+        {
+            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+            StringBuilder password = new StringBuilder();
+            Random random = new Random();
+
+            for (int i = 0; i < 10; i++)
+            {
+                password.Append(chars[random.Next(chars.Length)]);
+            }
+
+            return password.ToString();
         }
     }
 }

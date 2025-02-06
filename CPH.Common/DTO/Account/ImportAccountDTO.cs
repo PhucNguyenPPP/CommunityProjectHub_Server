@@ -14,8 +14,6 @@ namespace CPH.Common.DTO.Account
 
         public string? AccountName { get; set; } = null!;
 
-        public string? Password { get; set; } = null!;
-
         public string? FullName { get; set; } = null!;
 
         public string? AvatarLink { get; set; }
