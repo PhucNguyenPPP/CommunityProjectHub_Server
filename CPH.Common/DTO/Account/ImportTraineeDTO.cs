@@ -8,6 +8,7 @@ namespace CPH.Common.DTO.Account
 {
     public class ImportTraineeDTO
     {
+        public Guid? AccountId { get; set; } = null!;
         public string? AccountCode { get; set; } = null!;
 
         public string? AccountName { get; set; } = null!;
