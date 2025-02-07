@@ -11,5 +11,6 @@ namespace CPH.BLL.Interfaces
     {
         OtpCodeDTO GenerateOTP();
         Task SendOTPEmail(string userEmail, string userName, OtpCodeDTO otpCode, string subject);
+        Task SendAccountEmail(string userEmail, string accountName, string password, string subject);
     }
 }

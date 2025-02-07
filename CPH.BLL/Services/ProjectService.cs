@@ -73,11 +73,6 @@ namespace CPH.BLL.Services
                 project.Status = true;
                 project.CreatedDate = DateTime.Now;
                 await _unitOfWork.Project.AddAsync(project);
-                var result = await _unitOfWork.SaveChangeAsync();
-                if (!result)
-                {
-                    return new ResponseDTO("Tạo project thất bại", 500, false);
-                }
                 for (int i = 0; i < projectDTO.LessonList.Count; i++)
                 {
                     var ls = new Lesson
@@ -90,11 +85,6 @@ namespace CPH.BLL.Services
                     lessons.Add(ls);
                 }
                 await _unitOfWork.Lesson.AddRangeAsync(lessons);
-                var r = await _unitOfWork.SaveChangeAsync();
-                if (!r)
-                {
-                    return new ResponseDTO("Thêm bài học của dự án thất bại", 500, false);
-                }
                 List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)responseDTO.Result;
                 List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
                 List<Guid> classId = new List<Guid>();
@@ -109,11 +99,6 @@ namespace CPH.BLL.Services
                     classId.Add(c.ClassId);
                 }
                 await _unitOfWork.Class.AddRangeAsync(list);
-                r = await _unitOfWork.SaveChangeAsync();
-                if (!r)
-                {
-                    return new ResponseDTO("Thêm lớp của dự án thất bại", 500, false);
-                }
                 List<LessonClass> lessonClasses = new List<LessonClass>();
                 foreach (var cl in list)
                 {
@@ -130,18 +115,13 @@ namespace CPH.BLL.Services
                     }
                 }
                 await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses);
-                r = await _unitOfWork.SaveChangeAsync();
-                if (!r)
-                {
-                    return new ResponseDTO("Thêm bài học của lớp thất bại", 500, false);
-                }
                 List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
                 for (var i = 0; i < trainees.Count; i++)
                 {
                     var c = await _unitOfWork.Class.GetByCondition(c => c.ClassCode.Equals(importTraineeDTOs[i].ClassCode));
                     trainees[i].ClassId = c.ClassId;
                     trainees[i].TraineeId = Guid.NewGuid();
-                    var a = await _unitOfWork.Account.GetByCondition(a => a.AccountCode.Equals(importTraineeDTOs[i].AccountCode));
+                    var a = await _unitOfWork.Account.GetByCondition(a => a.Email.Equals(importTraineeDTOs[i].Email));
                     trainees[i].AccountId = a.AccountId;
                 }
                 for (var i = 0; i < classId.Count; i++)
@@ -175,10 +155,10 @@ namespace CPH.BLL.Services
 
                 }
                 await _unitOfWork.Trainee.AddRangeAsync(trainees);
-                r = await _unitOfWork.SaveChangeAsync();
+                var r = await _unitOfWork.SaveChangeAsync();
                 if (!r)
                 {
-                    return new ResponseDTO("Import học viên thất bại", 500, false);
+                    return new ResponseDTO("Tạo project thất bại", 500, false);
                 }
 
                 return new ResponseDTO("Tạo project thành công", 200, true);

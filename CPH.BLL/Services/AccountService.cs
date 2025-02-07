@@ -27,11 +27,13 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
-        public AccountService(IUnitOfWork unitOfWork, IMapper mapper)
+        public AccountService(IUnitOfWork unitOfWork, IMapper mapper, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         public bool CheckEmailExist(string email)
@@ -165,14 +167,13 @@ namespace CPH.BLL.Services
                     {
                         AccountCode = worksheet.Cells[row, 2].Text,
                         AccountName = worksheet.Cells[row, 3].Text,
-                        Password = worksheet.Cells[row, 4].Text,
-                        FullName = worksheet.Cells[row, 5].Text,
-                        Phone = worksheet.Cells[row, 6].Text,
-                        Email = worksheet.Cells[row, 7].Text,
-                        Address = worksheet.Cells[row, 8].Text,
-                        DateOfBirth = worksheet.Cells[row, 9].Text,
-                        Gender = worksheet.Cells[row, 10].Text,
-                        RoleName = worksheet.Cells[row, 11].Text
+                        FullName = worksheet.Cells[row, 4].Text,
+                        Phone = worksheet.Cells[row, 5].Text,
+                        Email = worksheet.Cells[row, 6].Text,
+                        Address = worksheet.Cells[row, 7].Text,
+                        DateOfBirth = worksheet.Cells[row, 8].Text,
+                        Gender = worksheet.Cells[row, 9].Text,
+                        RoleName = worksheet.Cells[row, 10].Text
                     };
                     accounts.Add(account);
                 }
@@ -191,13 +192,15 @@ namespace CPH.BLL.Services
             }
 
             var mapList = _mapper.Map<List<Account>>(accounts);
+            var accountEmail = new List<AccountEmailDTO>();
 
             for (var i = 0; i < mapList.Count; i++)
             {
                 mapList[i].AccountId = Guid.NewGuid();
                 mapList[i].Status = true;
                 mapList[i].Salt = GenerateSalt();
-                mapList[i].PasswordHash = GenerateHashedPassword(accounts[i].Password, mapList[i].Salt);
+                var passwordString = GeneratePasswordString();
+                mapList[i].PasswordHash = GenerateHashedPassword(passwordString, mapList[i].Salt);
 
                 if (accounts[i].RoleName.ToLower().Equals("student"))
                 {
@@ -218,12 +221,24 @@ namespace CPH.BLL.Services
                 {
                     mapList[i].RoleId = (int)RoleEnum.Associate;
                 }
+
+                var accountEmailDto = new AccountEmailDTO
+                {
+                    Email = mapList[i].Email,
+                    AccountName = mapList[i].AccountName,
+                    Password = passwordString
+                };
+                accountEmail.Add(accountEmailDto);
             }
 
             await _unitOfWork.Account.AddRangeAsync(mapList);
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
             {
+                foreach (var account in accountEmail)
+                {
+                    await _emailService.SendAccountEmail(account.Email, account.AccountName, account.Password, "The Community Project Hub's account");
+                }
                 return new ResponseDTO("Import tài khoản thành công", 201, true);
             }
 
@@ -244,7 +259,6 @@ namespace CPH.BLL.Services
             var accountNameSet = new Dictionary<string, List<int>>();
             var emailSet = new Dictionary<string, List<int>>();
             var phoneSet = new Dictionary<string, List<int>>();
-            var passwordSet = new Dictionary<string, List<int>>();
 
             for (int i = 0; i < listAccount.Count; i++)
             {
@@ -286,20 +300,6 @@ namespace CPH.BLL.Services
                         listResult.Add($"Tên tài khoản của tài khoản số {accountNumber} phải có ít nhất 5 ký tự");
                     }
 
-                }
-
-                if (string.IsNullOrEmpty(account.Password))
-                {
-                    listResult.Add($"Mật khẩu của tài khoản số {accountNumber} không có dữ liệu");
-                }
-                else
-                {
-
-                    Regex regexPassword = new Regex("^(?=.*[!@#$%^&*(),.?\":{}|<>]).+$");
-                    if (account.Password.Length < 8 || !regexPassword.IsMatch(account.Password))
-                    {
-                        listResult.Add($"Mật khẩu của tài khoản số {accountNumber} phải có ít nhất 8 ký tự và có ít nhất 1 ký tự đặc biệt");
-                    }
                 }
 
                 if (string.IsNullOrEmpty(account.FullName))
@@ -400,7 +400,6 @@ namespace CPH.BLL.Services
             CheckDuplicates(accountNameSet, "Tên tài khoản", listResult);
             CheckDuplicates(emailSet, "Email", listResult);
             CheckDuplicates(phoneSet, "Số điện thoại", listResult);
-            CheckDuplicates(passwordSet, "Mật khẩu", listResult);
 
             return listResult;
         }
@@ -493,7 +492,7 @@ namespace CPH.BLL.Services
 
             var allClasses = new Dictionary<string, List<ImportAccountDTO>>();
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            var accounts = new List<ImportTraineeDTO>();
+            var traineeList = new List<ImportTraineeDTO>();
 
             using (var package = new ExcelPackage(stream))
             {
@@ -515,25 +514,80 @@ namespace CPH.BLL.Services
                             Gender = worksheet.Cells[row, 9].Text,
                             ClassCode = worksheet.Name,
                         };
-                        accounts.Add(account);
+                        traineeList.Add(account);
                     }
                 }
             }
 
-            var checkValidation = CheckValidationImportTraineeFromExcel(accounts);
+            var checkValidation = CheckValidationImportTraineeFromExcel(traineeList);
 
             if (checkValidation.Count > 0)
             {
                 return new ResponseDTO("File excel học viên không hợp lệ", 400, false, checkValidation);
             }
 
-            var checkInfoTraineeInDb = await CheckInfoTraineeInDb(accounts);
-            if(checkInfoTraineeInDb.Count > 0)
+            var mapTraineeList = _mapper.Map<List<Account>>(traineeList);
+
+            foreach (var trainee in traineeList)
             {
-                return new ResponseDTO("File excel học viên không hợp lệ", 400, false, checkInfoTraineeInDb);
+                var user = await _unitOfWork.Account.GetByCondition(c => c.Email == trainee.Email);
+                if (user != null)
+                {
+                    trainee.AccountId = user.AccountId;
+                }
             }
 
-            return new ResponseDTO("Import học viên thành công", 201, true, accounts);
+            var accountEmail = new List<AccountEmailDTO>();
+            foreach (var trainee in mapTraineeList)
+            {
+                var user = await _unitOfWork.Account.GetByCondition(c => c.Email == trainee.Email);
+                if (user == null)
+                {
+                    var checkAccountCodeExisted = CheckAccountCodeExist(trainee.AccountCode);
+                    if (checkAccountCodeExisted)
+                    {
+                        return new ResponseDTO("File excel không hợp lệ", 400, false, $"Mã tài khoản của học viên có email {trainee.Email} đã tồn tại");
+                    }
+
+                    var checkAccountNameExisted = CheckAccountNameExist(trainee.AccountName);
+                    if (checkAccountNameExisted)
+                    {
+                        return new ResponseDTO("File excel không hợp lệ", 400, false, $"Tên tài khoản của học viên có email {trainee.Email} đã tồn tại");
+                    }
+
+                    var checkPhoneExisted = CheckPhoneExist(trainee.Phone);
+                    if (checkPhoneExisted)
+                    {
+                        return new ResponseDTO("File excel không hợp lệ", 400, false, $"Số điện thoại của học viên có email {trainee.Email} đã tồn tại");
+                    }
+
+                    var id = Guid.NewGuid();
+                    trainee.AccountId = id;
+                    trainee.Status = true;
+                    trainee.Salt = GenerateSalt();
+                    var passwordString = GeneratePasswordString();
+                    trainee.PasswordHash = GenerateHashedPassword(passwordString, trainee.Salt);
+                    trainee.RoleId = (int)RoleEnum.Trainee;
+
+                    var traineeResponse = traineeList.Where(c => c.Email == trainee.Email).FirstOrDefault();
+                    traineeResponse.AccountId = id;
+
+                    await _unitOfWork.Account.AddAsync(trainee);
+
+                    var accountEmailDto = new AccountEmailDTO
+                    {
+                        Email = trainee.Email,
+                        AccountName = trainee.AccountName,
+                        Password = passwordString
+                    };
+                    accountEmail.Add(accountEmailDto);
+                }
+            }
+            foreach (var account in accountEmail)
+            {
+                await _emailService.SendAccountEmail(account.Email, account.AccountName, account.Password, "The Community Project Hub's account");
+            }
+            return new ResponseDTO("Import học viên thành công", 201, true, traineeList);
         }
 
         public List<string> CheckValidationImportTraineeFromExcel(List<ImportTraineeDTO> listTrainee)
@@ -545,6 +599,10 @@ namespace CPH.BLL.Services
                 listResult.Add("Danh sách tài khoản trống");
                 return listResult;
             }
+            var accountCodeSet = new Dictionary<string, List<int>>();
+            var accountNameSet = new Dictionary<string, List<int>>();
+            var emailSet = new Dictionary<string, List<int>>();
+            var phoneSet = new Dictionary<string, List<int>>();
 
             // Dictionary để kiểm tra mỗi học viên chỉ được tồn tại ở 1 lớp duy nhất
             var studentClassMap = new Dictionary<string, string>();
@@ -562,21 +620,82 @@ namespace CPH.BLL.Services
                 {
                     listResult.Add($"Mã số tài khoản của học viên số {traineeNumber} không có dữ liệu");
                 }
+                else
+                {
+                    if (!accountCodeSet.ContainsKey(trainee.AccountCode))
+                    {
+                        accountCodeSet[trainee.AccountCode] = new List<int>();
+                    }
+                    accountCodeSet[trainee.AccountCode].Add(traineeNumber);
+
+                    if (trainee.AccountCode.Length < 8)
+                    {
+                        listResult.Add($"Mã số tài khoản của học viên số {traineeNumber} phải có ít nhất 8 ký tự");
+                    }
+                }
                 if (string.IsNullOrEmpty(trainee.AccountName))
                 {
                     listResult.Add($"Tên tài khoản của học viên số {traineeNumber} không có dữ liệu");
+                }
+                else
+                {
+                    if (!accountNameSet.ContainsKey(trainee.AccountName))
+                    {
+                        accountNameSet[trainee.AccountName] = new List<int>();
+                    }
+                    accountNameSet[trainee.AccountName].Add(traineeNumber);
+
+                    if (trainee.AccountName.Length < 5)
+                    {
+                        listResult.Add($"Tên tài khoản của học viên số {traineeNumber} phải có ít nhất 5 ký tự");
+                    }
                 }
                 if (string.IsNullOrEmpty(trainee.FullName))
                 {
                     listResult.Add($"Họ và tên của học viên số {traineeNumber} không có dữ liệu");
                 }
+                else
+                {
+                    if (trainee.FullName.Length < 8)
+                    {
+                        listResult.Add($"Họ và tên của học viên số {traineeNumber} phải có ít nhất 8");
+                    }
+                }
                 if (string.IsNullOrEmpty(trainee.Phone))
                 {
                     listResult.Add($"Số điện thoại của học viên số {traineeNumber} không có dữ liệu");
                 }
+                else
+                {
+                    if (!phoneSet.ContainsKey(trainee.Phone))
+                    {
+                        phoneSet[trainee.Phone] = new List<int>();
+                    }
+                    phoneSet[trainee.Phone].Add(traineeNumber);
+
+                    Regex regexPhone = new Regex("^0\\d{9}$");
+                    if (!regexPhone.IsMatch(trainee.Phone))
+                    {
+                        listResult.Add($"Số điện thoại của học viên số {traineeNumber} không hợp lệ");
+                    }
+                }
                 if (string.IsNullOrEmpty(trainee.Email))
                 {
                     listResult.Add($"Email của học viên số {traineeNumber} không có dữ liệu");
+                }
+                else
+                {
+                    if (!emailSet.ContainsKey(trainee.Email))
+                    {
+                        emailSet[trainee.Email] = new List<int>();
+                    }
+                    emailSet[trainee.Email].Add(traineeNumber);
+
+                    Regex regexEmail = new Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+                    if (!regexEmail.IsMatch(trainee.Email))
+                    {
+                        listResult.Add($"Email của học viên số {traineeNumber} không hợp lệ");
+                    }
                 }
                 if (string.IsNullOrEmpty(trainee.Address))
                 {
@@ -586,9 +705,24 @@ namespace CPH.BLL.Services
                 {
                     listResult.Add($"Ngày sinh của học viên số {traineeNumber} không có dữ liệu");
                 }
+                else
+                {
+                    bool checkParseDob = DateTime.TryParse(trainee.DateOfBirth, out DateTime parseDob);
+                    if (!checkParseDob || parseDob >= DateTime.Now)
+                    {
+                        listResult.Add($"Ngày sinh của học viên số {traineeNumber} không hợp lệ");
+                    }
+                }
                 if (string.IsNullOrEmpty(trainee.Gender))
                 {
                     listResult.Add($"Giới tính của học viên số {traineeNumber} không có dữ liệu");
+                }
+                else
+                {
+                    if (!trainee.Gender.Equals("Nam") && !trainee.Gender.Equals("Nữ"))
+                    {
+                        listResult.Add($"Giới tính của tài khoản số {trainee} không hợp lệ");
+                    }
                 }
 
                 // Kiểm tra mỗi học viên chỉ có thể thuộc 1 lớp duy nhất
@@ -617,6 +751,11 @@ namespace CPH.BLL.Services
                         listResult.Add($"Học viên {trainee.FullName} (Mã: {trainee.AccountCode}) đã tồn tại trong lớp {trainee.ClassCode}");
                     }
                 }
+
+                CheckDuplicates(accountCodeSet, "Mã số tài khoản", listResult);
+                CheckDuplicates(accountNameSet, "Tên tài khoản", listResult);
+                CheckDuplicates(emailSet, "Email", listResult);
+                CheckDuplicates(phoneSet, "Số điện thoại", listResult);
             }
 
             return listResult;
@@ -636,12 +775,13 @@ namespace CPH.BLL.Services
             {
                 var trainee = listTrainee[i];
                 int traineeNumber = i + 1;
-                
-                var traineeDb = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == trainee.AccountCode);
-                if(traineeDb == null)
+
+                var traineeDb = await _unitOfWork.Account.GetByCondition(c => c.Email == trainee.Email);
+                if (traineeDb == null)
                 {
-                    listResult.Add($"Học viên {trainee.FullName} (Mã: {trainee.AccountCode}) không tồn tại trong hệ thống");
-                } else
+                    listResult.Add($"Học viên {trainee.FullName} (Email: {trainee.Email}) không tồn tại trong hệ thống");
+                }
+                else
                 {
                     if (!traineeDb.AccountName.Equals(trainee.AccountName))
                     {
@@ -670,7 +810,7 @@ namespace CPH.BLL.Services
                 }
             }
 
-             return listResult;
+            return listResult;
         }
 
         public bool CheckAccountIdExist(Guid accountId)
@@ -726,6 +866,20 @@ namespace CPH.BLL.Services
             account.Salt = salt;
             account.PasswordHash = passwordHash;
             return await _unitOfWork.SaveChangeAsync();
+        }
+
+        private string GeneratePasswordString()
+        {
+            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+            StringBuilder password = new StringBuilder();
+            Random random = new Random();
+
+            for (int i = 0; i < 10; i++)
+            {
+                password.Append(chars[random.Next(chars.Length)]);
+            }
+
+            return password.ToString();
         }
     }
 }

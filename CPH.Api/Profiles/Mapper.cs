@@ -47,6 +47,8 @@ namespace CPH.Api.Profiles
             CreateMap<Account, AccountResponseDTO>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
                 .ReverseMap();
+            CreateMap<ImportTraineeDTO, Account>().ReverseMap();
+                .ReverseMap();
             CreateMap<UpdateProjectDTO, Project>()
             .ForMember(dest => dest.NumberLesson, opt => opt.MapFrom(src => src.LessonList.Count)) // Map NumberLesson from LessonList count
             .ForMember(dest => dest.ProjectId, opt => opt.Ignore()) // Ignore ProjectId in update, as it's usually handled separately
