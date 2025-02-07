@@ -46,7 +46,8 @@ namespace CPH.Api.Profiles
                 .ReverseMap();
             CreateMap<Account, AccountResponseDTO>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
-                .ReverseMap();  
+                .ReverseMap();
+            CreateMap<ImportTraineeDTO, Account>().ReverseMap();
 
         }
     }
