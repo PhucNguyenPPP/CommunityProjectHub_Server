@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
+using OfficeOpenXml.Drawing.Chart.ChartEx;
 
 namespace CPH.BLL.Services
 {
@@ -70,7 +71,7 @@ namespace CPH.BLL.Services
                 project.ProjectId = projectId;
                 project.NumberLesson = projectDTO.LessonList.Count;
                 project.Status = true;
-                project.CreatedDate=DateTime.Now;
+                project.CreatedDate = DateTime.Now;
                 await _unitOfWork.Project.AddAsync(project);
                 var result = await _unitOfWork.SaveChangeAsync();
                 if (!result)
@@ -123,7 +124,7 @@ namespace CPH.BLL.Services
                             LessonClassId = Guid.NewGuid(),
                             LessonId = l.LessonId,
                             ClassId = cl.ClassId,
-                          
+
                         };
                         lessonClasses.Add(lessonClass);
                     }
@@ -142,13 +143,13 @@ namespace CPH.BLL.Services
                     trainees[i].TraineeId = Guid.NewGuid();
                     var a = await _unitOfWork.Account.GetByCondition(a => a.AccountCode.Equals(importTraineeDTOs[i].AccountCode));
                     trainees[i].AccountId = a.AccountId;
-                }                
+                }
                 for (var i = 0; i < classId.Count; i++)
                 {
                     int temp = 0;
                     int groupNo = 1;
                     List<Trainee> traineeClass = trainees.Where(t => t.ClassId.Equals(classId[i])).ToList();
-                    for (var j = 0;j<traineeClass.Count();j++)
+                    for (var j = 0; j < traineeClass.Count(); j++)
                     {
                         if (temp < projectDTO.NumberTraineeEachGroup)
                         {
@@ -161,17 +162,17 @@ namespace CPH.BLL.Services
                             groupNo++;
                             traineeClass[j].GroupNo = groupNo;
                         }
-                        foreach(var t in trainees)
+                        foreach (var t in trainees)
                         {
-     
+
                             if (t.TraineeId.Equals(traineeClass[j].TraineeId))
                             {
                                 t.GroupNo = traineeClass[j].GroupNo;
                                 break;
-                            }    
-                        }    
+                            }
+                        }
                     }
-                   
+
                 }
                 await _unitOfWork.Trainee.AddRangeAsync(trainees);
                 r = await _unitOfWork.SaveChangeAsync();
@@ -179,7 +180,7 @@ namespace CPH.BLL.Services
                 {
                     return new ResponseDTO("Import học viên thất bại", 500, false);
                 }
-               
+
                 return new ResponseDTO("Tạo project thành công", 200, true);
             }
             catch (Exception ex)
@@ -232,12 +233,21 @@ namespace CPH.BLL.Services
                     var listTrainee = (List<ImportTraineeDTO>)response.Result;
                     if (listTrainee != null)
                     {
-                        if (projectDTO.NumberTraineeEachGroup > listTrainee.Count)
+                        var c = listTrainee.Select(t=> t.ClassCode).Distinct().ToList();   
+                        for (int i = 0; i <= c.Count; i++)
                         {
-                            errors.Add("Số học viên mỗi nhóm không thể lớn hơn tổng số học viên");
+                            var numOfTraineeClass = listTrainee.Where(t => t.ClassCode.Equals(c[i])).Count();
+                            if (numOfTraineeClass < projectDTO.NumberTraineeEachGroup)
+                            {
+                                errors.Add("Số lượng học viên mỗi nhóm không thể lớn hơn tổng số học viên ở từng lớp");
+                            }
+
                         }
                     }
-     
+                    else
+                    {
+                        errors.Add(response.Message.ToString());
+                    }
                     for (int i = 0; i < projectDTO.LessonList.Count; i++)
                     {
                         for (int j = 0; j < projectDTO.LessonList.Count; j++)
@@ -248,10 +258,10 @@ namespace CPH.BLL.Services
                             }
                         }
                     }
-                    if(errors.Count>0)
+                    if (errors.Count > 0)
                     {
                         return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
-                    }    
+                    }
                     return new ResponseDTO("Thông tin dự án hợp lệ", 200, true, listTrainee);
                 }
                 return response;
@@ -409,8 +419,6 @@ namespace CPH.BLL.Services
 
                         list = ApplySorting(list, filterField, filterOrder);
                     }
-
-
                     if (!list.Any())
                     {
                         return new ResponseDTO("Không có dự án trùng khớp", 400, false);
@@ -509,6 +517,167 @@ namespace CPH.BLL.Services
                     ? list.OrderByDescending(c => c.CreatedDate)
                     : list.OrderBy(c => c.CreatedDate)
             };
+        }
+
+        public async Task<ResponseDTO> UpdateProject(UpdateProjectDTO projectDTO)
+        {
+            try
+            {
+                var check = await CheckProjectExisted(projectDTO.ProjectId);
+                if (check.IsSuccess==false)
+                {
+                    return new ResponseDTO("Dự án không tồn tại", 404, false);
+                }
+                ResponseDTO responseDTO = await CheckUpdateProject(projectDTO);
+                if (!responseDTO.IsSuccess)
+                {
+                    return responseDTO;
+                }
+                Project project = (Project)check.Result;
+                project.Title = projectDTO.Title;
+                project.Description = projectDTO.Description;
+                project.Address = projectDTO.Address;
+                var cl = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectDTO.ProjectId)).Select(c => c.ClassId).Distinct().ToList();
+                if (cl == null)
+                {
+                    return new ResponseDTO("Lớp của dự án bị lỗi", 500, false);
+                }
+                if (project.NumberTraineeEachGroup != projectDTO.NumberTraineeEachGroup)
+                {                
+                    for (var i = 0; i < cl.Count; i++)
+                    {
+                        int temp = 0;
+                        int groupNo = 1;
+                        List<Trainee> traineeClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(cl[i])).ToList();
+                        for (var j = 0; j < traineeClass.Count(); j++)
+                        {
+                            if (temp < projectDTO.NumberTraineeEachGroup)
+                            {
+                                traineeClass[j].GroupNo = groupNo;
+                                temp++;
+                            }
+                            else
+                            {
+                                temp = 1;
+                                groupNo++;
+                                traineeClass[j].GroupNo = groupNo;
+                            }
+                            _unitOfWork.Trainee.UpdateRange(traineeClass);
+                        }
+                    }
+                    project.NumberTraineeEachGroup = projectDTO.NumberTraineeEachGroup;                    
+                }
+                project.StartDate = projectDTO.StartDate;
+                project.EndDate = projectDTO.EndDate;
+                project.ApplicationStartDate = projectDTO.ApplicationStartDate;
+                project.ApplicationEndDate = projectDTO.ApplicationEndDate;
+                for(var i = 0;i<projectDTO.LessonList.Count;i++)
+                {
+                    var lessonInDB = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && !l.LessonContent.Equals(projectDTO.LessonList[i])&&l.ProjectId.Equals(project.ProjectId));
+                    if(lessonInDB!=null)
+                    {
+                        lessonInDB.LessonContent = projectDTO.LessonList[(int)i];  
+                       _unitOfWork.Lesson.Update(lessonInDB);   
+                    }
+                    else
+                    {
+                        var lessonid = Guid.NewGuid();
+                        var ls = new Lesson
+                        {
+                            LessonId = lessonid,
+                            LessonContent = projectDTO.LessonList[i],
+                            ProjectId = projectDTO.ProjectId,
+                            LessonNo = i + 1
+                        };
+                        await _unitOfWork.Lesson.AddAsync(ls);
+                        for (var j = 0; j < cl.Count; j++)
+                        {
+                            var lsc = new LessonClass
+                            {
+                                LessonClassId = Guid.NewGuid(),
+                                LessonId = lessonid,
+                                ClassId = cl[j],
+                            };
+                            await _unitOfWork.LessonClass.AddAsync(lsc);
+                        }
+                    }
+                }    
+                project.NumberLesson = projectDTO.LessonList.Count;   
+                var updated = await _unitOfWork.SaveChangeAsync();    
+                if(updated == false)
+                {
+                    return new ResponseDTO("Chỉnh sửa thất bại", 500, false);
+                }    
+                return new ResponseDTO("Chỉnh sửa thành công",200, true);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO(ex.Message, 500, false);
+            }
+        }
+
+        private async Task<ResponseDTO> CheckUpdateProject(UpdateProjectDTO projectDTO)
+        {
+            try
+            {
+                var project = _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
+                
+                List<string> errors = new List<string>();
+                if (projectDTO.StartDate < DateTime.Now)
+                {
+                    errors.Add("Thời gian bắt đầu của dự án phải ở tương lai");
+                }
+                if (projectDTO.EndDate < projectDTO.StartDate)
+                {
+                    errors.Add("Thời gian kết thúc phải xa hơn thời gian bắt đầu");
+                }
+                if (projectDTO.ApplicationStartDate < DateTime.Now)
+                {
+                    errors.Add("Thời gian bắt đầu ứng tuyển vào dự án phải ở tương lai");
+                }
+                if (projectDTO.ApplicationEndDate < projectDTO.ApplicationStartDate)
+                {
+                    errors.Add("Thời gian hết hạn ứng tuyển phải xa hơn thời gian bắt đầu ứng tuyển");
+                }
+                if (projectDTO.ApplicationEndDate > projectDTO.EndDate)
+                {
+                    errors.Add("Thời gian hết hạn ứng tuyển không được xa hơn thời gian kết thúc dự án");
+                }
+                var projectName = await _unitOfWork.Project.GetByCondition(c => c.Title == projectDTO.Title && c.ProjectId!=projectDTO.ProjectId);
+                if (projectName != null)
+                {
+                    errors.Add("Tên dự án đã tồn tại");
+                }
+                var c = _unitOfWork.Class.GetAllByCondition(t => t.ProjectId.Equals(projectDTO.ProjectId)).Select(t => t.ClassId).Distinct().ToList();
+                for (int i = 0; i < c.Count; i++)
+                {
+                    var numOfTraineeClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(c[i])).Count();
+                    if (numOfTraineeClass < projectDTO.NumberTraineeEachGroup)
+                    {
+                        errors.Add("Số lượng học viên mỗi nhóm không thể lớn hơn tổng số học viên ở từng lớp");
+                    }
+                }
+                for (int i = 0; i < projectDTO.LessonList.Count; i++)
+                {
+                    for (int j = 0; j < projectDTO.LessonList.Count; j++)
+                    {
+                        if (projectDTO.LessonList[i] == projectDTO.LessonList[j] && i != j)
+                        {
+                            errors.Add("Có 2 bài học nội dung" + projectDTO.LessonList.ToString() + " trùng nhau");
+                        }
+                    }
+                }
+                if (errors.Count > 0)
+                {
+                    return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
+                }
+                return new ResponseDTO("Thông tin dự án hợp lệ", 200, true);
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO(ex.Message.ToString(), 500, false);
+            }
         }
     }
 }
