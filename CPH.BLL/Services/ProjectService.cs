@@ -84,9 +84,10 @@ namespace CPH.BLL.Services
                     };
                     lessons.Add(ls);
                 }
-                await _unitOfWork.Lesson.AddRangeAsync(lessons);
+               await _unitOfWork.Lesson.AddRangeAsync(lessons);
                 List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)responseDTO.Result;
                 List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
+                List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
                 List<Guid> classId = new List<Guid>();
                 List<Class> list = new List<Class>();
                 for (var i = 0; i < classCodes.Count; i++)
@@ -99,6 +100,13 @@ namespace CPH.BLL.Services
                     classId.Add(c.ClassId);
                 }
                 await _unitOfWork.Class.AddRangeAsync(list);
+                for (var i = 0; i < trainees.Count; i++)
+                {
+                    var c = list.Where(c => c.ClassCode.Equals(importTraineeDTOs[i].ClassCode)).FirstOrDefault();
+                    trainees[i].ClassId = c.ClassId;
+                    trainees[i].TraineeId = Guid.NewGuid();
+                }
+                //    await _unitOfWork.Class.AddRangeAsync(list);
                 List<LessonClass> lessonClasses = new List<LessonClass>();
                 foreach (var cl in list)
                 {
@@ -115,15 +123,7 @@ namespace CPH.BLL.Services
                     }
                 }
                 await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses);
-                List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
-                for (var i = 0; i < trainees.Count; i++)
-                {
-                    var c = await _unitOfWork.Class.GetByCondition(c => c.ClassCode.Equals(importTraineeDTOs[i].ClassCode));
-                    trainees[i].ClassId = c.ClassId;
-                    trainees[i].TraineeId = Guid.NewGuid();
-                    var a = await _unitOfWork.Account.GetByCondition(a => a.Email.Equals(importTraineeDTOs[i].Email));
-                    trainees[i].AccountId = a.AccountId;
-                }
+                
                 for (var i = 0; i < classId.Count; i++)
                 {
                     int temp = 0;
@@ -158,10 +158,10 @@ namespace CPH.BLL.Services
                 var r = await _unitOfWork.SaveChangeAsync();
                 if (!r)
                 {
-                    return new ResponseDTO("Tạo project thất bại", 500, false);
+                    return new ResponseDTO("Tạo dự án thất bại", 500, false);
                 }
 
-                return new ResponseDTO("Tạo project thành công", 200, true);
+                return new ResponseDTO("Tạo dự án thành công", 201, true);
             }
             catch (Exception ex)
             {
@@ -214,7 +214,7 @@ namespace CPH.BLL.Services
                     if (listTrainee != null)
                     {
                         var c = listTrainee.Select(t=> t.ClassCode).Distinct().ToList();   
-                        for (int i = 0; i <= c.Count; i++)
+                        for (int i = 0; i < c.Count; i++)
                         {
                             var numOfTraineeClass = listTrainee.Where(t => t.ClassCode.Equals(c[i])).Count();
                             if (numOfTraineeClass < projectDTO.NumberTraineeEachGroup)
