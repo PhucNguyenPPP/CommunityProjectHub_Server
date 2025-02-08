@@ -4,11 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace CPH.Common.DTO.Project
 {
-    public class ProjectDTO
+    public class UpdateProjectDTO
     {
+        [Required(ErrorMessage = "Vui lòng nhập Id của dự án")]
+        public Guid ProjectId { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập tên của dự án")]
         public string Title { get; set; } = null!;
         [Required(ErrorMessage = "Vui lòng nhập mô tả của dự án")]
@@ -26,6 +29,7 @@ namespace CPH.Common.DTO.Project
         public DateTime ApplicationStartDate { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập ngày hết hạn ứng tuyển của dự án")]
         public DateTime ApplicationEndDate { get; set; }
-        public Guid? ProjectManagerId { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập danh sách bài học của dự án")]
+        public List<string> LessonList { get; set; }
     }
 }
