@@ -387,5 +387,22 @@ namespace CPH.BLL.Services
                 return false;
             }
         }
-}
+
+        public ResponseDTO CheckOldPassword(CheckOldPasswordDTO model)
+        {
+            var user = _unitOfWork.Account.GetAllByCondition(x => x.Email == model.Email)
+                .Include(u => u.Role).FirstOrDefault();
+
+            if (user == null)
+            {
+                return new ResponseDTO("Email không tồn tại", 400, false);
+            }
+
+            if (VerifyPasswordHash(model.Password, user.PasswordHash, user.Salt))
+            {
+                return new ResponseDTO("Mật khẩu cũ chính xác", 200, true);
+            }
+            return new ResponseDTO("Mật khẩu cũ không chính xác", 400, false);
+        }
+    }
 }

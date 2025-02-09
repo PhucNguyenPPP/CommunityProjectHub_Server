@@ -16,5 +16,6 @@ namespace CPH.BLL.Interfaces
         Task<TokenDTO> RefreshAccessToken(RequestTokenDTO model);
         Task<ResponseDTO> GetAccountByAccessToken(string token);
         Task<bool> LogOut(string refreshToken);
+        ResponseDTO CheckOldPassword(CheckOldPasswordDTO model);
     }
 }
