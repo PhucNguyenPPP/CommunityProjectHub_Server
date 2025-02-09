@@ -445,8 +445,14 @@ namespace CPH.BLL.Services
             var project = _unitOfWork.Project
                 .GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(pm => pm.ProjectManager)
+                .Include(cl => cl.Classes) 
+                    .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)
-                .Include(l => l.Lessons).ThenInclude(lcl => lcl.LessonClasses).FirstOrDefault();
+                    .ThenInclude(tc => tc.Lecturer)
+                .Include(l => l.Lessons)
+                    .ThenInclude(lcl => lcl.LessonClasses)
+                .FirstOrDefault();
+            
             if (project == null)
             {
                 return new ResponseDTO("Không tìm thấy dự án tương ứng", 400, false);
