@@ -54,9 +54,10 @@ namespace CPH.Api.Profiles
             .ForMember(dest => dest.ProjectId, opt => opt.Ignore()) // Ignore ProjectId in update, as it's usually handled separately
             .ForMember(dest => dest.CreatedDate, opt => opt.Ignore()) // Ignore CreatedDate, as it's usually set on creation
             .ForMember(dest => dest.Status, opt => opt.Ignore()).ReverseMap(); // Ignore Status, as it's usually handled separately.
-           
-
-
+            CreateMap<LessonClass, GetAllLessonClassByClassDTO>()
+                 .ForMember(dest => dest.LessonNo, opt => opt.MapFrom(src => src.Lesson.LessonNo))
+                 .ForMember(dest => dest.LessonContent, opt => opt.MapFrom(src => src.Lesson.LessonContent))
+                 .ReverseMap();
         }
     }
 }
