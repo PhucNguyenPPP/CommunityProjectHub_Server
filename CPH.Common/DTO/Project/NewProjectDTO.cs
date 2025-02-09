@@ -12,8 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CPH.Common.DTO.Project
 {
     public class NewProjectDTO
-    {
-        
+    {        
         [Required(ErrorMessage = "Vui lòng nhập tên của dự án")]
         public string Title { get; set; } = null!;
         [Required(ErrorMessage = "Vui lòng nhập mô tả của dự án")]

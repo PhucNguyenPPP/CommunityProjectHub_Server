@@ -113,5 +113,18 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+        [HttpPut("project")]
+        public async Task<IActionResult> UpdateProject([FromForm] UpdateProjectDTO projectDTO)
+        {
+
+            ResponseDTO responseDTO = await _projectService.UpdateProject(projectDTO);
+            if (responseDTO.IsSuccess == false)
+            {
+
+                return BadRequest(responseDTO);
+
+            }
+            return Ok(responseDTO);
+        }
     }
 }
