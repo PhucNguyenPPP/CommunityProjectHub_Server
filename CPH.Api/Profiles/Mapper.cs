@@ -30,7 +30,7 @@ namespace CPH.Api.Profiles
                .ForMember(dest => dest.ProjectManagerName, opt => opt.MapFrom(src => src.ProjectManager.FullName))
                .ReverseMap();
 
-            CreateMap<GetAllClassDTO, Class>()
+            CreateMap<Class, GetAllClassDTO>()
                 .ReverseMap();
 
             CreateMap<GetAllLessonDTO, Lesson>()
@@ -43,6 +43,8 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.ProjectManagerName, opt => opt.MapFrom(src => src.ProjectManager.FullName))
                 .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons))
                 .ForMember(dest => dest.Classes, opt => opt.MapFrom(src => src.Classes))
+                .ForMember(dest => dest.TotalNumberTrainee, opt => opt.MapFrom(src => src.Classes.Sum(c => c.Trainees.Count())))
+                .ForMember(dest => dest.TotalNumberLecturer, opt => opt.MapFrom(src => src.Classes.Count(c=> c.Lecturer != null)))
                 .ReverseMap();
             CreateMap<Account, AccountResponseDTO>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))

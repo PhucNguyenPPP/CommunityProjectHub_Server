@@ -38,8 +38,13 @@ namespace CPH.Common.DTO.Project
 
         public string ProjectManagerName { get; set; }
 
+        public int TotalNumberLecturer { get; set; }
+
+        public int TotalNumberTrainee { get; set; }
+
         public List<GetAllLessonDTO> Lessons { get; set; }
 
         public List<GetAllClassDTO> Classes { get; set; }
+
     }
 }
