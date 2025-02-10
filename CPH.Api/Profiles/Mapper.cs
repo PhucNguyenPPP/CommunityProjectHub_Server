@@ -2,6 +2,7 @@
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Class;
+using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Message;
@@ -70,7 +71,7 @@ namespace CPH.Api.Profiles
                 //    context.Items.ContainsKey("StudentSlotAvailable") ? (int)context.Items["StudentSlotAvailable"] : 0))
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                 .ReverseMap();
-                
+            CreateMap<Account, LecturerResponseDTO>().ReverseMap();
 
         }
     }
