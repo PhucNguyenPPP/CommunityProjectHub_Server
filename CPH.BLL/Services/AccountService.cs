@@ -83,7 +83,10 @@ namespace CPH.BLL.Services
                 {
                     list = list.Where(c => 
                         c.AccountName.ToLower().Contains(searchValue.ToLower()) ||
-                        c.FullName.ToLower().Contains(searchValue.ToLower())
+                        c.FullName.ToLower().Contains(searchValue.ToLower()) ||
+                        c.AccountCode.ToLower().Contains(searchValue.ToLower()) ||
+                        c.Email.ToLower().Contains(searchValue.ToLower())||
+                        c.Phone.ToLower().Contains(searchValue.ToLower())
                     );
                 }
                 if (!list.Any())
