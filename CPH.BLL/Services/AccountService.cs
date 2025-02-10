@@ -4,6 +4,8 @@ using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Email;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Paging;
+using CPH.Common.DTO.Project;
 using CPH.Common.Enum;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
@@ -66,14 +68,61 @@ namespace CPH.BLL.Services
             return false;
         }
 
-        public List<AccountResponseDTO> GetAllAccounts()
+        public async Task<ResponseDTO> GetAllAccounts(string? searchValue, int? pageNumber, int? rowsPerPage)
         {
-            var list = _unitOfWork.Account.GetAllByCondition(c => c.RoleId != (int)RoleEnum.Admin)
-                .Include(c => c.Role)
-                .ToList();
-            var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
+            IQueryable<Account> list = _unitOfWork.Account.GetAllByCondition(c => c.RoleId != (int)RoleEnum.Admin)
+                .Include(c => c.Role);
+            if(searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
+            {
+                var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
+                return new ResponseDTO("Lấy danh sách tài khoản thành công", 200, true, mapList);
+            }
+            else
+            {
+                if (!searchValue.IsNullOrEmpty())
+                {
+                    list = list.Where(c => 
+                        c.AccountName.ToLower().Contains(searchValue.ToLower()) ||
+                        c.FullName.ToLower().Contains(searchValue.ToLower()) ||
+                        c.AccountCode.ToLower().Contains(searchValue.ToLower()) ||
+                        c.Email.ToLower().Contains(searchValue.ToLower())||
+                        c.Phone.ToLower().Contains(searchValue.ToLower())
+                    );
+                }
+                if (!list.Any())
+                {
+                    return new ResponseDTO("Không có tài khoản trùng khớp", 400, false);
+                }
 
-            return mapList;
+                if (pageNumber == null && rowsPerPage != null)
+                {
+                    return new ResponseDTO("Vui lòng chọn số trang", 400, false);
+                }
+                if (pageNumber != null && rowsPerPage == null)
+                {
+                    return new ResponseDTO("Vui lòng chọn số dòng mỗi trang", 400, false);
+                }
+                if (pageNumber <= 0 || rowsPerPage <= 0)
+                {
+                    return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
+                }
+
+                var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
+                if (pageNumber != null && rowsPerPage != null)
+                {
+                    var pagedList = PagedList<AccountResponseDTO>.ToPagedList(mapList.AsQueryable(), pageNumber, rowsPerPage);
+                    var result = new ListAccountDTO
+                    {
+                        AccountResponseDTOs = pagedList,
+                        CurrentPage = pageNumber,
+                        RowsPerPages = rowsPerPage,
+                        TotalCount = mapList.Count,
+                        TotalPages = (int)Math.Ceiling(mapList.Count / (double)rowsPerPage)
+                    };
+                    return new ResponseDTO("Tìm kiếm tài khoản thành công", 200, true, result);
+                }
+                return new ResponseDTO("Tìm kiếm tài khoản thành công", 200, true, mapList);
+            }
         }
 
         public bool CheckAccountCodeExist(string code)

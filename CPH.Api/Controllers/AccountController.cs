@@ -21,9 +21,11 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("all-accounts")]
-        public IActionResult GetAllAccounts()
+        public IActionResult GetAllAccounts([FromQuery] string? searchValue,
+                                            [FromQuery] int? pageNumber,
+                                            [FromQuery] int? rowsPerPage)
         {
-            var list = _accountService.GetAllAccounts();
+            var list = _accountService.GetAllAccounts(searchValue, pageNumber, rowsPerPage);
             return Ok(new ResponseDTO("Get all accounts successfully", 200, true, list));
         }
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CPH.Common.DTO.Class
 {
-    public class GetAllClassDTO
+    public class GetAllClassOfProjectDTO
     {
         public Guid ClassId { get; set; }
 
@@ -19,5 +19,15 @@ namespace CPH.Common.DTO.Class
         public Guid ProjectId { get; set; }
 
         public Guid LecturerId { get; set; }
+
+        public string? LecturerName { get; set; }
+
+        public string? LecturerPhone { get; set; }
+
+        public int LecturerSlotAvailable { get; set; } 
+
+        public int StudentSlotAvailable { get; set; }
+
+        public int TotalTrainee {  get; set; }
     }
 }

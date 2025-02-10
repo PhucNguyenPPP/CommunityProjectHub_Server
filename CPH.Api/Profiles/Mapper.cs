@@ -30,7 +30,7 @@ namespace CPH.Api.Profiles
                .ForMember(dest => dest.ProjectManagerName, opt => opt.MapFrom(src => src.ProjectManager.FullName))
                .ReverseMap();
 
-            CreateMap<GetAllClassDTO, Class>()
+            CreateMap<Class, GetAllClassDTO>()
                 .ReverseMap();
 
             CreateMap<GetAllLessonDTO, Lesson>()
@@ -43,6 +43,8 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.ProjectManagerName, opt => opt.MapFrom(src => src.ProjectManager.FullName))
                 .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons))
                 .ForMember(dest => dest.Classes, opt => opt.MapFrom(src => src.Classes))
+                .ForMember(dest => dest.TotalNumberTrainee, opt => opt.MapFrom(src => src.Classes.Sum(c => c.Trainees.Count())))
+                .ForMember(dest => dest.TotalNumberLecturer, opt => opt.MapFrom(src => src.Classes.Count(c=> c.Lecturer != null)))
                 .ReverseMap();
             CreateMap<Account, AccountResponseDTO>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
@@ -58,6 +60,18 @@ namespace CPH.Api.Profiles
                  .ForMember(dest => dest.LessonNo, opt => opt.MapFrom(src => src.Lesson.LessonNo))
                  .ForMember(dest => dest.LessonContent, opt => opt.MapFrom(src => src.Lesson.LessonContent))
                  .ReverseMap();
+
+            CreateMap<Class, GetAllClassOfProjectDTO>()
+                .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
+                .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
+                //.ForMember(dest => dest.LecturerSlotAvailable, opt => opt.MapFrom((src, dest, destMember, context) =>
+                //    context.Items.ContainsKey("LecturerSlotAvailable") ? (int)context.Items["LecturerSlotAvailable"] : 0))
+                //.ForMember(dest => dest.StudentSlotAvailable, opt => opt.MapFrom((src, dest, destMember, context) =>
+                //    context.Items.ContainsKey("StudentSlotAvailable") ? (int)context.Items["StudentSlotAvailable"] : 0))
+                .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
+                .ReverseMap();
+                
+
         }
     }
 }
