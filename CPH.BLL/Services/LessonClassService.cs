@@ -50,5 +50,41 @@ namespace CPH.BLL.Services
                 return new ResponseDTO(ex.Message.ToString(),500, false);
             }
         }
+
+        public async Task<ResponseDTO> UpdateLessonClass(List<UpdateLessonClassDTO> updateLessonClassDTOs)
+        {
+            /*Guid classId;
+            Guid projectId;
+            int totalProjectLesson = 0;
+
+            for(int i = 0; i < updateLessonClassDTOs.Count(); i++)
+            {
+                var lessonClasses = _unitOfWork.LessonClass.GetAllByCondition(c => c.LessonClassId == updateLessonClassDTOs[i].LessonClassId).FirstOrDefault();
+                if (lessonClasses == null)
+                {
+                    return new ResponseDTO("Bài giảng không tồn tại", 400, false);
+                }
+                if(i == 0)
+                {
+                    classId = lessonClasses.ClassId;
+                    projectId = _unitOfWork.Class
+                        .GetAllByCondition(c => c.ClassId == classId)
+                        .Select(c => c.ProjectId).FirstOrDefault();
+                    var classes = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId == projectId).ToList();
+                    for(int j = 0; j < classes.Count(); i++)
+                    {
+                        var lesson = _unitOfWork.LessonClass.GetAllByCondition(c => c.ClassId == classes[j].ClassId);
+                        totalProjectLesson += lesson.Count();
+                    }
+                    if(totalProjectLesson < updateLessonClassDTOs.Count() || totalProjectLesson > updateLessonClassDTOs.Count())
+                    {
+                        return new ResponseDTO("Vui lòng cập nhật toàn bộ bài giảng của dự án!", 400, false);
+                    }
+                }
+                
+            }
+            list.Where()*/
+            return new ResponseDTO("chưa xong", 200, true);
+        }
     }
 }

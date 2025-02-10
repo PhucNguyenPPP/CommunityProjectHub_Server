@@ -60,6 +60,18 @@ namespace CPH.Api.Profiles
                  .ForMember(dest => dest.LessonNo, opt => opt.MapFrom(src => src.Lesson.LessonNo))
                  .ForMember(dest => dest.LessonContent, opt => opt.MapFrom(src => src.Lesson.LessonContent))
                  .ReverseMap();
+
+            CreateMap<Class, GetAllClassOfProjectDTO>()
+                .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
+                .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
+                //.ForMember(dest => dest.LecturerSlotAvailable, opt => opt.MapFrom((src, dest, destMember, context) =>
+                //    context.Items.ContainsKey("LecturerSlotAvailable") ? (int)context.Items["LecturerSlotAvailable"] : 0))
+                //.ForMember(dest => dest.StudentSlotAvailable, opt => opt.MapFrom((src, dest, destMember, context) =>
+                //    context.Items.ContainsKey("StudentSlotAvailable") ? (int)context.Items["StudentSlotAvailable"] : 0))
+                .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
+                .ReverseMap();
+                
+
         }
     }
 }
