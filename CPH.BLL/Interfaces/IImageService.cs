@@ -10,5 +10,7 @@ namespace CPH.BLL.Interfaces
     public interface IImageService
     {
         Task<string> StoreImageAndGetLink(IFormFile image, string folderName);
+
+        Task DeleteFileFromFirebase(string fileUrl);
     }
 }

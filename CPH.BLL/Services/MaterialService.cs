@@ -28,15 +28,17 @@ namespace CPH.BLL.Services
         private readonly FirebaseApp _firebaseApp;
         private readonly string _firebaseBucket;
         private readonly IProjectService _projectService;
+        private readonly IImageService _imageService;
 
         public MaterialService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration config,
-            IProjectService projectService)
+            IProjectService projectService, IImageService imageService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _config = config;
             _projectService = projectService;
             _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
+            _imageService = imageService;
 
             if (FirebaseApp.DefaultInstance == null)
             {
@@ -50,6 +52,7 @@ namespace CPH.BLL.Services
             {
                 _firebaseApp = FirebaseApp.DefaultInstance;
             }
+            _imageService = imageService;
         }
 
         public async Task<ResponseDTO> CreateMaterial(MaterialCreateRequestDTO model)
@@ -171,6 +174,27 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Tìm kiếm tài nguyên thành công", 200, true, result);
             }
             return new ResponseDTO("Lấy tài nguyên của dự án thành công", 200, true, listDTO);
+        }
+
+        public async Task<ResponseDTO>DeleteMaterial(Guid materialId)
+        {
+            var material = _unitOfWork.Material.GetAllByCondition(c => c.MaterialId == materialId).FirstOrDefault();
+            if(material == null)
+            {
+                return new ResponseDTO("Tài nguyên không tồn tại", 400, false);
+            }
+
+            string filePath = material.MaterialUrl;
+
+            _unitOfWork.Material.Delete(material);
+            await _unitOfWork.SaveChangeAsync();
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                await _imageService.DeleteFileFromFirebase(filePath);
+            }
+
+            return new ResponseDTO("Xóa tài nguyên thành công", 200, true);
         }
     }
 }

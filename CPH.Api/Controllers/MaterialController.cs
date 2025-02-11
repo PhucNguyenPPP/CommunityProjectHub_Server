@@ -1,7 +1,9 @@
-﻿using CPH.BLL.Interfaces;
+﻿using System.Buffers;
+using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Material;
+using CPH.DAL.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,6 +38,24 @@ namespace CPH.Api.Controllers
                                             [FromQuery] int? rowsPerPage)
         {
             ResponseDTO responseDTO = await _materialService.GetAllMaterialProject(projectId, searchValue, pageNumber, rowsPerPage);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpDelete("material-of-project")]
+        public async Task<IActionResult> DeleteMaterial([FromQuery] Guid materialId)
+        {
+            ResponseDTO responseDTO = await _materialService.DeleteMaterial(materialId);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)

@@ -66,5 +66,33 @@ namespace CPH.BLL.Services
                 return storageUrl;
             }
         }
+
+        public async Task DeleteFileFromFirebase(string fileUrl)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(fileUrl)) return;
+
+                // Chuyển URL đầy đủ thành đường dẫn Firebase Storage
+                string filePath = fileUrl
+                    .Replace("https://firebasestorage.googleapis.com/v0/b/" + _firebaseBucket + "/o/", "")
+                    .Split('?')[0]; // Loại bỏ query string phía sau
+
+                
+                // Giải mã URL (fix lỗi %252F)
+                filePath = Uri.UnescapeDataString(filePath);
+
+                Console.WriteLine($"FilePath cần xóa trên Firebase: {filePath}");
+
+                var firebaseStorage = new FirebaseStorage(_firebaseBucket);
+                await firebaseStorage.Child(filePath).DeleteAsync();
+
+                Console.WriteLine($"Đã xóa file trên Firebase: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi xóa file trên Firebase: {ex.Message}");
+            }
+        }
     }
 }
