@@ -9,6 +9,7 @@ using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lesson;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CPH.BLL.Services
 {
@@ -28,12 +29,8 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> UpdateLessonOfProject(UpdateLessonOfProjectDTO lessonOfProjectDTO)
         {
-            var project = await _projectService.CheckProjectExisted(lessonOfProjectDTO.ProjectId);
-            if (!project.IsSuccess)
-            {
-                return new ResponseDTO("Dự án không tồn tại", 404, false);
-            }
-            var check = await CheckUpdateProject(lessonOfProjectDTO.LessonOfProject);
+
+            var check = await CheckUpdateProject(lessonOfProjectDTO);
             if (!check.IsSuccess)
             {
                 return check;
@@ -44,24 +41,24 @@ namespace CPH.BLL.Services
                 for (int i = 0; i < list.Count; i++)
                 {
                     {
-                        var lessonNo = list[i].LessonNo;
-                        if (lessonOfProjectDTO.LessonOfProject[lessonNo - 1] != null)
+                        var spt = list[i].LessonNo - 1;
+                        if (lessonOfProjectDTO.LessonOfProject.Count >= spt + 1)
                         {
-                            if (!list[i].Equals(lessonOfProjectDTO.LessonOfProject[lessonNo - 1]))
+                            if (!list[i].Equals(lessonOfProjectDTO.LessonOfProject[spt]))
                             {
 
-                                list[i].LessonContent = lessonOfProjectDTO.LessonOfProject[lessonNo - 1];
+                                list[i].LessonContent = lessonOfProjectDTO.LessonOfProject[spt];
                                 _unitOfWork.Lesson.Update(list[i]);
                             }
                         }
                         else
                         {
                             var lscr = _unitOfWork.LessonClass.GetAllByCondition(ls => ls.LessonId.Equals(list[i].LessonId));
-                            foreach(var lc in lscr)
+                            foreach (var lc in lscr)
                             {
                                 _unitOfWork.LessonClass.Delete(lc);
-                            } 
-                             _unitOfWork.Lesson.Delete(list[i]);   
+                            }
+                            _unitOfWork.Lesson.Delete(list[i]);
                         }
                     }
 
@@ -70,14 +67,15 @@ namespace CPH.BLL.Services
                 {
                     var listToadd = lessonOfProjectDTO.LessonOfProject.Skip(list.Count).ToList();
                     int temp = list.Count;
-                    for(int i=0;i<listToadd.Count;i++)
+                    for (int i = 0; i < listToadd.Count; i++)
                     {
                         var nId = Guid.NewGuid();
                         Lesson newLesson = new Lesson()
                         {
                             LessonId = nId,
-                            LessonNo = temp+1,
-                            LessonContent = listToadd[i]
+                            LessonNo = temp + 1,
+                            LessonContent = listToadd[i],
+                            ProjectId = lessonOfProjectDTO.ProjectId
                         };
                         await _unitOfWork.Lesson.AddAsync(newLesson);
                         temp++;
@@ -85,17 +83,25 @@ namespace CPH.BLL.Services
                         foreach (var lc in cl)
                         {
                             var c = new LessonClass()
-                            { 
+                            {
                                 LessonClassId = Guid.NewGuid(),
-                                ClassId = lc.ClassId,   
+                                ClassId = lc.ClassId,
                                 LessonId = nId
                             };
                             await _unitOfWork.LessonClass.AddAsync(c);
                         }
                     }
                 }
+                
             }
-            return new ResponseDTO("Bài học hợp lệ", 200, true);
+            var updated = await _unitOfWork.SaveChangeAsync();
+            if (updated)
+            {
+                return new ResponseDTO("Cập nhật bài học của dự án thành công", 200, true);
+            }
+
+
+            return new ResponseDTO("Cập nhật không thành công", 500, false);
         }
 
         private List<Lesson> GetAllLessonOfProject(Guid projectId)
@@ -103,17 +109,27 @@ namespace CPH.BLL.Services
             return _unitOfWork.Lesson.GetAllByCondition(l => l.ProjectId == projectId).ToList();
         }
 
-        private async Task<ResponseDTO> CheckUpdateProject(List<string> lessonOfProject)
+        private async Task<ResponseDTO> CheckUpdateProject(UpdateLessonOfProjectDTO lessonOfProjectDTO)
         {
-            for (int i = 0; i < lessonOfProject.Count; i++)
+            var project = await _projectService.CheckProjectExisted(lessonOfProjectDTO.ProjectId);
+            if (!project.IsSuccess)
             {
-                for (int j = i + 1; j < lessonOfProject.Count; j++)
+                return new ResponseDTO("Dự án không tồn tại", 404, false);
+            }
+            for (int i = 0; i < lessonOfProjectDTO.LessonOfProject.Count; i++)
+            {
+                for (int j = i + 1; j < lessonOfProjectDTO.LessonOfProject.Count; j++)
                 {
-                    if (lessonOfProject.ElementAt(i).Equals(lessonOfProject.ElementAt(j)))
+                    if (lessonOfProjectDTO.LessonOfProject.ElementAt(i).Equals(lessonOfProjectDTO.LessonOfProject.ElementAt(j)))
                     {
-                        return new ResponseDTO("Có 2 bài học có trùng nội dung là: " + lessonOfProject.ElementAt(i).ToString(), 400, false);
+                        return new ResponseDTO("Có 2 bài học có trùng nội dung là: " + lessonOfProjectDTO.LessonOfProject.ElementAt(i).ToString(), 400, false);
                     }
                 }
+            }
+            var project2 = (Project)project.Result;
+            if (project2.StartDate < DateTime.Now)
+            {
+                return new ResponseDTO("Không thể thay đổi bài học của dự án đã bắt đầu", 400, false);
             }
             return new ResponseDTO("Bài học hợp lệ", 200, true);
         }

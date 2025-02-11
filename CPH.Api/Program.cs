@@ -25,6 +25,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<ILessonClassService, LessonClassService>();
 builder.Services.AddScoped<ILecturerService, LecturerService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);
