@@ -623,7 +623,7 @@ namespace CPH.BLL.Services
         {
             try
             {
-                var project = _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
+                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
 
                 List<string> errors = new List<string>();
                 if (projectDTO.StartDate < DateTime.Now)
