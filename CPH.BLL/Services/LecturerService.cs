@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.DTO.Lecturer;
+using CPH.Common.Enum;
 using CPH.DAL.UnitOfWork;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -21,16 +22,16 @@ namespace CPH.BLL.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
-        public List<LecturerResponseDTO> SearchLecturer(string searchValue)
+        public List<LecturerResponseDTO> SearchLecturer(string? searchValue)
         {
             if (searchValue.IsNullOrEmpty())
             {
                 return new List<LecturerResponseDTO>();
             }
 
-            var searchedList = _unitOfWork.Account.GetAllByCondition(c => c.AccountCode.ToLower().Contains(searchValue.ToLower())
+            var searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue.ToLower())
             || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
-            || c.Phone.ToLower().Contains(searchValue.ToLower()));
+            || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Lecturer);
 
             var mappedSearchedList = _mapper.Map<List<LecturerResponseDTO>>(searchedList);
             return mappedSearchedList;
