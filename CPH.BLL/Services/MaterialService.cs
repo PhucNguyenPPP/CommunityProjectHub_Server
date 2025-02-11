@@ -2,6 +2,8 @@
 using CPH.BLL.Interfaces;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Material;
+using CPH.Common.DTO.Paging;
+using CPH.Common.DTO.Project;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Firebase.Storage;
@@ -117,6 +119,58 @@ namespace CPH.BLL.Services
 
                 return storageUrl;
             }
+        }
+
+        public async Task<ResponseDTO> GetAllMaterialProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)
+        {
+            var list = _unitOfWork.Material.GetAllByCondition(c => c.ProjectId == projectId);
+
+            if (!list.Any())
+            {
+                return new ResponseDTO("Dự án chưa có tài nguyên", 400, false);
+            }
+
+            if (!searchValue.IsNullOrEmpty())
+            {
+                list = list.Where(c =>
+                   c.Title.ToLower().Contains(searchValue.ToLower())
+                );
+            }
+
+            if (!list.Any())
+            {
+                return new ResponseDTO("Không tìm thấy tài nguyên hợp lệ", 400, false);
+            }
+
+            if (pageNumber == null && rowsPerPage != null)
+            {
+                return new ResponseDTO("Vui lòng chọn số trang", 400, false);
+            }
+            if (pageNumber != null && rowsPerPage == null)
+            {
+                return new ResponseDTO("Vui lòng chọn số dòng mỗi trang", 400, false);
+            }
+            if (pageNumber <= 0 || rowsPerPage <= 0)
+            {
+                return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
+            }
+
+            var listDTO = _mapper.Map<List<GetAllMaterialDTO>>(list);
+
+            if (pageNumber != null && rowsPerPage != null)
+            {
+                var pagedList = PagedList<GetAllMaterialDTO>.ToPagedList(listDTO.AsQueryable(), pageNumber, rowsPerPage);
+                var result = new ListMaterialDTO
+                {
+                    GetAllMaterialDTOs = pagedList,
+                    CurrentPage = pageNumber,
+                    RowsPerPages = rowsPerPage,
+                    TotalCount = listDTO.Count,
+                    TotalPages = (int)Math.Ceiling(listDTO.Count / (double)rowsPerPage)
+                };
+                return new ResponseDTO("Tìm kiếm tài nguyên thành công", 200, true, result);
+            }
+            return new ResponseDTO("Lấy tài nguyên của dự án thành công", 200, true, listDTO);
         }
     }
 }

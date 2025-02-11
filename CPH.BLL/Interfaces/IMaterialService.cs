@@ -13,5 +13,7 @@ namespace CPH.BLL.Interfaces
     {
         Task<ResponseDTO> CreateMaterial(MaterialCreateRequestDTO model);
         Task<string> StoreFileAndGetLink(IFormFile file, string folderName);
+
+        Task<ResponseDTO> GetAllMaterialProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
     }
 }
