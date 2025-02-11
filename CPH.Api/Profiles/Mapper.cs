@@ -5,6 +5,7 @@ using CPH.Common.DTO.Class;
 using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.LessonClass;
+using CPH.Common.DTO.Material;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Notification;
 using CPH.Common.DTO.Project;
@@ -61,14 +62,10 @@ namespace CPH.Api.Profiles
             CreateMap<Class, GetAllClassOfProjectDTO>()
                 .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
                 .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
-                //.ForMember(dest => dest.LecturerSlotAvailable, opt => opt.MapFrom((src, dest, destMember, context) =>
-                //    context.Items.ContainsKey("LecturerSlotAvailable") ? (int)context.Items["LecturerSlotAvailable"] : 0))
-                //.ForMember(dest => dest.StudentSlotAvailable, opt => opt.MapFrom((src, dest, destMember, context) =>
-                //    context.Items.ContainsKey("StudentSlotAvailable") ? (int)context.Items["StudentSlotAvailable"] : 0))
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                 .ReverseMap();
             CreateMap<Account, LecturerResponseDTO>().ReverseMap();
-
+            CreateMap<Material, GetAllMaterialDTO>().ReverseMap();
         }
     }
 }

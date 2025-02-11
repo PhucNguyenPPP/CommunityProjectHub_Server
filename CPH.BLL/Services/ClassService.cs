@@ -105,7 +105,7 @@ namespace CPH.BLL.Services
                 };
                 return new ResponseDTO("Lấy các lớp của dự án thành công", 200, true, result);
             }
-            return new ResponseDTO("lấy các lớp của dự án thành công", 200, true, mapList);
+            return new ResponseDTO("lấy các lớp của dự án thất bại", 500, false, mapList);
         }
     }
 }
