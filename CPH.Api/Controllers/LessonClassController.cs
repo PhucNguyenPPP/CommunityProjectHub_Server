@@ -1,6 +1,8 @@
-﻿using CPH.BLL.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.LessonClass;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,6 +32,31 @@ namespace CPH.Api.Controllers
                     return BadRequest(responseDTO);
                 }
             }
+            return Ok(responseDTO);
+        }
+
+        [HttpPut("lesson-of-class")]
+        public async Task<IActionResult> UpdateLessonClass([Required]Guid projectId, [FromBody] List<UpdateLessonClassDTO> updateLessonClassDTO)
+        {
+            var checkValid = await _lessonClassService.CheckValidationUpdateLessonClass(projectId, updateLessonClassDTO);
+            if (!checkValid.IsSuccess)
+            {
+                return BadRequest(checkValid);
+            }
+
+            ResponseDTO responseDTO = await _lessonClassService.UpdateLessonClass(projectId, updateLessonClassDTO);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 404)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+
             return Ok(responseDTO);
         }
     }
