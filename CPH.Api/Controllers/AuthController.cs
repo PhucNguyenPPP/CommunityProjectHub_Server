@@ -104,5 +104,19 @@ namespace CPH.Api.Controllers
 
             return BadRequest(new ResponseDTO("Log out failed", 400, false));
         }
+
+        [HttpPost("old-password")]
+        public IActionResult CheckOldPassword(CheckOldPasswordDTO model)
+        {
+
+            var response = _authService.CheckOldPassword(model);
+
+            if (response.IsSuccess)
+            {
+                return Ok(response);
+            }
+
+            return BadRequest(response);
+        }
     }
 }
