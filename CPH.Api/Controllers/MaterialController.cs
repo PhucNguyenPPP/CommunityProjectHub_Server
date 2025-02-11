@@ -69,5 +69,23 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpPut("material-of-project")]
+        public async Task<IActionResult> UpdateMaterial([FromForm] MaterialUpdateDTO material)
+        {
+            ResponseDTO responseDTO = await _materialService.UpdateMaterial(material);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }

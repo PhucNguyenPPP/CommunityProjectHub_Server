@@ -178,7 +178,9 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO>DeleteMaterial(Guid materialId)
         {
-            var material = _unitOfWork.Material.GetAllByCondition(c => c.MaterialId == materialId).FirstOrDefault();
+            var material = _unitOfWork.Material
+                .GetAllByCondition(c => c.MaterialId == materialId)
+                .FirstOrDefault();
             if(material == null)
             {
                 return new ResponseDTO("Tài nguyên không tồn tại", 400, false);
@@ -195,6 +197,53 @@ namespace CPH.BLL.Services
             }
 
             return new ResponseDTO("Xóa tài nguyên thành công", 200, true);
+        }
+
+        public async Task<ResponseDTO> UpdateMaterial (MaterialUpdateDTO model)
+        {
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c=> c.ProjectId == model.ProjectId)
+                .FirstOrDefault();
+
+            if(project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            var material = _unitOfWork.Material
+                .GetAllByCondition(c => c.MaterialId == model.MaterialId && c.ProjectId == model.ProjectId)
+                .FirstOrDefault();
+            if(material == null)
+            {
+                return new ResponseDTO("Tài nguyên không tồn tại", 400, false);
+            }
+
+            string filePath = material.MaterialUrl;
+
+            if (model.File == null || model.File.Length == 0)
+            {
+                return new ResponseDTO("File không hợp lệ!", 400, false);
+            }
+
+            var url = await StoreFileAndGetLink(model.File, "cph_learning_material");
+            if (url.IsNullOrEmpty())
+            {
+                return new ResponseDTO("Lưu tài liệu không thành công", 400, false);
+            }
+
+            material.Title = model.Title;
+            material.MaterialUrl = url;
+            material.UploadedAt = DateTime.Now;
+
+            _unitOfWork.Material.Update(material);
+            await _unitOfWork.SaveChangeAsync();
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                await _imageService.DeleteFileFromFirebase(filePath);
+            }
+
+            return new ResponseDTO("Cập nhật tài nguyên thành công", 200, true);
         }
     }
 }
