@@ -20,5 +20,6 @@ namespace CPH.DAL.UnitOfWork
         ITraineeRepository Trainee { get; }
         ILessonRepository Lesson { get; }
         ILessonClassRepository LessonClass { get; }
+        IMaterialRepository Material { get; }
     }
 }

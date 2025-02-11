@@ -30,7 +30,7 @@ namespace CPH.BLL.Services
         {
             try
             {
-                var c = _unitOfWork.Class.GetByCondition(c => c.ClassId == classId);
+                var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId == classId);
                 if (c == null)
                 {
                     return new ResponseDTO("Lớp không tồn tại", 404, false);
