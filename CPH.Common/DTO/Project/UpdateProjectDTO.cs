@@ -29,7 +29,6 @@ namespace CPH.Common.DTO.Project
         public DateTime ApplicationStartDate { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập ngày hết hạn ứng tuyển của dự án")]
         public DateTime ApplicationEndDate { get; set; }
-        [Required(ErrorMessage = "Vui lòng nhập danh sách bài học của dự án")]
-        public List<string> LessonList { get; set; }
+
     }
 }
