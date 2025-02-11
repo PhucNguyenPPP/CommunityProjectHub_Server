@@ -557,7 +557,7 @@ namespace CPH.BLL.Services
                 project.EndDate = projectDTO.EndDate;
                 project.ApplicationStartDate = projectDTO.ApplicationStartDate;
                 project.ApplicationEndDate = projectDTO.ApplicationEndDate;
-                for (var i = 0; i < projectDTO.LessonList.Count; i++)
+         /*       for (var i = 0; i < projectDTO.LessonList.Count; i++)
                 {
                     Lesson lessonToUpdate = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && !l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
                     Lesson lessonCorrected = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
@@ -603,8 +603,7 @@ namespace CPH.BLL.Services
                         _unitOfWork.Lesson.Delete(l);
                     }
 
-                }
-                project.NumberLesson = projectDTO.LessonList.Count;
+                }*/
                 _unitOfWork.Project.Update(project);
                 var updated = await _unitOfWork.SaveChangeAsync();
                 if (updated == false)
@@ -623,7 +622,7 @@ namespace CPH.BLL.Services
         {
             try
             {
-                var project = _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
+                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
 
                 List<string> errors = new List<string>();
                 if (projectDTO.StartDate < DateTime.Now)
@@ -659,17 +658,7 @@ namespace CPH.BLL.Services
                     {
                         errors.Add("Số lượng học viên mỗi nhóm không thể lớn hơn tổng số học viên ở từng lớp");
                     }
-                }
-                for (int i = 0; i < projectDTO.LessonList.Count; i++)
-                {
-                    for (int j = 0; j < projectDTO.LessonList.Count; j++)
-                    {
-                        if (projectDTO.LessonList[i] == projectDTO.LessonList[j] && i != j)
-                        {
-                            errors.Add("Có 2 bài học nội dung" + projectDTO.LessonList.ToString() + " trùng nhau");
-                        }
-                    }
-                }
+                }               
                 if (errors.Count > 0)
                 {
                     return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
