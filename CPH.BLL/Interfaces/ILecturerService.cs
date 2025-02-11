@@ -9,7 +9,7 @@ namespace CPH.BLL.Interfaces
 {
     public interface ILecturerService
     {
-        List<LecturerResponseDTO> SearchLecturer(string searchValue);
+        List<LecturerResponseDTO> SearchLecturer(string? searchValue);
 
     }
 }
