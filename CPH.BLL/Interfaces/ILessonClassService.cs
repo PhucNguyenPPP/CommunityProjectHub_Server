@@ -11,6 +11,8 @@ namespace CPH.BLL.Interfaces
     public interface ILessonClassService
     {
         Task<ResponseDTO> GetLessonClass(Guid classId);
-        Task<ResponseDTO> UpdateLessonClass(List<UpdateLessonClassDTO> updateLessonClassDTOs);
+        Task<ResponseDTO> UpdateLessonClass(Guid projectId, List<UpdateLessonClassDTO> updateLessonClassDTOs);
+
+        Task<ResponseDTO> CheckValidationUpdateLessonClass(Guid projectId, List<UpdateLessonClassDTO> updateLessonClassDTOs);
     }
 }
