@@ -930,5 +930,5 @@ namespace CPH.BLL.Services
 
             return password.ToString();
         }
-    }
+    }  
 }

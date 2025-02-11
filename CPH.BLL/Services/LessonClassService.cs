@@ -30,7 +30,7 @@ namespace CPH.BLL.Services
         {
             try
             {
-                var c = _unitOfWork.Class.GetByCondition(c => c.ClassId == classId);
+                var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId == classId);
                 if (c == null)
                 {
                     return new ResponseDTO("Lớp không tồn tại", 404, false);
@@ -51,40 +51,146 @@ namespace CPH.BLL.Services
             }
         }
 
-        public async Task<ResponseDTO> UpdateLessonClass(List<UpdateLessonClassDTO> updateLessonClassDTOs)
+        //Ánh ánh xạ cột lesson no
+        private async Task<Dictionary<Guid, int>> GetLessonNosAsync(List<Guid> lessonClassIds)
         {
-            /*Guid classId;
-            Guid projectId;
-            int totalProjectLesson = 0;
+            // Lấy danh sách LessonClass theo lessonClassId
+            var lessonClassData = _unitOfWork.LessonClass
+                .GetAllByCondition(c => lessonClassIds.Contains(c.LessonClassId))
+                .Select(c => new { c.LessonClassId, c.LessonId })
+                .ToList();
 
-            for(int i = 0; i < updateLessonClassDTOs.Count(); i++)
+            // Lấy danh sách LessonId và LessonNo
+            var lessonIds = lessonClassData.Select(lc => lc.LessonId).ToList();
+            var lessonData = _unitOfWork.Lesson
+                .GetAllByCondition(l => lessonIds.Contains(l.LessonId))
+                .Select(l => new { l.LessonId, l.LessonNo })
+                .ToList();
+
+            // Ghép LessonNo vào LessonClassId
+            var lessonNoDict = lessonClassData.ToDictionary(
+                lc => lc.LessonClassId,
+                lc => lessonData.FirstOrDefault(l => l.LessonId == lc.LessonId)?.LessonNo ?? -1
+            );
+
+            return lessonNoDict;
+        }
+
+        public async Task<ResponseDTO> CheckValidationUpdateLessonClass(Guid projectId, List<UpdateLessonClassDTO> updateLessonClassDTOs)
+        {
+            int totalProjectLesson = _unitOfWork.Lesson.GetAllByCondition(c => c.ProjectId == projectId).Count();
+            if (updateLessonClassDTOs.Count() < totalProjectLesson || updateLessonClassDTOs.Count() > totalProjectLesson)
             {
-                var lessonClasses = _unitOfWork.LessonClass.GetAllByCondition(c => c.LessonClassId == updateLessonClassDTOs[i].LessonClassId).FirstOrDefault();
-                if (lessonClasses == null)
-                {
-                    return new ResponseDTO("Bài giảng không tồn tại", 400, false);
-                }
-                if(i == 0)
-                {
-                    classId = lessonClasses.ClassId;
-                    projectId = _unitOfWork.Class
-                        .GetAllByCondition(c => c.ClassId == classId)
-                        .Select(c => c.ProjectId).FirstOrDefault();
-                    var classes = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId == projectId).ToList();
-                    for(int j = 0; j < classes.Count(); i++)
-                    {
-                        var lesson = _unitOfWork.LessonClass.GetAllByCondition(c => c.ClassId == classes[j].ClassId);
-                        totalProjectLesson += lesson.Count();
-                    }
-                    if(totalProjectLesson < updateLessonClassDTOs.Count() || totalProjectLesson > updateLessonClassDTOs.Count())
-                    {
-                        return new ResponseDTO("Vui lòng cập nhật toàn bộ bài giảng của dự án!", 400, false);
-                    }
-                }
-                
+                return new ResponseDTO("Số lượng bài giảng của lớp không hợp lệ!", 400, false);
             }
-            list.Where()*/
-            return new ResponseDTO("chưa xong", 200, true);
+
+            var startProject = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .Select(c => c.StartDate)
+                .FirstOrDefault();
+
+            var endProject = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .Select(c => c.EndDate)
+                .FirstOrDefault();
+
+            var allLessonClasses = _unitOfWork.LessonClass.GetAll().ToList();
+
+
+            var lessonClassIds = updateLessonClassDTOs.Select(lc => lc.LessonClassId).ToList();
+
+            var lessonNoDict = await GetLessonNosAsync(lessonClassIds);
+
+            var lessonClasses = updateLessonClassDTOs
+                .Select(lc => new
+                {
+                    LessonClassDTO = lc,
+                    LessonNo = lessonNoDict.ContainsKey(lc.LessonClassId) ? lessonNoDict[lc.LessonClassId] : -1
+                })
+                .OrderBy(lc => lc.LessonNo)
+                .ToList();
+
+            List<Guid> classIds = new List<Guid>();
+            List<DateTime> startTime = new List<DateTime>();
+            List<DateTime> endTime = new List<DateTime>();
+
+            for (int i = 0; i < lessonClasses.Count(); i++)
+            {
+                var lessonClass = _unitOfWork.LessonClass
+                    .GetAllByCondition(c => c.LessonClassId == lessonClasses[i].LessonClassDTO.LessonClassId)
+                    .FirstOrDefault();
+
+                if (lessonClass == null)
+                {
+                    return new ResponseDTO($"Bài giảng thứ {i + 1} không tồn tại", 400, false);
+                }
+
+                if (lessonClasses[i].LessonClassDTO.StartTime < startProject || lessonClasses[i].LessonClassDTO.StartTime > endProject)
+                {
+                    return new ResponseDTO("Thời gian bắt đầu của buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
+                }
+
+                if (lessonClasses[i].LessonClassDTO.EndTime < startProject || lessonClasses[i].LessonClassDTO.EndTime > endProject)
+                {
+                    return new ResponseDTO("Thời gian kết thúc buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
+                }
+
+                if (lessonClasses[i].LessonClassDTO.StartTime >= lessonClasses[i].LessonClassDTO.EndTime)
+                {
+                    return new ResponseDTO("Thời gian bắt đầu phải sớm hơn thời gian kết thúc!", 400, false);
+                }
+
+                foreach (var existingLesson in allLessonClasses)
+                {
+                    if (existingLesson.LessonClassId != lessonClasses[i].LessonClassDTO.LessonClassId &&
+                        existingLesson.Room == lessonClasses[i].LessonClassDTO.Room &&
+                        (
+                            (lessonClasses[i].LessonClassDTO.StartTime >= existingLesson.StartTime && lessonClasses[i].LessonClassDTO.StartTime < existingLesson.EndTime) || // Bắt đầu trong khoảng thời gian đã có
+                            (lessonClasses[i].LessonClassDTO.EndTime > existingLesson.StartTime && lessonClasses[i].LessonClassDTO.EndTime <= existingLesson.EndTime) || // Kết thúc trong khoảng thời gian đã có
+                            (lessonClasses[i].LessonClassDTO.StartTime <= existingLesson.StartTime && lessonClasses[i].LessonClassDTO.EndTime >= existingLesson.EndTime) // Chứa toàn bộ khoảng thời gian đã có
+                        ))
+                    {
+                        return new ResponseDTO($"Phòng {lessonClasses[i].LessonClassDTO.Room} đã được đặt từ {existingLesson.StartTime} đến {existingLesson.EndTime}. Vui lòng chọn thời gian khác!", 400, false);
+                    }
+                }
+
+                classIds.Add(lessonClass.ClassId);
+                startTime.Add(lessonClasses[i].LessonClassDTO.StartTime);
+                endTime.Add(lessonClasses[i].LessonClassDTO.EndTime);
+            }
+
+            bool check = classIds.Distinct().Count() == 1;
+            if (!check)
+            {
+                return new ResponseDTO("Tất cả các bài giảng phải thuộc cùng một lớp", 400, false);
+            }
+
+            bool checkStart = startTime.Distinct().Count() == lessonClasses.Count() ;
+            bool checkEnd = endTime.Distinct().Count() == lessonClasses.Count(); 
+            if (!checkStart && !checkEnd)
+            {
+                return new ResponseDTO("Thời gian của các buổi học phải khác nhau", 400, false);
+            }
+            return new ResponseDTO("Check thành công", 200, true);
+        }
+
+        public async Task<ResponseDTO> UpdateLessonClass(Guid projectId, List<UpdateLessonClassDTO> updateLessonClassDTOs)
+        {
+            foreach (var dto in updateLessonClassDTOs)
+            {
+                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(c => c.LessonClassId == dto.LessonClassId).FirstOrDefault();
+                if (lessonClass != null)
+                {
+                    // Cập nhật thông tin từ DTO
+                    lessonClass.Room = dto.Room;
+                    lessonClass.StartTime = dto.StartTime;
+                    lessonClass.EndTime = dto.EndTime;
+
+                    _unitOfWork.LessonClass.Update(lessonClass);
+                }
+            }
+            await _unitOfWork.SaveChangeAsync();
+            return new ResponseDTO("Cập nhật thành công", 200, true);
         }
     }
 }

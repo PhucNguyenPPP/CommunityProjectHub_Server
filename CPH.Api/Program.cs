@@ -23,6 +23,8 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<ILessonClassService, LessonClassService>();
+builder.Services.AddScoped<ILecturerService, LecturerService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
 
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);
