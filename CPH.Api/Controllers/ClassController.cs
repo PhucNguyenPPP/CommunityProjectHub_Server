@@ -36,5 +36,23 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("class-detail")]
+        public async Task<IActionResult> GetClassDetail([FromQuery] Guid classId)
+        {
+            ResponseDTO responseDTO = await _classService.GetClassDetail(classId);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }

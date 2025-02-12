@@ -11,5 +11,6 @@ namespace CPH.BLL.Interfaces
     {
         Task<bool> CheckClassIdExist(Guid classId);
         Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
+        Task<ResponseDTO> GetClassDetail(Guid classId);
     }
 }
