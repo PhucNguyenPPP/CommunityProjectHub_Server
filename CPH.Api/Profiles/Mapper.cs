@@ -76,6 +76,7 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
                 .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
+                .ForMember(dest => dest.ProjectTitle, opt => opt.MapFrom(src => src.Project.Title))
                 .ReverseMap();
 
 
