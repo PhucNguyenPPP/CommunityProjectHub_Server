@@ -19,6 +19,8 @@ namespace CPH.Common.DTO.Class
 
         public Guid ProjectId { get; set; }
 
+        public string? ProjectTitle { get; set; }
+
         public Guid LecturerId { get; set; }
 
         public string? LecturerName { get; set; }
