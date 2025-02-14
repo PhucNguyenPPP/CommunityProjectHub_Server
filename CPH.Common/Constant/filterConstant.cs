@@ -9,6 +9,6 @@ namespace CPH.Common.Constant
     public class FilterConstant
     {
         public const string Ascending = "ASC";
-        public const string Descending = "DES";
+        public const string Descending = "DESC";
     }
 }
