@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
 using CPH.Common.Enum;
@@ -39,8 +40,8 @@ namespace CPH.BLL.Services
         {
             var account = _mapper.Map<Account>(model);
 
-            var salt = GenerateSalt();
-            var passwordHash = GenerateHashedPassword(model.Password, salt);
+            var salt = _accountService.GenerateSalt();
+            var passwordHash = _accountService.GenerateHashedPassword(model.Password, salt);
             //var avatarLink = await _imageService.StoreImageAndGetLink(model.AvatarLink, FileNameFirebaseStorage.UserImage);
 
             account.AccountId = Guid.NewGuid();
@@ -53,35 +54,6 @@ namespace CPH.BLL.Services
             return await _unitOfWork.SaveChangeAsync();
         }
 
-        public byte[] GenerateSalt()
-        {
-            byte[] saltBytes = new byte[32];
-            var rng = RandomNumberGenerator.Create();
-            rng.GetNonZeroBytes(saltBytes);
-            return saltBytes;
-        }
-
-        public byte[] GenerateHashedPassword(string password, byte[] saltBytes)
-        {
-            byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-            byte[] passwordWithSaltBytes = new byte[passwordBytes.Length + saltBytes.Length];
-
-            for (int i = 0; i < passwordBytes.Length; i++)
-            {
-                passwordWithSaltBytes[i] = passwordBytes[i];
-            }
-
-            for (int i = 0; i < saltBytes.Length; i++)
-            {
-                passwordWithSaltBytes[passwordBytes.Length + i] = saltBytes[i];
-            }
-
-            var cryptoProvider = SHA512.Create();
-            byte[] hashedBytes = cryptoProvider.ComputeHash(passwordWithSaltBytes);
-
-            return hashedBytes;
-        }
-
         public async Task<ResponseDTO> CheckValidationSignUp(SignUpRequestDTO model)
         {
             if (model.DateOfBirth >= DateTime.Now)
@@ -89,8 +61,8 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Date of birth is invalid", 400, false);
             }
 
-            if (model.Gender != GenderEnum.Male.ToString()
-                && model.Gender != GenderEnum.Female.ToString())
+            if (model.Gender != GenderConstant.Male
+                && model.Gender != GenderConstant.Female)
             {
                 return new ResponseDTO("Gender is invalid", 400, false);
             }
@@ -157,7 +129,7 @@ namespace CPH.BLL.Services
 
         private bool VerifyPasswordHash(string password, byte[] passwordHashDb, byte[] salt)
         {
-            var passwordHash = GenerateHashedPassword(password, salt);
+            var passwordHash = _accountService.GenerateHashedPassword(password, salt);
             bool areEqual = passwordHashDb.SequenceEqual(passwordHash);
             return areEqual;
         }
@@ -415,5 +387,22 @@ namespace CPH.BLL.Services
                 return false;
             }
         }
-}
+
+        public ResponseDTO CheckOldPassword(CheckOldPasswordDTO model)
+        {
+            var user = _unitOfWork.Account.GetAllByCondition(x => x.Email == model.Email)
+                .Include(u => u.Role).FirstOrDefault();
+
+            if (user == null)
+            {
+                return new ResponseDTO("Email không tồn tại", 400, false);
+            }
+
+            if (VerifyPasswordHash(model.Password, user.PasswordHash, user.Salt))
+            {
+                return new ResponseDTO("Mật khẩu cũ chính xác", 200, true);
+            }
+            return new ResponseDTO("Mật khẩu cũ không chính xác", 400, false);
+        }
+    }
 }

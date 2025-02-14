@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CPH.DAL.Entities;
 
-namespace CPH.Common.Enum
+namespace CPH.DAL.Interfaces
 {
-    public enum GenderEnum
+    public interface IMemberRepository : IGenericRepository<Member>
     {
-        Male,
-        Female
     }
 }

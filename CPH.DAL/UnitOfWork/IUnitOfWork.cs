@@ -13,6 +13,14 @@ namespace CPH.DAL.UnitOfWork
         public Task<bool> SaveChangeAsync();
         IAccountRepository Account { get; }
         IRefreshTokenRepository RefreshToken { get; }
+        IMessageRepository Message { get; }
+        INotificationRepository Notification { get; }
+        IClassRepository Class { get; }
         IProjectRepository Project { get; }
+        ITraineeRepository Trainee { get; }
+        ILessonRepository Lesson { get; }
+        ILessonClassRepository LessonClass { get; }
+        IMaterialRepository Material { get; }
+        IMemberRepository Member { get; }
     }
 }

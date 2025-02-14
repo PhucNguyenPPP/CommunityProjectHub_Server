@@ -17,7 +17,15 @@ namespace CPH.DAL.UnitOfWork
             _context = new CphDbContext();
             Account = new AccountRepository(_context);
             RefreshToken = new RefreshTokenRepository(_context);
+            Message = new MessageRepository(_context);
+            Notification = new NotificationRepository(_context);
+            Class = new ClassRepository(_context);
             Project = new ProjectRepository(_context);
+            Trainee = new TraineeRepository(_context);
+            Lesson = new LessonRepository(_context);
+            LessonClass = new LessonClassRepository(_context);
+            Material = new MaterialRepository(_context);
+            Member = new MemberRepository(_context);
         }
 
 
@@ -33,7 +41,14 @@ namespace CPH.DAL.UnitOfWork
 
         public IAccountRepository Account { get; private set; }
         public IRefreshTokenRepository RefreshToken { get; private set; }
+        public IMessageRepository Message { get; private set; }
+        public INotificationRepository Notification { get; private set; }
+        public IClassRepository Class { get; private set; }
         public IProjectRepository Project { get; private set; }
-
+        public ITraineeRepository Trainee { get; private set; }
+        public ILessonRepository Lesson { get; private set; }
+        public ILessonClassRepository LessonClass { get; private set; }
+        public IMaterialRepository Material { get; private set; }
+        public IMemberRepository Member { get; private set; }
     }
 }
