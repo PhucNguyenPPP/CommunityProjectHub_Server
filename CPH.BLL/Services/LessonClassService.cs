@@ -37,11 +37,15 @@ namespace CPH.BLL.Services
                 }
                 var lesson = _unitOfWork.LessonClass
                     .GetAllByCondition(c => c.ClassId == classId)
-                    .Include(l => l.Lesson).ToList();
+                    .Include(l => l.Lesson)
+                    .ToList()
+                    .OrderBy(c=> c.Lesson.LessonNo);
+                
                 if (lesson == null)
                 {
                     return new ResponseDTO("Không tìm thấy bài học tương ứng", 400, false);
                 }
+
                 var lessonClassDTO = _mapper.Map<List<GetAllLessonClassByClassDTO>>(lesson);
                 return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, lessonClassDTO);
             }
