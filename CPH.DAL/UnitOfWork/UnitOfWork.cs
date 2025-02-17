@@ -26,6 +26,7 @@ namespace CPH.DAL.UnitOfWork
             LessonClass = new LessonClassRepository(_context);
             Material = new MaterialRepository(_context);
             Member = new MemberRepository(_context);
+            Registration = new RegistrationRepository(_context);
         }
 
 
@@ -50,5 +51,7 @@ namespace CPH.DAL.UnitOfWork
         public ILessonClassRepository LessonClass { get; private set; }
         public IMaterialRepository Material { get; private set; }
         public IMemberRepository Member { get; private set; }
+
+        public IRegistrationRepository Registration { get; private set; }
     }
 }
