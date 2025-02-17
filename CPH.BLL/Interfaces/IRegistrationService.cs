@@ -10,6 +10,7 @@ namespace CPH.BLL.Interfaces
 {
     public interface IRegistrationService
     {
+        Task<ResponseDTO> CancelRegistration(Guid cancelRegistrationId);
         Task<ResponseDTO> SendRegistration(SendRegistrationDTO registrationDTO);
     }
 }

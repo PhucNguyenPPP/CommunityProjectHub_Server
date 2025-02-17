@@ -24,6 +24,47 @@ namespace CPH.BLL.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
+
+        public async Task<ResponseDTO> CancelRegistration(Guid cancelRegistrationId)
+        {
+            var check = await CheckCancel(cancelRegistrationId);
+            if (check.IsSuccess == false)
+            {
+                return check;
+            }
+            Registration re = (Registration)check.Result;
+            if (re != null)
+            {
+                re.Status = RegistrationStatusConstant.Canceled;
+                _unitOfWork.Registration.Update(re);
+                var canceled = await _unitOfWork.SaveChangeAsync();
+                if(canceled)
+                {
+                    return new ResponseDTO("Huỷ đơn đăng ký thành công", 200, true);
+                }    
+            }
+            return new ResponseDTO("Huỷ đơn đăng ký thất bại", 500, true);
+
+        }
+
+        private async Task<ResponseDTO> CheckCancel(Guid cancelRegistrationId)
+        {
+            if (cancelRegistrationId == Guid.Empty)
+            {
+                return new ResponseDTO("Vui lòng nhập Id của đơn đăng ký muốn huỷ", 400, false);
+            }
+            var re = await _unitOfWork.Registration.GetByCondition(r => r.RegistrationId.Equals(cancelRegistrationId));
+            if (re == null)
+            {
+                return new ResponseDTO("Đơn đăng ký không tồn tại", 404, false);
+            }
+            if(!re.Status.Equals(RegistrationStatusConstant.Processing))
+            {
+                return new ResponseDTO("Đơn đăng ký không thể huỷ", 400, false);
+            }
+            return new ResponseDTO("Hợp lệ", 200, true,re);
+        }
+
         public async Task<ResponseDTO> SendRegistration(SendRegistrationDTO registrationDTO)
         {
             var check = await CheckRegistrationValid(registrationDTO);
