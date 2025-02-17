@@ -3,6 +3,7 @@ using CPH.BLL.Interfaces;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
 using CPH.DAL.Entities;
@@ -105,7 +106,56 @@ namespace CPH.BLL.Services
                 };
                 return new ResponseDTO("Lấy các lớp của dự án thành công", 200, true, result);
             }
-            return new ResponseDTO("lấy các lớp của dự án thất bại", 500, false, mapList);
+            return new ResponseDTO("lấy các lớp của dự án thành công", 200, true, mapList);
+        }
+
+        public async Task<ResponseDTO> GetClassDetail(Guid classId)
+        {
+            var clas = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
+                .Include(c => c.Trainees)
+                .Include(c => c.Members)
+                .Include(c => c.Project)
+                .FirstOrDefault();
+            if (clas == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+
+            int lecturerSlotAvailable = 0;
+
+            if (clas.LecturerId == null)
+            {
+                lecturerSlotAvailable = 1;
+            }
+
+            var projectId = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId).Select(c => c.ProjectId).FirstOrDefault();
+            int perGroup = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).Select(c => c.NumberTraineeEachGroup).FirstOrDefault();
+            int totalTrainees = clas.Trainees.Count();
+
+            int groupRequiredPerClass = (int)Math.Ceiling((double)totalTrainees / perGroup);
+
+            int groupWithStudentPerClass = clas.Members
+                    .Where(m => m.ClassId != null)
+                    .Select(m => m.GroupSupportNo)
+                    .Distinct()
+                    .Count();
+
+            int studentSlotAvailable = Math.Max(groupRequiredPerClass - groupWithStudentPerClass, 0);
+
+            var member = _unitOfWork.Member
+                .GetAllByCondition(c => c.ClassId == classId)
+                .Select(c => c.Account)
+                .ToList();
+
+            var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
+
+            var dto = _mapper.Map<ClassDetailDTO>(clas);
+            dto.LecturerSlotAvailable = lecturerSlotAvailable;
+            dto.StudentSlotAvailable = studentSlotAvailable;
+            dto.getMemberOfClassDTOs = memberDto;
+
+            return new ResponseDTO("Lấy thông tin chi tiết của lớp thành công", 200, true, dto);
+
         }
     }
 }

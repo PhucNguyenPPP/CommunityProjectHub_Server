@@ -37,11 +37,15 @@ namespace CPH.BLL.Services
                 }
                 var lesson = _unitOfWork.LessonClass
                     .GetAllByCondition(c => c.ClassId == classId)
-                    .Include(l => l.Lesson).ToList();
+                    .Include(l => l.Lesson)
+                    .ToList()
+                    .OrderBy(c=> c.Lesson.LessonNo);
+                
                 if (lesson == null)
                 {
                     return new ResponseDTO("Không tìm thấy bài học tương ứng", 400, false);
                 }
+
                 var lessonClassDTO = _mapper.Map<List<GetAllLessonClassByClassDTO>>(lesson);
                 return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, lessonClassDTO);
             }
@@ -125,6 +129,9 @@ namespace CPH.BLL.Services
                     return new ResponseDTO($"Bài giảng thứ {i + 1} không tồn tại", 400, false);
                 }
 
+                var currentStart = lessonClasses[i].LessonClassDTO.StartTime;
+                var currentEnd = lessonClasses[i].LessonClassDTO.EndTime;
+
                 if (lessonClasses[i].LessonClassDTO.StartTime < startProject || lessonClasses[i].LessonClassDTO.StartTime > endProject)
                 {
                     return new ResponseDTO("Thời gian bắt đầu của buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
@@ -138,6 +145,15 @@ namespace CPH.BLL.Services
                 if (lessonClasses[i].LessonClassDTO.StartTime >= lessonClasses[i].LessonClassDTO.EndTime)
                 {
                     return new ResponseDTO("Thời gian bắt đầu phải sớm hơn thời gian kết thúc!", 400, false);
+                }
+
+                if (i > 0)
+                {
+                    var previousEnd = lessonClasses[i - 1].LessonClassDTO.EndTime;
+                    if (currentStart <= previousEnd)
+                    {
+                        return new ResponseDTO($"Bài giảng {lessonClasses[i].LessonNo} phải bắt đầu sau khi bài {lessonClasses[i - 1].LessonNo} kết thúc!", 400, false);
+                    }
                 }
 
                 foreach (var existingLesson in allLessonClasses)
