@@ -44,5 +44,18 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+        [HttpPut("registration")]
+        public async Task<IActionResult> AnswerRegistration([FromBody] AnswerRegistrationDTO answerRegistrationDTO)
+        {
+
+            ResponseDTO responseDTO = await _registrationService.AnswerRegistration(answerRegistrationDTO);
+            if (responseDTO.IsSuccess == false)
+            {
+
+                return BadRequest(responseDTO);
+
+            }
+            return Ok(responseDTO);
+        }
     }
 }

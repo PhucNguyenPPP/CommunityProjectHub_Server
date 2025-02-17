@@ -185,5 +185,51 @@ namespace CPH.BLL.Services
             }
             return new ResponseDTO("Thông tin đăng ký tham gia hợp lệ", 200, true);
         }
+
+        public async Task<ResponseDTO> AnswerRegistration(AnswerRegistrationDTO answerRegistrationDTO)
+        {
+            var check = await CheckAnswer(answerRegistrationDTO);
+            if (check.IsSuccess == false)
+            {
+                return check;
+            }
+            Registration re = (Registration)check.Result;
+            if (re != null)
+            {
+                if (answerRegistrationDTO.Type.Equals("Approve"))
+                {
+                    re.Status = RegistrationStatusConstant.Inspected;
+                }
+                else
+                {
+                    re.Status = RegistrationStatusConstant.Rejected;
+                }
+                _unitOfWork.Registration.Update(re);
+                var ans = await _unitOfWork.SaveChangeAsync();
+                if (ans)
+                {
+                    return new ResponseDTO("Trả lời đơn đăng ký thành công", 200, true);
+                }
+            }
+            return new ResponseDTO("Trả lời đơn đăng ký thất bại", 500, true);
+        }
+
+        private async Task<ResponseDTO> CheckAnswer(AnswerRegistrationDTO answerRegistrationDTO)
+        {
+            var re = await _unitOfWork.Registration.GetByCondition(r => r.RegistrationId.Equals(answerRegistrationDTO.RegistrationId));
+            if (re == null)
+            {
+                return new ResponseDTO("Đơn đăng ký không tồn tại", 404, false);
+            }
+            if (re.Status != RegistrationStatusConstant.Processing)
+            {
+                return new ResponseDTO("Không thể trả lời đơn đăng ký này", 400, false);
+            }
+            if (answerRegistrationDTO.Type!="Approve" && answerRegistrationDTO.Type!="Deny")
+            {
+                return new ResponseDTO("Phần trả lời đơn đăng ký không hợp lệ", 400, false);
+            }
+            return new ResponseDTO("Thông tin trả lời đơn đăng ký hợp lệ", 200, true,re);
+        }
     }
 }
