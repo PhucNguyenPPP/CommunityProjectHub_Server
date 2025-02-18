@@ -78,8 +78,11 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                 .ForMember(dest => dest.ProjectTitle, opt => opt.MapFrom(src => src.Project.Title))
                 .ReverseMap();
-
-
+            
+            CreateMap<Member, MemberProjectDTO>()
+                .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Account))
+                .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode))
+                .ReverseMap();
         }
     }
 }

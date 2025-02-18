@@ -126,6 +126,12 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAllMaterialProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)
         {
+            var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).FirstOrDefault();
+            if(project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
             var list = _unitOfWork.Material.GetAllByCondition(c => c.ProjectId == projectId);
 
             if (!list.Any())
