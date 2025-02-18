@@ -70,5 +70,18 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+        [HttpGet("registrations-of-project")]
+        public async Task<IActionResult> GetRegistrationsOfProject([FromQuery] Guid projectId,
+                                                            [FromQuery] string search = null,
+                                                            [FromQuery] int? rowsPerPage = null,
+                                                [FromQuery] int? pageNumber = null)
+        {
+            ResponseDTO responseDTO = await _registrationService.GetRegistrationsOfProject(projectId, search, rowsPerPage, pageNumber);
+            if (responseDTO.IsSuccess == false)
+            {
+                return BadRequest(responseDTO);
+            }
+            return Ok(responseDTO);
+        }
     }
 }

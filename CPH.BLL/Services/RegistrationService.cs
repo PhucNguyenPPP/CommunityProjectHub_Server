@@ -16,6 +16,7 @@ using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CPH.BLL.Services
@@ -146,7 +147,7 @@ namespace CPH.BLL.Services
                                                 {
                                                     var checklsc = lscToRegister.Where(t => !(t.StartTime < lscOfAccRegistered[j].StartTime
                                                     && t.EndTime < lscOfAccRegistered[j].StartTime || t.StartTime > lscOfAccRegistered[j].EndTime && t.EndTime > lscOfAccRegistered[j].EndTime));
-                                                    if (checklsc.Count()>0)
+                                                    if (checklsc.Count() > 0)
                                                     {
                                                         var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(lscOfAccRegistered[j].ClassId));
                                                         var l = await _unitOfWork.Lesson.GetByCondition(c => c.LessonId.Equals(lscOfAccRegistered[j].LessonId));
@@ -251,18 +252,18 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Tài khoản không có đơn đăng ký", 404, false);
             }
-           
+
             for (int i = 0; i < listDTO.Count; i++)
             {
-                    var projectTtile = await _unitOfWork.Project.GetByCondition(c => c.ProjectId.Equals(listDTO[i].ProjectId)) ;
-                    if (projectTtile != null)
-                    {
-                 
-                        listDTO[i].Title = projectTtile.Title;
-                    }
+                var projectTtile = await _unitOfWork.Project.GetByCondition(c => c.ProjectId.Equals(listDTO[i].ProjectId));
+                if (projectTtile != null)
+                {
+
+                    listDTO[i].Title = projectTtile.Title;
                 }
-            
-            
+            }
+
+
             if (search.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
             {
 
@@ -281,7 +282,7 @@ namespace CPH.BLL.Services
                         ).ToList();
                     }
                 }
-                if (listDTO==null || !listDTO.Any())
+                if (listDTO == null || !listDTO.Any())
                 {
                     return new ResponseDTO("Không có đơn đăng ký trùng khớp", 404, false);
                 }
@@ -299,7 +300,7 @@ namespace CPH.BLL.Services
                     return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
                 }
 
- 
+
                 if (pageNumber != null && rowsPerPage != null)
                 {
                     var pagedList = PagedList<SentRegistDTO>.ToPagedList(listDTO.AsQueryable(), pageNumber, rowsPerPage);
@@ -313,7 +314,7 @@ namespace CPH.BLL.Services
                     };
                     return new ResponseDTO("Tìm kiếm đơn đăng ký thành công", 200, true, result);
                 }
-                return new ResponseDTO("Tìm kiếm dự án thành công", 200, true, listDTO);
+                return new ResponseDTO("Tìm kiếm đơn đăng ký thành công", 200, true, listDTO);
 
             }
         }
@@ -335,6 +336,84 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Tài khoản không thể nộp đơn đăng ký", 400, false);
             }
             return new ResponseDTO("Id tài khoản hợp lệ", 200, true);
+        }
+
+        public async Task<ResponseDTO> GetRegistrationsOfProject(Guid projectId, string search, int? rowsPerPage, int? pageNumber)
+        {
+            List<RegistrationsOfProjectDTO> listDTO = new List<RegistrationsOfProjectDTO>();
+            if (projectId.ToString().IsNullOrEmpty())
+            {
+                return new ResponseDTO("Vui lòng nhập Id của dự án", 400, false);
+            }
+            var project = await _unitOfWork.Project.GetByCondition(a => a.ProjectId.Equals(projectId));
+            if (project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 404, false);
+            }
+            List<Guid> cla = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectId)).Select(c => c.ClassId).ToList();
+            var regis = _unitOfWork.Registration.GetAll()
+                            .Include(r => r.Account).ThenInclude(a => a.Role)
+                            .Include(r => r.Class).ThenInclude(c => c.Project)
+                            .ToList();
+            regis = regis.Where(r=>cla.Contains(r.ClassId)).ToList();
+            listDTO = _mapper.Map<List<RegistrationsOfProjectDTO>>(regis);
+            if (listDTO == null)
+            {
+                return new ResponseDTO("Dự án không có đơn đăng ký", 404, false);
+            }
+            if (search.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
+            {
+
+                return new ResponseDTO("Hiển thị thông tin các đơn đăng ký của dự án hợp lệ", 200, true, listDTO);
+            }
+            else
+            {
+                if (search != null)
+                {
+                    if (listDTO != null) // Kiểm tra null trước khi lọc
+                    {
+                        listDTO = listDTO.Where(c =>
+        ((!string.IsNullOrEmpty(c.ClassCode) && c.ClassCode.ToLower().Contains(search.ToLower())) ||
+        (!string.IsNullOrEmpty(c.FullName) && c.FullName.ToLower().Contains(search.ToLower())) ||
+        (!string.IsNullOrEmpty(c.Email) && c.Email.ToLower().Contains(search.ToLower())) ||
+        (!string.IsNullOrEmpty(c.AccountCode) && c.AccountCode.ToLower().Contains(search.ToLower())) ||
+        (!string.IsNullOrEmpty(c.Title) && c.Title.ToLower().Contains(search.ToLower())) // Project Title
+    )
+).ToList();
+                    }
+                }
+                if (listDTO == null || !listDTO.Any())
+                {
+                    return new ResponseDTO("Không có đơn đăng ký trùng khớp", 404, false);
+                }
+
+                if (pageNumber == null && rowsPerPage != null)
+                {
+                    return new ResponseDTO("Vui lòng chọn số trang", 400, false);
+                }
+                if (pageNumber != null && rowsPerPage == null)
+                {
+                    return new ResponseDTO("Vui lòng chọn số dòng mỗi trang", 400, false);
+                }
+                if (pageNumber <= 0 || rowsPerPage <= 0)
+                {
+                    return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
+                }
+                if (pageNumber != null && rowsPerPage != null)
+                {
+                    var pagedList = PagedList<RegistrationsOfProjectDTO>.ToPagedList(listDTO.AsQueryable(), pageNumber, rowsPerPage);
+                    var result = new ListRegistrationOfProjectDTO
+                    {
+                        Registrations = pagedList,
+                        CurrentPage = pageNumber,
+                        RowsPerPages = rowsPerPage,
+                        TotalCount = listDTO.Count,
+                        TotalPages = (int)Math.Ceiling(listDTO.Count / (double)rowsPerPage)
+                    };
+                    return new ResponseDTO("Tìm kiếm đơn đăng ký thành công", 200, true, result);
+                }
+                return new ResponseDTO("Tìm kiếm đơn đăng ký thành công", 200, true, listDTO);
+            }
         }
     }
 }
