@@ -10,6 +10,7 @@ using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Notification;
 using CPH.Common.DTO.Project;
+using CPH.Common.DTO.Registration;
 using CPH.DAL.Entities;
 
 namespace CPH.Api.Profiles
@@ -78,6 +79,9 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                 .ForMember(dest => dest.ProjectTitle, opt => opt.MapFrom(src => src.Project.Title))
                 .ReverseMap();
+            CreateMap<Registration, SendRegistrationDTO>()
+               .ReverseMap();
+
             
             CreateMap<Member, MemberProjectDTO>()
                 .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Account))

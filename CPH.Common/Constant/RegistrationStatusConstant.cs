@@ -8,7 +8,7 @@ namespace CPH.Common.Constant
 {
     public class RegistrationStatusConstant
     {
-        public const string Processing = "Đang xử lý";
+        public const string Processing = "Đang chờ duyệt";
         public const string Inspected = "Đã duyệt";
         public const string Rejected = "Từ chối";
         public const string Canceled = "Đã hủy";
