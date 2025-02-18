@@ -17,7 +17,7 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("all-member-of-project")]
-        public async Task<IActionResult> GetAllMaterialProject([FromQuery] Guid projectId,
+        public async Task<IActionResult> GetAllMemberProject([FromQuery] Guid projectId,
                                                                 [FromQuery] string? searchValue,
                                                                 [FromQuery] int? pageNumber,
                                                                 [FromQuery] int? rowsPerPage)

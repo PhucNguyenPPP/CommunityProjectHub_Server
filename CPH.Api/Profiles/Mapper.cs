@@ -83,6 +83,10 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Account))
                 .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode))
                 .ReverseMap();
+
+            CreateMap<Class, LecturerProjectDTO>()
+                .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Lecturer))
+                .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.ClassCode));
         }
     }
 }
