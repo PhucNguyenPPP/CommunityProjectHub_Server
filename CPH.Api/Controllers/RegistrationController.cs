@@ -57,5 +57,18 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+        [HttpGet("registrations")]
+        public async Task<IActionResult> GetAllSentRegistrations([FromQuery] Guid accountId,
+                                                            [FromQuery] string search = null,
+                                                            [FromQuery] int? rowsPerPage = null,
+                                                [FromQuery] int? pageNumber = null)
+        {
+            ResponseDTO responseDTO = await _registrationService.GetAllSentRegistrations(accountId,search,rowsPerPage,pageNumber);
+            if (responseDTO.IsSuccess == false)
+            { 
+                return BadRequest(responseDTO);
+            }
+            return Ok(responseDTO);
+        }
     }
 }
