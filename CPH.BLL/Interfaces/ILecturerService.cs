@@ -13,6 +13,7 @@ namespace CPH.BLL.Interfaces
         List<LecturerResponseDTO> SearchLecturer(string? searchValue);
 
         Task<ResponseDTO> GetAllLecturerOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
+        Task<ResponseDTO> RemoveLecturerFromProject(Guid lecturerId, Guid classId);
 
     }
 }

@@ -100,5 +100,29 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Tìm kiếm sinh viên hỗ trợ thất bại", 500, false);
             }
         }
+
+        public async Task<ResponseDTO> RemoveMemberFromProject(Guid memberId)
+        {
+            var member = await _unitOfWork.Member.GetByCondition(c => c.MemberId == memberId);
+            if (member == null)
+            {
+                return new ResponseDTO("Sinh viên không tồn tại", 400, false, null);
+            }
+
+            var lessonClassMember = member.Class.LessonClasses.ToList();
+            //If the first lesson of class is start, student can not be removed
+            if (lessonClassMember[0].StartTime < DateTime.Now)
+            {
+                return new ResponseDTO("Không thể xóa sinh viên do lớp đã bắt đầu", 400, false, null);
+            }
+
+            _unitOfWork.Member.Delete(member);
+            var result = await _unitOfWork.SaveChangeAsync();
+            if(result)
+            {
+                return new ResponseDTO("Xóa sinh viên thành công", 200, true, null);
+            }
+            return new ResponseDTO("Xóa sinh viên thất bại", 500, false, null);
+        }
     }
 }

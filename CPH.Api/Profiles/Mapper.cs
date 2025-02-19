@@ -90,7 +90,9 @@ namespace CPH.Api.Profiles
 
             CreateMap<Class, LecturerProjectDTO>()
                 .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Lecturer))
-                .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.ClassCode));
+                .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.ClassCode))
+                .ForMember(dest => dest.ClassId, opt => opt.MapFrom(src => src.ClassId));
+
             CreateMap<Registration, SentRegistDTO>().
                 ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode)).
                 ForMember(dest => dest.ClassId, opt =>opt.MapFrom(src=>src.Class.ClassId)). 
