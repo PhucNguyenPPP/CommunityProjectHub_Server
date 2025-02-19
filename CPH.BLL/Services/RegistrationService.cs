@@ -171,7 +171,7 @@ namespace CPH.BLL.Services
                                     var temp = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(registrationDTO.ClassId));
                                     var numOfStudent = temp.Max(t => t.GroupNo);
                                     var regisOfClass = _unitOfWork.Registration.GetAllByCondition(r => r.ClassId.Equals(registrationDTO.ClassId) && r.Status.Equals(RegistrationStatusConstant.Inspected));
-                                    if (regisOfClass.Count() > numOfStudent)
+                                    if (regisOfClass.Count() >= numOfStudent)
                                     {
                                         listError.Add("Lớp đã đủ sinh viên hỗ trợ");
                                     }
@@ -205,6 +205,42 @@ namespace CPH.BLL.Services
                 if (answerRegistrationDTO.Type.Equals("Approve"))
                 {
                     re.Status = RegistrationStatusConstant.Inspected;
+                    var acc = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(re.AccountId));
+                    var clasRegis = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId));
+                    if (acc.RoleId.Equals((int)RoleEnum.Lecturer))
+                    {
+                        if (clasRegis.LecturerId.HasValue)
+                        {
+                            return new ResponseDTO("Lớp " + clasRegis.ClassCode + " đã đủ giảng viên", 400, false);
+                        }
+                        else
+                        {
+                            clasRegis.LecturerId = re.AccountId;
+                            _unitOfWork.Class.Update(clasRegis);
+                        }
+                    }
+                    else if (acc.RoleId.Equals((int)RoleEnum.Student))
+                    {
+                        var stu = _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(re.ClassId));
+                        var maxGroup = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(re.ClassId)).Select(t => t.GroupNo).Max();
+                        if (stu.Count() >= maxGroup)
+                        {
+                            return new ResponseDTO("Lớp " + clasRegis.ClassCode + " đã đủ sinh viên hỗ trợ", 400, false);
+                        }
+                        else
+                        {
+                            Member mem = new Member()
+                            {
+                                ClassId = re.ClassId,
+                                AccountId = re.AccountId,
+                                GroupSupportNo = stu.Count() + 1,
+                                MemberId = Guid.NewGuid(),
+
+                            };
+                            await _unitOfWork.Member.AddAsync(mem);
+                        }
+
+                    }
                 }
                 else
                 {
@@ -355,7 +391,7 @@ namespace CPH.BLL.Services
                             .Include(r => r.Account).ThenInclude(a => a.Role)
                             .Include(r => r.Class).ThenInclude(c => c.Project)
                             .ToList();
-            regis = regis.Where(r=>cla.Contains(r.ClassId)).ToList();
+            regis = regis.Where(r => cla.Contains(r.ClassId)).ToList();
             listDTO = _mapper.Map<List<RegistrationsOfProjectDTO>>(regis);
             if (listDTO == null)
             {
