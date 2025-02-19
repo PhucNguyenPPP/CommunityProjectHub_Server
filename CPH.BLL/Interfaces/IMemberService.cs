@@ -10,5 +10,6 @@ namespace CPH.BLL.Interfaces
     public interface IMemberService
     {
         Task<ResponseDTO> GetAllMemberOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
+        Task<ResponseDTO> RemoveMemberFromProject(Guid memberId);
     }
 }

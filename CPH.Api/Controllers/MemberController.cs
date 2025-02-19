@@ -36,5 +36,17 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpDelete("member")]
+        public async Task<IActionResult> RemoveMemberFromProject(Guid memberId)
+        {
+            var result = await _memberService.RemoveMemberFromProject(memberId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+
     }
 }

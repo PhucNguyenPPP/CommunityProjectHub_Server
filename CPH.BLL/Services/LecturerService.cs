@@ -114,5 +114,39 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Tìm kiếm giảng viên thất bại", 500, false);
             }
         }
+
+        public async Task<ResponseDTO> RemoveLecturerFromProject(Guid lecturerId, Guid classId)
+        {
+            var lecturer = await _unitOfWork.Account.GetByCondition(c => c.AccountId == lecturerId);
+            if (lecturer == null)
+            {
+                return new ResponseDTO("Giảng viên không tồn tại", 400, false);
+            }
+
+            var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId == classId);
+            if (c == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+
+            var lecturerClass = await _unitOfWork.Class.GetByCondition(c => c.ClassId == classId && c.LecturerId == lecturerId);
+            if (lecturerClass == null)
+            {
+                return new ResponseDTO("Giảng viên hiện không đảm nhận lớp này", 400, false);
+            }
+
+            lecturerClass.LecturerId = null;
+
+            _unitOfWork.Class.Update(lecturerClass);
+            var result = await _unitOfWork.SaveChangeAsync();
+            if(result)
+            {
+                return new ResponseDTO("Xóa giảng viên thành công", 200, true);
+            } else
+            {
+                return new ResponseDTO("Xóa giảng viên thất bại", 500, true);
+            }
+
+        }
     }
 }

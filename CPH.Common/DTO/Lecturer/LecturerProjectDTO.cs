@@ -9,6 +9,7 @@ namespace CPH.Common.DTO.Lecturer
 {
     public class LecturerProjectDTO
     {
+        public Guid ClassId { get; set; }
         public string ClassCode { get; set; } = null!;
         public AccountResponseDTO Account { get; set; }
     }
