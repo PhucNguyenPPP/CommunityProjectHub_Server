@@ -53,7 +53,7 @@ namespace CPH.BLL.Services
                 }
 
                 IQueryable<Class> member = _unitOfWork.Class
-                    .GetAllByCondition(c => c.ProjectId == projectId)
+                    .GetAllByCondition(c => c.ProjectId == projectId && c.LecturerId != null)
                     .Include(ac => ac.Lecturer).ThenInclude(r => r.Role);
 
                 if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)

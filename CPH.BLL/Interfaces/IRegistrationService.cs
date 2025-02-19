@@ -12,6 +12,8 @@ namespace CPH.BLL.Interfaces
     {
         Task<ResponseDTO> AnswerRegistration(AnswerRegistrationDTO answerRegistrationDTO);
         Task<ResponseDTO> CancelRegistration(Guid cancelRegistrationId);
+        Task<ResponseDTO> GetAllSentRegistrations(Guid accountId, string search, int? rowsPerPage, int? pageNumber);
+        Task<ResponseDTO> GetRegistrationsOfProject(Guid projectId, string search, int? rowsPerPage, int? pageNumber);
         Task<ResponseDTO> SendRegistration(SendRegistrationDTO registrationDTO);
     }
 }
