@@ -20,6 +20,7 @@ namespace CPH.Api.Profiles
         public Mapper()
         {
             CreateMap<SignUpRequestDTO, Account>().ReverseMap();
+            CreateMap<SignUpRequestDTO2, Account>().ReverseMap();
             CreateMap<Account, LocalAccountDTO>()
                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
                .ReverseMap();

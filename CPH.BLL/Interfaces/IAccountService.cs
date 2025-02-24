@@ -32,5 +32,6 @@ namespace CPH.BLL.Interfaces
         Task<bool> SetOtp(string email, OtpCodeDTO model);
         Task<bool> VerifyingOtp(string email, string otp);
         Task<bool> ChangePassword(ForgotPasswordDTO model);
+        string GeneratePasswordString();
     }
 }

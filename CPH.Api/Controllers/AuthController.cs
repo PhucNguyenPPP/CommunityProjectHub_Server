@@ -37,11 +37,37 @@ namespace CPH.Api.Controllers
             if (signUpResult)
             {
                 return Created("Sign up successfully",
-                    new ResponseDTO("Sign up successfully", 201, true, null));
+                    new ResponseDTO("Đăng kí tài khoản thành công", 201, true, null));
             }
             else
             {
-                return BadRequest(new ResponseDTO("Sign up unsuccessfully", 400, true, null));
+                return BadRequest(new ResponseDTO("Đăng kí tài khoản thất bại", 400, true, null));
+            }
+        }
+
+        [HttpPost("new-account2")]
+        public async Task<IActionResult> SignUp2([FromForm] SignUpRequestDTO2 model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ResponseDTO(ModelState.ToString() ?? "Unknow error", 400, false, null));
+            }
+
+            var checkValid = await _authService.CheckValidationSignUp2(model);
+            if (!checkValid.IsSuccess)
+            {
+                return BadRequest(checkValid);
+            }
+
+            var signUpResult = await _authService.SignUp2(model);
+            if (signUpResult)
+            {
+                return Created("Sign up successfully",
+                    new ResponseDTO("Đăng kí tài khoản thành công", 201, true, null));
+            }
+            else
+            {
+                return BadRequest(new ResponseDTO("Đăng kí tài khoản thất bại", 400, true, null));
             }
         }
 
@@ -55,9 +81,9 @@ namespace CPH.Api.Controllers
             var result = await _authService.CheckLogin(loginRequestDTO);
             if (result != null)
             {
-                return Ok(new ResponseDTO("Sign in successfully", 200, true, result));
+                return Ok(new ResponseDTO("Đăng nhập thành công", 200, true, result));
             }
-            return BadRequest(new ResponseDTO("Sign in unsuccessfully", 400, false));
+            return BadRequest(new ResponseDTO("Đăng nhập thất bại", 400, false));
         }
 
         [HttpPost("refresh-token")]
@@ -71,10 +97,10 @@ namespace CPH.Api.Controllers
             var result = await _authService.RefreshAccessToken(model);
             if (result == null || string.IsNullOrEmpty(result.AccessToken))
             {
-                return BadRequest(new ResponseDTO("Create refresh token unsuccessfully", 400, false, result));
+                return BadRequest(new ResponseDTO("Tạo refresh token thất bại", 400, false, result));
             }
             return Created("Create refresh token successfully",
-                new ResponseDTO("Create refresh token successfully", 201, true, result));
+                new ResponseDTO("Tạo refresh token thành công", 201, true, result));
         }
 
         [HttpGet("/account/access-token/{accessToken}")]
@@ -99,10 +125,10 @@ namespace CPH.Api.Controllers
 
             if (response)
             {
-                return Ok(new ResponseDTO("Log out successfully", 200, true));
+                return Ok(new ResponseDTO("Đăng xuất thành công", 200, true));
             }
 
-            return BadRequest(new ResponseDTO("Log out failed", 400, false));
+            return BadRequest(new ResponseDTO("Đăng xuất thất bại", 400, false));
         }
 
         [HttpPost("old-password")]
