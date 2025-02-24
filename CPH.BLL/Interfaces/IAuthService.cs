@@ -11,7 +11,9 @@ namespace CPH.BLL.Interfaces
     public interface IAuthService
     {
         Task<bool> SignUp(SignUpRequestDTO model);
+        Task<bool> SignUp2(SignUpRequestDTO2 model);
         Task<ResponseDTO> CheckValidationSignUp(SignUpRequestDTO model);
+        Task<ResponseDTO> CheckValidationSignUp2(SignUpRequestDTO2 model);
         Task<LoginResponseDTO?> CheckLogin(LoginRequestDTO loginRequestDTO);
         Task<TokenDTO> RefreshAccessToken(RequestTokenDTO model);
         Task<ResponseDTO> GetAccountByAccessToken(string token);

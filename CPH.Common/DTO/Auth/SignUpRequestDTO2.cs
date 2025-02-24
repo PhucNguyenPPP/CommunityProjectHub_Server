@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CPH.Common.DTO.Auth
 {
-    public class SignUpRequestDTO
+    public class SignUpRequestDTO2
     {
         [Required(ErrorMessage = "Please input account name")]
         [MinLength(5, ErrorMessage = "Account name must have at least 5 characters")]
@@ -19,7 +19,13 @@ namespace CPH.Common.DTO.Auth
         [RegularExpression("^[\\p{L}]+([\\s\\p{L}]+)*$",
             ErrorMessage = "Full name is invalid")]
         public string FullName { get; set; } = null!;
-       
+
+        [Required(ErrorMessage = "Please input password")]
+        [MinLength(8, ErrorMessage = "Password must have at least 8 characters")]
+        [RegularExpression("^(?=.*[!@#$%^&*(),.?\":{}|<>]).+$",
+            ErrorMessage = "Password must have at least 1 special character")]
+        public string Password { get; set; } = null!;
+
         public IFormFile? AvatarLink { get; set; } = null!;
 
         [Required(ErrorMessage = "Please input phone number")]
@@ -41,8 +47,7 @@ namespace CPH.Common.DTO.Auth
         public string Gender { get; set; } = null!;
 
         [Required(ErrorMessage = "Please input role id")]
-        [Range(1,6)]
+        [Range(1, 6)]
         public int RoleId { get; set; }
-
     }
 }

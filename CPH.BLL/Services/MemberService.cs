@@ -109,13 +109,6 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Sinh viên không tồn tại", 400, false, null);
             }
 
-            var lessonClassMember = member.Class.LessonClasses.ToList();
-            //If the first lesson of class is start, student can not be removed
-            if (lessonClassMember[0].StartTime < DateTime.Now)
-            {
-                return new ResponseDTO("Không thể xóa sinh viên do lớp đã bắt đầu", 400, false, null);
-            }
-
             _unitOfWork.Member.Delete(member);
             var result = await _unitOfWork.SaveChangeAsync();
             if(result)
