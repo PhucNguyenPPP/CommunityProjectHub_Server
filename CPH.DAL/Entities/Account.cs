@@ -45,6 +45,8 @@ public partial class Account
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
+    public virtual ICollection<ProjectNote> ProjectNotes { get; set; } = new List<ProjectNote>();
+
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
 
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
