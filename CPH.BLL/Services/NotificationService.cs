@@ -38,7 +38,10 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetNotifications(Guid accountId)
         {
-            var listNotification = _unitOfWork.Notification.GetAllByCondition(c => c.AccountId == accountId).ToList();
+            var listNotification = _unitOfWork.Notification.GetAllByCondition(c => c.AccountId == accountId)
+                .OrderByDescending(c => c.CreatedDate)
+                .ToList();
+
             if(listNotification.Count == 0)
             {
                 return new ResponseDTO("Bạn chưa có bất kì thông báo nào", 404, false);
