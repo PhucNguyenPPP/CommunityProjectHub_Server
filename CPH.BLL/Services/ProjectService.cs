@@ -799,8 +799,6 @@ namespace CPH.BLL.Services
 
         }
 
-   
-
         private async Task<List<Project>> GetProjectsWithStartDateNow()
         {
             var today = DateTime.Now; // Sử dụng UTC để tránh vấn đề múi giờ
