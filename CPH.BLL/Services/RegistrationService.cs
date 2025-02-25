@@ -271,6 +271,21 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Phần trả lời đơn đăng ký không hợp lệ", 400, false);
             }
+            var classOfRe = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId));
+            if (classOfRe == null)
+            {
+                return new ResponseDTO("Lớp đăng ký vào không tồn tại", 400, false);
+            }
+            var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfRe.ProjectId));
+            if (project == null)
+            {
+                return new ResponseDTO("Dự án đăng ký vào không tồn tại", 400, false);
+            }
+            if(project.Status != RegistrationStatusConstant.Processing || project.ApplicationEndDate<DateTime.Now)
+            {
+                return new ResponseDTO("Dự án đã quá hạn trả lời", 400, false);
+            }    
+    
             return new ResponseDTO("Thông tin trả lời đơn đăng ký hợp lệ", 200, true, re);
         }
 
