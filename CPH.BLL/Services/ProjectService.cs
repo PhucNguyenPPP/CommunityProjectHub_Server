@@ -73,7 +73,7 @@ namespace CPH.BLL.Services
                 Project project = _mapper.Map<Project>(projectDTO);
                 project.ProjectId = projectId;
                 project.NumberLesson = projectDTO.LessonList.Count;
-                //project.Status = true;
+                project.Status = ProjectStatusConstant.UpComing;
                 project.CreatedDate = DateTime.Now;
                 await _unitOfWork.Project.AddAsync(project);
                 for (int i = 0; i < projectDTO.LessonList.Count; i++)
@@ -109,7 +109,7 @@ namespace CPH.BLL.Services
                     trainees[i].ClassId = c.ClassId;
                     trainees[i].TraineeId = Guid.NewGuid();
                 }
-                //    await _unitOfWork.Class.AddRangeAsync(list);
+                    await _unitOfWork.Class.AddRangeAsync(list);
                 List<LessonClass> lessonClasses = new List<LessonClass>();
                 foreach (var cl in list)
                 {
@@ -177,9 +177,9 @@ namespace CPH.BLL.Services
             try
             {
                 List<string> errors = new List<string>();
-                if (projectDTO.StartDate < DateTime.Now)
+                if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
                 {
-                    errors.Add("Thời gian bắt đầu của dự án phải ở tương lai");
+                    errors.Add("Thời gian bắt đầu của dự án phải sau khi kết thúc thời gian ứng tuyển");
                 }
                 if (projectDTO.EndDate < projectDTO.StartDate)
                 {
@@ -193,10 +193,10 @@ namespace CPH.BLL.Services
                 {
                     errors.Add("Thời gian hết hạn ứng tuyển phải xa hơn thời gian bắt đầu ứng tuyển");
                 }
-                if (projectDTO.ApplicationEndDate > projectDTO.EndDate)
+             /*   if (projectDTO.ApplicationEndDate > projectDTO.EndDate)
                 {
                     errors.Add("Thời gian hết hạn ứng tuyển không được xa hơn thời gian kết thúc dự án");
-                }
+                }*/
                 var projectName = await _unitOfWork.Project.GetByCondition(c => c.Title == projectDTO.Title);
                 if (projectName != null)
                 {
@@ -488,7 +488,7 @@ namespace CPH.BLL.Services
                     return check;
                 }
                 var project = (Project)check.Result;
-                //project.Status = false;
+                project.Status = ProjectStatusConstant.Cancelled;
                 _unitOfWork.Project.Update(project);
                 var updated = await _unitOfWork.SaveChangeAsync();
                 if (!updated)
@@ -642,9 +642,9 @@ namespace CPH.BLL.Services
                 var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
 
                 List<string> errors = new List<string>();
-                if (projectDTO.StartDate < DateTime.Now)
+                if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
                 {
-                    errors.Add("Thời gian bắt đầu của dự án phải ở tương lai");
+                    errors.Add("Thời gian bắt đầu của dự án phải sau khi kết thúc thời gian ứng tuyển");
                 }
                 if (projectDTO.EndDate < projectDTO.StartDate)
                 {
@@ -657,10 +657,6 @@ namespace CPH.BLL.Services
                 if (projectDTO.ApplicationEndDate < projectDTO.ApplicationStartDate)
                 {
                     errors.Add("Thời gian hết hạn ứng tuyển phải xa hơn thời gian bắt đầu ứng tuyển");
-                }
-                if (projectDTO.ApplicationEndDate > projectDTO.EndDate)
-                {
-                    errors.Add("Thời gian hết hạn ứng tuyển không được xa hơn thời gian kết thúc dự án");
                 }
                 var projectName = await _unitOfWork.Project.GetByCondition(c => c.Title == projectDTO.Title && c.ProjectId != projectDTO.ProjectId);
                 if (projectName != null)
