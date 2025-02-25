@@ -28,6 +28,7 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddHostedService<ProjectStatusUpdater>();
+builder.Services.AddScoped<ITraineeService, TraineeService>();
 
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);
