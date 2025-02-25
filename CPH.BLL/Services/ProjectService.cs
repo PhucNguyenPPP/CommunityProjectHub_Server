@@ -267,7 +267,7 @@ namespace CPH.BLL.Services
                 //    .Include(c => c.ProjectManager);
 
                 IQueryable<Project> list = _unitOfWork.Project
-                    .GetAllByCondition(c => true)
+                    .GetAll()
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                     .Include(c => c.ProjectManager);
                 if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null && filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
@@ -699,7 +699,7 @@ namespace CPH.BLL.Services
                 //    .Include(c => c.ProjectManager).Where(c => c.ApplicationStartDate <= DateTime.Now && c.ApplicationEndDate >= DateTime.Now);
 
                 IQueryable<Project> list = _unitOfWork.Project
-                    .GetAllByCondition(c => true)
+                    .GetAllByCondition(c => c.Status ==  ProjectStatusConstant.UpComing)
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                     .Include(c => c.ProjectManager).Where(c => c.ApplicationStartDate <= DateTime.Now && c.ApplicationEndDate >= DateTime.Now);
                 if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null && filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
