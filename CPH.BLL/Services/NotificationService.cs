@@ -15,11 +15,14 @@ namespace CPH.BLL.Services
     public class NotificationService : INotificationService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper; 
-        public NotificationService(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly IMapper _mapper;
+        private readonly WebSocketHandler _webSocketHandler;
+
+        public NotificationService(IUnitOfWork unitOfWork, IMapper mapper, WebSocketHandler webSocketHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _webSocketHandler = webSocketHandler;
         }
 
         public async Task CreateNotification(Guid accountId, string content)
@@ -32,7 +35,7 @@ namespace CPH.BLL.Services
                 MessageContent = content,
                 IsRead = false
             };
-
+            await _webSocketHandler.BroadcastNotificationAsync(notification);
             await _unitOfWork.Notification.AddAsync(notification);
         }
 
@@ -41,11 +44,6 @@ namespace CPH.BLL.Services
             var listNotification = _unitOfWork.Notification.GetAllByCondition(c => c.AccountId == accountId)
                 .OrderByDescending(c => c.CreatedDate)
                 .ToList();
-
-            if(listNotification.Count == 0)
-            {
-                return new ResponseDTO("Bạn chưa có bất kì thông báo nào", 404, false);
-            }
             var mapList = _mapper.Map<List<NotificationResponseDTO>>(listNotification);
             return new ResponseDTO("Lấy thông báo thành công", 200, true, mapList);
         }
