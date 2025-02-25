@@ -19,14 +19,16 @@ namespace CPH.BLL.Services
         private readonly IMapper _mapper;
         private readonly IAccountService _accountService;
         private readonly IClassService _classService;
+        private readonly WebSocketHandler _websocketHandler;
 
         public MessageService(IUnitOfWork unitOfWork, IMapper mapper, IAccountService accountService,
-            IClassService classService)
+            IClassService classService, WebSocketHandler websocketHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _accountService = accountService;
             _classService = classService;
+            _websocketHandler = websocketHandler;
         }
 
         public async Task<ResponseDTO> CreateMessage(MessageDTO newMessage)
@@ -40,6 +42,8 @@ namespace CPH.BLL.Services
                 ClassId = newMessage.ClassId,
             };
 
+            await _websocketHandler.BroadcastMessageAsync(mes);
+            
             await _unitOfWork.Message.AddAsync(mes);
             bool ok = await _unitOfWork.SaveChangeAsync();
             if (ok)
