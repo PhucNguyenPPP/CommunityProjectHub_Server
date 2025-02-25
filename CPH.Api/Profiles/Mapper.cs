@@ -11,6 +11,7 @@ using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Notification;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Registration;
+using CPH.Common.DTO.Trainee;
 using CPH.DAL.Entities;
 
 namespace CPH.Api.Profiles
@@ -109,6 +110,10 @@ namespace CPH.Api.Profiles
            .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.Account.DateOfBirth)) // Access DateOfBirth from the related Account
            .ForMember(dest => dest.RoleId, opt => opt.MapFrom(src => src.Account.RoleId)) // Access RoleId from the related Account
            .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Account.Role.RoleName));
+
+            CreateMap<Trainee, GetAllTraineeOfClassDTO>()
+                .ForMember(dest => dest.AccountResponseDTO, opt => opt.MapFrom(src => src.Account))
+                .ReverseMap();
         }
     }
 }
