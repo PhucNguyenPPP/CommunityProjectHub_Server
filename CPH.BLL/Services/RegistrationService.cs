@@ -281,7 +281,7 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Dự án đăng ký vào không tồn tại", 400, false);
             }
-            if(project.Status != RegistrationStatusConstant.Processing || project.ApplicationEndDate<DateTime.Now)
+            if(project.Status != ProjectStatusConstant.UpComing || project.ApplicationEndDate<DateTime.Now)
             {
                 return new ResponseDTO("Dự án đã quá hạn trả lời", 400, false);
             }    
