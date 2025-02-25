@@ -41,7 +41,7 @@ public class ProjectStatusUpdater : BackgroundService
             }
 
             // Chạy service mỗi 5 phút
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
 
         _logger.LogInformation("ProjectStatusUpdater service stopped.");
