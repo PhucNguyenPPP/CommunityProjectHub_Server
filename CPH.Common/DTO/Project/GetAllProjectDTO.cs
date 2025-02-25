@@ -30,7 +30,7 @@ namespace CPH.Common.DTO.Project
 
         public DateTime CreatedDate { get; set; }
 
-        public bool Status { get; set; }
+        public string Status { get; set; }
 
         public Guid ProjectManagerId { get; set; }
 
