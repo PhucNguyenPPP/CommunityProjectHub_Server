@@ -41,11 +41,11 @@ namespace CPH.BLL.Services
         {
             try
             {
-                //var project = await _unitOfWork.Project
-                //    .GetByCondition(c => c.Status == true && c.ProjectId.Equals(projectID));
-
                 var project = await _unitOfWork.Project
-                    .GetByCondition(c => c.ProjectId.Equals(projectID));
+                    .GetByCondition(c => c.Status != ProjectStatusConstant.Cancelled && c.ProjectId.Equals(projectID));
+/*
+                var project = await _unitOfWork.Project
+                    .GetByCondition(c => c.ProjectId.Equals(projectID));*/
                 if (project == null)
                 {
                     return new ResponseDTO("Dự án cộng đồng không tồn tại", 404, false);
