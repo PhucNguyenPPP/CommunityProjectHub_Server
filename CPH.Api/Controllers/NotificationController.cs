@@ -1,5 +1,5 @@
 ﻿using CPH.BLL.Interfaces;
-using CPH.BLL.WebSocketHandler;
+using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Message;
 using Microsoft.AspNetCore.Http;
@@ -23,10 +23,6 @@ namespace CPH.Api.Controllers
             ResponseDTO responseDTO = await _notificationService.GetNotifications(accountId);
             if (responseDTO.IsSuccess == false)
             {
-                if (responseDTO.StatusCode == 404)
-                {
-                    return NotFound(responseDTO);
-                }
                 if (responseDTO.StatusCode == 500 || responseDTO.StatusCode == 400)
                 {
                     return BadRequest(responseDTO);

@@ -1,5 +1,5 @@
 ﻿using CPH.BLL.Interfaces;
-using CPH.BLL.WebSocketHandler;
+using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Message;
 using Microsoft.AspNetCore.Http;
@@ -51,8 +51,6 @@ namespace CPH.Api.Controllers
                     return BadRequest(responseDTO);
                 }
             }
-
-            await _webSocketHandler.BroadcastMessageAsync(messageDTO.Content);
 
             return Ok(responseDTO);
         }

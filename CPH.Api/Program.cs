@@ -8,7 +8,6 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text.Json.Serialization;
 using System.Text;
-using CPH.BLL.WebSocketHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
