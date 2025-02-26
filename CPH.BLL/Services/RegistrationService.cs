@@ -122,7 +122,7 @@ namespace CPH.BLL.Services
             }
             else
             {
-                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(cl.ProjectId));
+                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(cl.ProjectId) && p.Status.Equals(ProjectStatusConstant.UpComing));
                 if (project == null)
                 {
                     listError.Add("Dự án không tồn tại");

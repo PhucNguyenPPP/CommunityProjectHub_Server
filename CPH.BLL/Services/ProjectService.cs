@@ -783,8 +783,14 @@ namespace CPH.BLL.Services
                 foreach (var item in projectsToUpdate)
                 {
                     item.Status = ProjectStatusConstant.InProgress;
+                    var cOfPro = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).Select( c=>c.ClassId);
+                    var regis = _unitOfWork.Registration.GetAllByCondition(r => cOfPro.Contains(r.ClassId) && r.Status.Equals(RegistrationStatusConstant.Processing));
+                    foreach (var reg in regis)
+                    {
+                        reg.Status = RegistrationStatusConstant.Rejected;
+                    }    
                 }
-                _unitOfWork.Project.UpdateRange(projectsToUpdate);
+                _unitOfWork.Project.UpdateRange(projectsToUpdate);                
                 bool savechange = await _unitOfWork.SaveChangeAsync();
                 if (!savechange)
                 {
