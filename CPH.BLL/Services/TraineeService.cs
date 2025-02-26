@@ -71,7 +71,7 @@ namespace CPH.BLL.Services
 
                     if (!filterField.IsNullOrEmpty() && !filterOrder.IsNullOrEmpty())
                     {
-                        if (!filterField.Equals("FullName") && !filterField.Equals("AccountCode") && !filterField.Equals("AccountName"))
+                        if (!filterField.Equals("fullName") && !filterField.Equals("accountCode") && !filterField.Equals("accountName"))
                         {
                             return new ResponseDTO("Trường lọc không hợp lệ", 400, false);
                         }
@@ -124,13 +124,13 @@ namespace CPH.BLL.Services
         {
             return filterField switch
             {
-                "FullName" => filterOrder == FilterConstant.Descending
+                "fullName" => filterOrder == FilterConstant.Descending
                     ? list.OrderByDescending(c => c.Account.FullName)
                     : list.OrderBy(c => c.Account.FullName),
-                "AccountCode" => filterOrder == FilterConstant.Descending
+                "accountCode" => filterOrder == FilterConstant.Descending
                     ? list.OrderByDescending(c => c.Account.AccountCode)
                     : list.OrderBy(c => c.Account.AccountCode),
-                "AccountName" => filterOrder == FilterConstant.Descending
+                "accountName" => filterOrder == FilterConstant.Descending
                     ? list.OrderByDescending(c => c.Account.AccountName)
                     : list.OrderBy(c => c.Account.AccountName)
             };
