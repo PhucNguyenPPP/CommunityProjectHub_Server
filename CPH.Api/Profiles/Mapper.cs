@@ -112,7 +112,6 @@ namespace CPH.Api.Profiles
            .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Account.Role.RoleName));
 
             CreateMap<Trainee, GetAllTraineeOfClassDTO>()
-                .ForMember(dest => dest.AccountResponseDTO, opt => opt.MapFrom(src => src.Account))
                 .ReverseMap();
         }
     }

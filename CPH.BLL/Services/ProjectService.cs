@@ -311,11 +311,6 @@ namespace CPH.BLL.Services
                     }
 
 
-                    if (!list.Any())
-                    {
-                        return new ResponseDTO("Không có dự án trùng khớp", 400, false);
-                    }
-
                     if (pageNumber == null && rowsPerPage != null)
                     {
                         return new ResponseDTO("Vui lòng chọn số trang", 400, false);

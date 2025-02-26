@@ -23,6 +23,6 @@ namespace CPH.Common.DTO.Trainee
 
         public Guid AccountId { get; set; }
 
-        public AccountResponseDTO AccountResponseDTO { get; set; }
+        public AccountResponseDTO Account { get; set; }
     }
 }
