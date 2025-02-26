@@ -12,6 +12,7 @@ using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Registration;
 using CPH.Common.Enum;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -25,10 +26,12 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public RegistrationService(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly INotificationService _notificationService;
+        public RegistrationService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         public async Task<ResponseDTO> CancelRegistration(Guid cancelRegistrationId)
@@ -83,6 +86,23 @@ namespace CPH.BLL.Services
             registration.Status = RegistrationStatusConstant.Processing;
             registration.CreatedAt = DateTime.Now;
             await _unitOfWork.Registration.AddAsync(registration);
+
+            //Create notification
+            var sender = await _unitOfWork.Account.GetByCondition(c => c.AccountId == registrationDTO.AccountId);
+            var classRegistration = _unitOfWork.Class
+                .GetAllByCondition(c => c.ClassId == registrationDTO.ClassId)
+                .Include(c => c.Project)
+                .ThenInclude(c => c.ProjectManager)
+                .FirstOrDefault();
+
+            var messageNotification = RegistrationNotification.SendRegistrationNotification(sender!.FullName, classRegistration!.ClassCode, classRegistration!.Project.Title);
+            if (classRegistration!.Project.ProjectManagerId != null)
+            {
+                await _notificationService.CreateNotification((Guid)classRegistration!.Project.ProjectManagerId, messageNotification);
+            };
+
+            //End of create notification
+
             var added = await _unitOfWork.SaveChangeAsync();
             if (added)
             {
