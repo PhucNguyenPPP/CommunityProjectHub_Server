@@ -13,5 +13,10 @@ namespace CPH.Common.Notification
             var result = $"{senderName} đã gửi đơn đăng ký vào lớp {className} của dự án {projectName}";
             return result;
         }
+        public static string AnswerRegistrationNotification(string answer ,string className, string projectName)
+        {
+            var result = $"Đơn đăng ký vào lớp {className} thuộc dự án {projectName} đã {answer}";
+            return result;
+        }
     }
 }
