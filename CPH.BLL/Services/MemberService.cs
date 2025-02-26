@@ -10,6 +10,7 @@ using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -21,10 +22,12 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public MemberService(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly INotificationService _notificationService;
+        public MemberService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<ResponseDTO> GetAllMemberOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)
@@ -110,6 +113,23 @@ namespace CPH.BLL.Services
             }
 
             _unitOfWork.Member.Delete(member);
+
+            //Create notification
+            
+            var classRemove = _unitOfWork.Class
+                .GetAllByCondition(c => c.ClassId == member.ClassId)
+                .Include(c => c.Project)
+                .FirstOrDefault();
+
+            if (classRemove == null)
+            {
+                return new ResponseDTO("Không tìm thấy lớp học", 400, false, null);
+            }
+
+            var messageNotification = RemoveMemberNotification.SendRemovedNotification(classRemove!.ClassCode, classRemove!.Project.Title);
+            var accountId = member.AccountId;
+            await _notificationService.CreateNotification(accountId, messageNotification);
+
             var result = await _unitOfWork.SaveChangeAsync();
             if(result)
             {
