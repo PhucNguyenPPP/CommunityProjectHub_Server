@@ -47,5 +47,38 @@ namespace CPH.BLL.Services
             var mapList = _mapper.Map<List<NotificationResponseDTO>>(listNotification);
             return new ResponseDTO("Lấy thông báo thành công", 200, true, mapList);
         }
+
+        public async Task<ResponseDTO> UpdateIsReadNotification(UpdateNotificationRequestDTO model)
+        {
+            bool checkNotificationsExisted = true;
+            foreach(var n in model.NotificationIds)
+            {
+                var notification = await _unitOfWork.Notification.GetByCondition(c => c.NotificationId == n);
+                if(notification == null)
+                {
+                    checkNotificationsExisted = false;
+                    break;
+                }
+            }
+
+            if (!checkNotificationsExisted)
+            {
+                return new ResponseDTO("Thông báo không tồn tại", 400, false);
+            }
+
+            foreach (var n in model.NotificationIds)
+            {
+                var notification = await _unitOfWork.Notification.GetByCondition(c => c.NotificationId == n);
+                notification!.IsRead = true;
+                _unitOfWork.Notification.Update(notification);
+            }
+
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Cập nhật thông báo thành công", 200, true);
+            }
+            return new ResponseDTO("Cập nhật thông báo thất bại", 400, false);
+        }
     }
 }
