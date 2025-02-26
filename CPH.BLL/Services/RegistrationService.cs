@@ -220,13 +220,15 @@ namespace CPH.BLL.Services
                 return check;
             }
             Registration re = (Registration)check.Result;
+            var accountId = re.AccountId;
+            var clasRegis = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId));
             if (re != null)
             {
                 if (answerRegistrationDTO.Type.Equals("Approve"))
                 {
                     re.Status = RegistrationStatusConstant.Inspected;
                     var acc = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(re.AccountId));
-                    var clasRegis = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId));
+
                     if (acc.RoleId.Equals((int)RoleEnum.Lecturer))
                     {
                         if (clasRegis.LecturerId.HasValue)
@@ -267,10 +269,28 @@ namespace CPH.BLL.Services
                     re.Status = RegistrationStatusConstant.Rejected;
                 }
                 _unitOfWork.Registration.Update(re);
+
+                //Create notification
+                var classRegistration = clasRegis.ClassCode;
+                var prjRegistration = clasRegis.Project.Title;
+                string messageNotification = null!;
+                if (answerRegistrationDTO.Type.Equals("Approve"))
+                {
+                    messageNotification = RegistrationNotification.AnswerRegistrationNotification("được duyệt",classRegistration,prjRegistration);
+                }
+                else 
+                {
+                    messageNotification = RegistrationNotification.AnswerRegistrationNotification("bị từ chối", classRegistration, prjRegistration);
+                }
+                await _notificationService.CreateNotification(accountId, messageNotification);
+
+
+                //End of create notification
                 var ans = await _unitOfWork.SaveChangeAsync();
                 if (ans)
                 {
                     return new ResponseDTO("Trả lời đơn đăng ký thành công", 200, true);
+
                 }
             }
             return new ResponseDTO("Trả lời đơn đăng ký thất bại", 500, true);
@@ -301,11 +321,11 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Dự án đăng ký vào không tồn tại", 400, false);
             }
-            if(project.Status != ProjectStatusConstant.UpComing || project.ApplicationEndDate<DateTime.Now)
+            if (project.Status != ProjectStatusConstant.UpComing || project.ApplicationEndDate < DateTime.Now)
             {
                 return new ResponseDTO("Dự án đã quá hạn trả lời", 400, false);
-            }    
-    
+            }
+
             return new ResponseDTO("Thông tin trả lời đơn đăng ký hợp lệ", 200, true, re);
         }
 
