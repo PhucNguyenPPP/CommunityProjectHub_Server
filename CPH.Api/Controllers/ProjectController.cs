@@ -128,13 +128,14 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("available-project")]
-        public async Task<IActionResult> GetAllAvailableProject([FromQuery] string? searchValue,
+        public async Task<IActionResult> GetAllAvailableProject([FromQuery] Guid userId,
+                                                        [FromQuery] string? searchValue,
                                                         [FromQuery] int? pageNumber,
                                                         [FromQuery] int? rowsPerPage,
                                                         [FromQuery] string? filterField,
                                                         [FromQuery] string? filterOrder)
         {
-            ResponseDTO responseDTO = await _projectService.GetAvailableProject(searchValue, pageNumber, rowsPerPage, filterField, filterOrder);
+            ResponseDTO responseDTO = await _projectService.GetAvailableProject(userId, searchValue, pageNumber, rowsPerPage, filterField, filterOrder);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)
