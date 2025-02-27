@@ -177,7 +177,7 @@ namespace CPH.BLL.Services
             try
             {
                 List<string> errors = new List<string>();
-                if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
+                if (projectDTO.StartDate <= projectDTO.ApplicationEndDate)
                 {
                     errors.Add("Thời gian bắt đầu của dự án phải sau khi kết thúc thời gian ứng tuyển");
                 }
