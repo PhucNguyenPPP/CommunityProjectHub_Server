@@ -19,7 +19,7 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetProjectDetail(Guid projectId);
         Task<ResponseDTO> InActivateProject(Guid projectID);
         Task<ResponseDTO> UpdateProject(UpdateProjectDTO projectDTO);
-        Task<ResponseDTO> GetAvailableProject(string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder);
+        Task<ResponseDTO> GetAvailableProject(Guid userId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder);
         Task UpdateProjectsStatusToInProgress();
     }
 }
