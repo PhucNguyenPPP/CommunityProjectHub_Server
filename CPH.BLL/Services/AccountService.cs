@@ -917,7 +917,7 @@ namespace CPH.BLL.Services
             return await _unitOfWork.SaveChangeAsync();
         }
 
-        private string GeneratePasswordString()
+        public string GeneratePasswordString()
         {
             string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
             StringBuilder password = new StringBuilder();

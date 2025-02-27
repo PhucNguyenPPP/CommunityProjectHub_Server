@@ -26,17 +26,40 @@ namespace CPH.BLL.Services
         private readonly IMapper _mapper;
         private readonly IAccountService _accountService;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
         public AuthService(IAccountService accountService, IUnitOfWork unitOfWork,
-            IMapper mapper, IConfiguration configuration)
+            IMapper mapper, IConfiguration configuration, IEmailService emailService)
         {
 
             _accountService = accountService;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _config = configuration;
+            _emailService = emailService;
         }
         public async Task<bool> SignUp(SignUpRequestDTO model)
+        {
+            var account = _mapper.Map<Account>(model);
+
+            var salt = _accountService.GenerateSalt();
+            var generatedPassword = _accountService.GeneratePasswordString();
+            var passwordHash = _accountService.GenerateHashedPassword(generatedPassword, salt);
+            //var avatarLink = await _imageService.StoreImageAndGetLink(model.AvatarLink, FileNameFirebaseStorage.UserImage);
+
+            account.AccountId = Guid.NewGuid();
+            account.AccountCode = _accountService.GenerateAccountCode(model.RoleId);
+            account.Salt = salt;
+            account.PasswordHash = passwordHash;
+            account.Status = true;
+
+            await _unitOfWork.Account.AddAsync(account);
+
+            await _emailService.SendAccountEmail(account.Email, account.AccountName, generatedPassword, "The Community Project Hub's account");
+            return await _unitOfWork.SaveChangeAsync();
+        }
+
+        public async Task<bool> SignUp2(SignUpRequestDTO2 model)
         {
             var account = _mapper.Map<Account>(model);
 
@@ -58,33 +81,66 @@ namespace CPH.BLL.Services
         {
             if (model.DateOfBirth >= DateTime.Now)
             {
-                return new ResponseDTO("Date of birth is invalid", 400, false);
+                return new ResponseDTO("Ngày sinh phải nhỏ hơn ngày hiện tại", 400, false);
             }
 
             if (model.Gender != GenderConstant.Male
                 && model.Gender != GenderConstant.Female)
             {
-                return new ResponseDTO("Gender is invalid", 400, false);
+                return new ResponseDTO("Giới tính không hợp lệ", 400, false);
             }
 
             var checkAccountNameExist = _accountService.CheckAccountNameExist(model.AccountName);
             if (checkAccountNameExist)
             {
-                return new ResponseDTO("Username already exists", 400, false);
+                return new ResponseDTO("Tên tài khoản đã tồn tại", 400, false);
             }
 
             var checkEmailExist = _accountService.CheckEmailExist(model.Email);
             if (checkEmailExist)
             {
-                return new ResponseDTO("Email already exists", 400, false);
+                return new ResponseDTO("Email đã tồn tại", 400, false);
             }
 
             var checkPhoneExist = _accountService.CheckPhoneExist(model.Phone);
             if (checkPhoneExist)
             {
-                return new ResponseDTO("Phone already exists", 400, false);
+                return new ResponseDTO("Số điện thoại đã tồn tại", 400, false);
             }
-            return new ResponseDTO("Check successfully", 200, true);
+            return new ResponseDTO("Kiểm tra thành công", 200, true);
+        }
+
+        public async Task<ResponseDTO> CheckValidationSignUp2(SignUpRequestDTO2 model)
+        {
+            if (model.DateOfBirth >= DateTime.Now)
+            {
+                return new ResponseDTO("Ngày sinh phải nhỏ hơn ngày hiện tại", 400, false);
+            }
+
+            if (model.Gender != GenderConstant.Male
+                && model.Gender != GenderConstant.Female)
+            {
+                return new ResponseDTO("Giới tính không hợp lệ", 400, false);
+            }
+
+            var checkAccountNameExist = _accountService.CheckAccountNameExist(model.AccountName);
+            if (checkAccountNameExist)
+            {
+                return new ResponseDTO("Tên tài khoản đã tồn tại", 400, false);
+            }
+
+            var checkEmailExist = _accountService.CheckEmailExist(model.Email);
+            if (checkEmailExist)
+            {
+                return new ResponseDTO("Email đã tồn tại", 400, false);
+            }
+
+            var checkPhoneExist = _accountService.CheckPhoneExist(model.Phone);
+            if (checkPhoneExist)
+            {
+                return new ResponseDTO("Số điện thoại đã tồn tại", 400, false);
+            }
+            return new ResponseDTO("Kiểm tra thành công", 200, true);
         }
 
         public async Task<LoginResponseDTO?> CheckLogin(LoginRequestDTO loginRequestDTO)
@@ -324,25 +380,25 @@ namespace CPH.BLL.Services
         {
             if (string.IsNullOrWhiteSpace(accessToken))
             {
-                return new ResponseDTO("Token is empty", 400, false);
+                return new ResponseDTO("Token rỗng", 400, false);
             }
             var accountId = ExtractAccountIdFromToken(accessToken);
             if (accountId == "Token is expired")
             {
-                return new ResponseDTO("Token is expired", 400, false);
+                return new ResponseDTO("Token đã hết hạn", 400, false);
             }
             if (accountId == "Token is invalid")
             {
-                return new ResponseDTO("Token is invalid", 400, false);
+                return new ResponseDTO("Token không hợp lệ", 400, false);
             }
             var user = await _unitOfWork.Account.GetAllByCondition(c => c.AccountId.ToString() == accountId
             && c.Status == true).Include(c => c.Role).FirstOrDefaultAsync();
             if (user == null)
             {
-                return new ResponseDTO("User not found", 400, false);
+                return new ResponseDTO("Không tìm thấy tài khoản", 400, false);
             }
             var mapUser = _mapper.Map<LocalAccountDTO>(user);
-            return new ResponseDTO("Get user by token successfully", 200, true, mapUser);
+            return new ResponseDTO("Lấy tài khoản bằng token thành công", 200, true, mapUser);
         }
 
         private string ExtractAccountIdFromToken(string accessToken)

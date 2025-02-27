@@ -14,12 +14,6 @@ namespace CPH.Common.DTO.Auth
         [MinLength(5, ErrorMessage = "Account name must have at least 5 characters")]
         public string AccountName { get; set; } = null!;
 
-        [Required(ErrorMessage = "Please input password")]
-        [MinLength(8, ErrorMessage = "Password must have at least 8 characters")]
-        [RegularExpression("^(?=.*[!@#$%^&*(),.?\":{}|<>]).+$",
-            ErrorMessage = "Password must have at least 1 special character")]
-        public string Password { get; set; } = null!;
-
         [Required(ErrorMessage = "Please input full name")]
         [MinLength(8, ErrorMessage = "Full name must have at least 8 characters")]
         [RegularExpression("^[\\p{L}]+([\\s\\p{L}]+)*$",

@@ -126,5 +126,27 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("available-project")]
+        public async Task<IActionResult> GetAllAvailableProject([FromQuery] string? searchValue,
+                                                        [FromQuery] int? pageNumber,
+                                                        [FromQuery] int? rowsPerPage,
+                                                        [FromQuery] string? filterField,
+                                                        [FromQuery] string? filterOrder)
+        {
+            ResponseDTO responseDTO = await _projectService.GetAvailableProject(searchValue, pageNumber, rowsPerPage, filterField, filterOrder);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }

@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CPH.Common.DTO.WebSocket;
+using CPH.DAL.Entities;
+using Microsoft.AspNetCore.Http;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
-namespace CPH.BLL.WebSocketHandler
+namespace CPH.BLL.Services
 {
     public class WebSocketHandler
     {
@@ -32,9 +35,45 @@ namespace CPH.BLL.WebSocketHandler
             _sockets.Remove(webSocket);
         }
 
-        public async Task BroadcastMessageAsync(string message)
+        public async Task BroadcastMessageAsync(Message model)
         {
+            var messageObject = new MessageWebSocketDTO()
+            {
+                MessageId = model.MessageId,
+                AccountId = model.AccountId,
+                ClassId = model.ClassId,
+                Content = model.Content,
+                CreatedDate = model.CreatedDate,
+                Type = "Message", 
+            };
+
+            string message = JsonSerializer.Serialize(messageObject);
             var buffer = Encoding.UTF8.GetBytes(message);
+
+            foreach (var socket in _sockets)
+            {
+                if (socket.State == WebSocketState.Open)
+                {
+                    await socket.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
+            }
+        }
+
+
+        public async Task BroadcastNotificationAsync(Notification model)
+        {
+            var notificationObject = new NotificationWebSocketDTO()
+            {
+                NotificationId = model.NotificationId,
+                AccountId = model.AccountId,
+                CreatedDate = model.CreatedDate,
+                IsRead = model.IsRead,
+                MessageContent = model.MessageContent,
+                Type = "Notification"
+            };
+
+            string notification = JsonSerializer.Serialize(notificationObject);
+            var buffer = Encoding.UTF8.GetBytes(notification);
 
             foreach (var socket in _sockets)
             {

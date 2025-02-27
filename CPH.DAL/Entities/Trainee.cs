@@ -9,7 +9,7 @@ public partial class Trainee
 
     public bool? Score { get; set; }
 
-    public int GroupNo { get; set; }
+    public int? GroupNo { get; set; }
 
     public string? FeedbackContent { get; set; }
 

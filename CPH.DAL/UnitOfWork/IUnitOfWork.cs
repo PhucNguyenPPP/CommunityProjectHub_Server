@@ -22,5 +22,6 @@ namespace CPH.DAL.UnitOfWork
         ILessonClassRepository LessonClass { get; }
         IMaterialRepository Material { get; }
         IMemberRepository Member { get; }
-    }
+        IRegistrationRepository Registration { get; }
+            }
 }

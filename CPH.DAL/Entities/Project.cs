@@ -27,7 +27,7 @@ public partial class Project
 
     public DateTime CreatedDate { get; set; }
 
-    public bool Status { get; set; }
+    public string Status { get; set; } = null!;
 
     public Guid? ProjectManagerId { get; set; }
 
@@ -38,4 +38,6 @@ public partial class Project
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
     public virtual Account? ProjectManager { get; set; }
+
+    public virtual ICollection<ProjectNote> ProjectNotes { get; set; } = new List<ProjectNote>();
 }
