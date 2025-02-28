@@ -19,8 +19,6 @@ public partial class Project
 
     public int NumberLesson { get; set; }
 
-    public int NumberTraineeEachGroup { get; set; }
-
     public DateTime ApplicationStartDate { get; set; }
 
     public DateTime ApplicationEndDate { get; set; }

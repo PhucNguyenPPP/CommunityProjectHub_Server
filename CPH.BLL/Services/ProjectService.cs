@@ -519,115 +519,117 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> UpdateProject(UpdateProjectDTO projectDTO)
         {
-            try
-            {
-                var check = await CheckProjectExisted(projectDTO.ProjectId);
-                if (check.IsSuccess == false)
-                {
-                    return new ResponseDTO("Dự án không tồn tại", 404, false);
-                }
-                ResponseDTO responseDTO = await CheckUpdateProject(projectDTO);
-                if (!responseDTO.IsSuccess)
-                {
-                    return responseDTO;
-                }
-                Project project = (Project)check.Result;
-                project.Title = projectDTO.Title;
-                project.Description = projectDTO.Description;
-                project.Address = projectDTO.Address;
-                var cl = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectDTO.ProjectId)).Select(c => c.ClassId).Distinct().ToList();
-                if (cl == null)
-                {
-                    return new ResponseDTO("Lớp của dự án bị lỗi", 500, false);
-                }
-                if (project.NumberTraineeEachGroup != projectDTO.NumberTraineeEachGroup)
-                {
-                    for (var i = 0; i < cl.Count; i++)
-                    {
-                        int temp = 0;
-                        int groupNo = 1;
-                        List<Trainee> traineeClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(cl[i])).ToList();
-                        for (var j = 0; j < traineeClass.Count(); j++)
-                        {
-                            if (temp < projectDTO.NumberTraineeEachGroup)
-                            {
-                                traineeClass[j].GroupNo = groupNo;
-                                temp++;
-                            }
-                            else
-                            {
-                                temp = 1;
-                                groupNo++;
-                                traineeClass[j].GroupNo = groupNo;
-                            }
-                        }
-                        _unitOfWork.Trainee.UpdateRange(traineeClass);
-                    }
-                    project.NumberTraineeEachGroup = projectDTO.NumberTraineeEachGroup;
-                }
-                project.StartDate = projectDTO.StartDate;
-                project.EndDate = projectDTO.EndDate;
-                project.ApplicationStartDate = projectDTO.ApplicationStartDate;
-                project.ApplicationEndDate = projectDTO.ApplicationEndDate;
-                /*       for (var i = 0; i < projectDTO.LessonList.Count; i++)
-                       {
-                           Lesson lessonToUpdate = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && !l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
-                           Lesson lessonCorrected = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
-                           if (lessonToUpdate != null)
-                           {
-                               lessonToUpdate.LessonContent = projectDTO.LessonList[(int)i];
-                               _unitOfWork.Lesson.Update(lessonToUpdate);
-                           }
-                           else if (lessonCorrected == null)
-                           {
-                               var lessonid = Guid.NewGuid();
-                               var ls = new Lesson
-                               {
-                                   LessonId = lessonid,
-                                   LessonContent = projectDTO.LessonList[i],
-                                   ProjectId = projectDTO.ProjectId,
-                                   LessonNo = i + 1
-                               };
-                               await _unitOfWork.Lesson.AddAsync(ls);
-                               for (var j = 0; j < cl.Count; j++)
-                               {
-                                   var lsc = new LessonClass
-                                   {
-                                       LessonClassId = Guid.NewGuid(),
-                                       LessonId = lessonid,
-                                       ClassId = cl[j],
-                                   };
-                                   await _unitOfWork.LessonClass.AddAsync(lsc);
-                               }
+            //try
+            //{
+            //    var check = await CheckProjectExisted(projectDTO.ProjectId);
+            //    if (check.IsSuccess == false)
+            //    {
+            //        return new ResponseDTO("Dự án không tồn tại", 404, false);
+            //    }
+            //    ResponseDTO responseDTO = await CheckUpdateProject(projectDTO);
+            //    if (!responseDTO.IsSuccess)
+            //    {
+            //        return responseDTO;
+            //    }
+            //    Project project = (Project)check.Result;
+            //    project.Title = projectDTO.Title;
+            //    project.Description = projectDTO.Description;
+            //    project.Address = projectDTO.Address;
+            //    var cl = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectDTO.ProjectId)).Select(c => c.ClassId).Distinct().ToList();
+            //    if (cl == null)
+            //    {
+            //        return new ResponseDTO("Lớp của dự án bị lỗi", 500, false);
+            //    }
+            //    if (project.NumberTraineeEachGroup != projectDTO.NumberTraineeEachGroup)
+            //    {
+            //        for (var i = 0; i < cl.Count; i++)
+            //        {
+            //            int temp = 0;
+            //            int groupNo = 1;
+            //            List<Trainee> traineeClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(cl[i])).ToList();
+            //            for (var j = 0; j < traineeClass.Count(); j++)
+            //            {
+            //                if (temp < projectDTO.NumberTraineeEachGroup)
+            //                {
+            //                    traineeClass[j].GroupNo = groupNo;
+            //                    temp++;
+            //                }
+            //                else
+            //                {
+            //                    temp = 1;
+            //                    groupNo++;
+            //                    traineeClass[j].GroupNo = groupNo;
+            //                }
+            //            }
+            //            _unitOfWork.Trainee.UpdateRange(traineeClass);
+            //        }
+            //        project.NumberTraineeEachGroup = projectDTO.NumberTraineeEachGroup;
+            //    }
+            //    project.StartDate = projectDTO.StartDate;
+            //    project.EndDate = projectDTO.EndDate;
+            //    project.ApplicationStartDate = projectDTO.ApplicationStartDate;
+            //    project.ApplicationEndDate = projectDTO.ApplicationEndDate;
+            //    /*       for (var i = 0; i < projectDTO.LessonList.Count; i++)
+            //           {
+            //               Lesson lessonToUpdate = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && !l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
+            //               Lesson lessonCorrected = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
+            //               if (lessonToUpdate != null)
+            //               {
+            //                   lessonToUpdate.LessonContent = projectDTO.LessonList[(int)i];
+            //                   _unitOfWork.Lesson.Update(lessonToUpdate);
+            //               }
+            //               else if (lessonCorrected == null)
+            //               {
+            //                   var lessonid = Guid.NewGuid();
+            //                   var ls = new Lesson
+            //                   {
+            //                       LessonId = lessonid,
+            //                       LessonContent = projectDTO.LessonList[i],
+            //                       ProjectId = projectDTO.ProjectId,
+            //                       LessonNo = i + 1
+            //                   };
+            //                   await _unitOfWork.Lesson.AddAsync(ls);
+            //                   for (var j = 0; j < cl.Count; j++)
+            //                   {
+            //                       var lsc = new LessonClass
+            //                       {
+            //                           LessonClassId = Guid.NewGuid(),
+            //                           LessonId = lessonid,
+            //                           ClassId = cl[j],
+            //                       };
+            //                       await _unitOfWork.LessonClass.AddAsync(lsc);
+            //                   }
 
-                           }
-                       }
-                       var lessonToDel = _unitOfWork.Lesson.GetAllByCondition(l => l.ProjectId.Equals(project.ProjectId) && l.LessonNo > projectDTO.LessonList.Count).ToList();
-                       if (lessonToDel.Count > 0)
-                       {
-                           foreach (var l in lessonToDel)
-                           {
-                               var lsclass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.LessonId.Equals(l.LessonId)).ToList();   
-                               foreach (var lsc in lsclass)
-                               {
-                                   _unitOfWork.LessonClass.Delete(lsc);
-                               }
-                               _unitOfWork.Lesson.Delete(l);
-                           }
+            //               }
+            //           }
+            //           var lessonToDel = _unitOfWork.Lesson.GetAllByCondition(l => l.ProjectId.Equals(project.ProjectId) && l.LessonNo > projectDTO.LessonList.Count).ToList();
+            //           if (lessonToDel.Count > 0)
+            //           {
+            //               foreach (var l in lessonToDel)
+            //               {
+            //                   var lsclass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.LessonId.Equals(l.LessonId)).ToList();   
+            //                   foreach (var lsc in lsclass)
+            //                   {
+            //                       _unitOfWork.LessonClass.Delete(lsc);
+            //                   }
+            //                   _unitOfWork.Lesson.Delete(l);
+            //               }
 
-                       }*/
-                _unitOfWork.Project.Update(project);
-                var updated = await _unitOfWork.SaveChangeAsync();
-                if (updated == false)
-                {
-                    return new ResponseDTO("Chỉnh sửa thất bại", 500, false);
-                }
-                return new ResponseDTO("Chỉnh sửa thành công", 200, true);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseDTO(ex.Message, 500, false);
-            }
+            //           }*/
+            //    _unitOfWork.Project.Update(project);
+            //    var updated = await _unitOfWork.SaveChangeAsync();
+            //    if (updated == false)
+            //    {
+            //        return new ResponseDTO("Chỉnh sửa thất bại", 500, false);
+            //    }
+            //    return new ResponseDTO("Chỉnh sửa thành công", 200, true);
+            //}
+            //catch (Exception ex)
+            //{
+            //    return new ResponseDTO(ex.Message, 500, false);
+            //}
+
+            return new ResponseDTO("", 500, false);
         }
 
         private async Task<ResponseDTO> CheckUpdateProject(UpdateProjectDTO projectDTO)
