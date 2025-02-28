@@ -630,7 +630,7 @@ namespace CPH.BLL.Services
                 return new ResponseDTO(ex.Message, 500, false);
             }
 
-            return new ResponseDTO("", 500, false);
+         //   return new ResponseDTO("", 500, false);
         }
 
         private async Task<ResponseDTO> CheckUpdateProject(UpdateProjectDTO projectDTO)
