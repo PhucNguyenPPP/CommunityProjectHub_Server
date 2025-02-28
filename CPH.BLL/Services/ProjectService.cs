@@ -126,7 +126,7 @@ namespace CPH.BLL.Services
                     }
                 }
                 await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses);
-
+                /*
                 for (var i = 0; i < classId.Count; i++)
                 {
                     int temp = 0;
@@ -155,8 +155,10 @@ namespace CPH.BLL.Services
                             }
                         }
                     }
+                
 
                 }
+                */
                 await _unitOfWork.Trainee.AddRangeAsync(trainees);
                 var r = await _unitOfWork.SaveChangeAsync();
                 if (!r)
@@ -211,12 +213,11 @@ namespace CPH.BLL.Services
                     }
                 }
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
-                if (response.IsSuccess)
+                if (!response.IsSuccess)
                 {
-                    var listTrainee = (List<ImportTraineeDTO>)response.Result;
-                    if (listTrainee != null)
-                    {
-                        var c = listTrainee.Select(t => t.ClassCode).Distinct().ToList();
+
+                    //  {
+                    /*     var c = listTrainee.Select(t => t.ClassCode).Distinct().ToList();
                         for (int i = 0; i < c.Count; i++)
                         {
                             var numOfTraineeClass = listTrainee.Where(t => t.ClassCode.Equals(c[i])).Count();
@@ -228,26 +229,26 @@ namespace CPH.BLL.Services
                         }
                     }
                     else
+                    {*/
+                    errors.Add(response.Message.ToString());
+                }
+                var listTrainee = (List<ImportTraineeDTO>)response.Result;
+                for (int i = 0; i < projectDTO.LessonList.Count; i++)
+                {
+                    for (int j = 0; j < projectDTO.LessonList.Count; j++)
                     {
-                        errors.Add(response.Message.ToString());
-                    }
-                    for (int i = 0; i < projectDTO.LessonList.Count; i++)
-                    {
-                        for (int j = 0; j < projectDTO.LessonList.Count; j++)
+                        if (projectDTO.LessonList[i] == projectDTO.LessonList[j] && i != j)
                         {
-                            if (projectDTO.LessonList[i] == projectDTO.LessonList[j] && i != j)
-                            {
-                                errors.Add("Có 2 bài học nội dung" + projectDTO.LessonList.ToString() + " trùng nhau");
-                            }
+                            errors.Add("Có 2 bài học nội dung" + projectDTO.LessonList.ToString() + " trùng nhau");
                         }
                     }
-                    if (errors.Count > 0)
-                    {
-                        return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
-                    }
-                    return new ResponseDTO("Thông tin dự án hợp lệ", 200, true, listTrainee);
                 }
-                return response;
+                if (errors.Count > 0)
+                {
+                    return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
+                }
+                return new ResponseDTO("Thông tin dự án hợp lệ", 200, true, listTrainee);
+
             }
             catch (Exception ex)
             {
@@ -693,7 +694,7 @@ namespace CPH.BLL.Services
                     && (!c.Classes.Any(cls => cls.Members != null && cls.Members.Any(m => m.AccountId == userId))))
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                     .Include(c => c.ProjectManager)
-                    .Where(c => c.ApplicationStartDate <= DateTime.Now 
+                    .Where(c => c.ApplicationStartDate <= DateTime.Now
                         && c.ApplicationEndDate >= DateTime.Now);
 
                 if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null && filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
@@ -780,20 +781,20 @@ namespace CPH.BLL.Services
 
         public async Task UpdateProjectsStatusToInProgress()
         {
-            List<Project> projectsToUpdate =  await GetProjectsWithStartDateNow();
-            if(projectsToUpdate.Count > 0) 
+            List<Project> projectsToUpdate = await GetProjectsWithStartDateNow();
+            if (projectsToUpdate.Count > 0)
             {
                 foreach (var item in projectsToUpdate)
                 {
                     item.Status = ProjectStatusConstant.InProgress;
-                    var cOfPro = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).Select( c=>c.ClassId);
+                    var cOfPro = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).Select(c => c.ClassId);
                     var regis = _unitOfWork.Registration.GetAllByCondition(r => cOfPro.Contains(r.ClassId) && r.Status.Equals(RegistrationStatusConstant.Processing));
                     foreach (var reg in regis)
                     {
                         reg.Status = RegistrationStatusConstant.Rejected;
-                    }    
+                    }
                 }
-                _unitOfWork.Project.UpdateRange(projectsToUpdate);                
+                _unitOfWork.Project.UpdateRange(projectsToUpdate);
                 bool savechange = await _unitOfWork.SaveChangeAsync();
                 if (!savechange)
                 {
