@@ -9,6 +9,7 @@ namespace CPH.Common.DTO.Class
 {
     public class DevideGroupOfClassDTO
     {
+        [Required(ErrorMessage = "Vui lòng nhập lớp muốn chia nhóm")]
         public Guid ClassId { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập số lượng nhóm")]
         [Range(1, int.MaxValue, ErrorMessage = "Số lượng nhóm lớp có ít nhất bằng 1")]

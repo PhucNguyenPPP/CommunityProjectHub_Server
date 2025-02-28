@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
@@ -44,21 +45,69 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> DevideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO)
         {
-            var check  = await CheckClassIdExist(devideGroupOfClassDTO.ClassId);  
-            if(!check)
+            var existed  = await CheckClassIdExist(devideGroupOfClassDTO.ClassId);  
+            if(!existed)
             {
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
-            var numbTrainOfClass = _unitOfWork.Trainee.GetAllByCondition(t=>t.ClassId.Equals(devideGroupOfClassDTO.ClassId)).Count();   
-            if(numbTrainOfClass<=0)
+            var check = await CheckDivision(devideGroupOfClassDTO);
+            if (!check.IsSuccess)
+            {
+                return new ResponseDTO(check.Message.ToString(), 400, false);
+            }
+            if(check.Result==null)
+            {
+                return new ResponseDTO("Lớp học lỗi", 400, false);
+            }    
+            Class temp = (Class) check.Result;  
+            temp.NumberGroup = devideGroupOfClassDTO.NumberGroup;   
+            _unitOfWork.Class.Update(temp);
+            var traineesOfClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            int i = 1;
+            foreach (var trainee in traineesOfClass)
+            {
+                if (i <= devideGroupOfClassDTO.NumberGroup)
+                {
+                    trainee.GroupNo = i;
+                    i++;
+                }
+                else
+                {
+                    i = 1;
+                    trainee.GroupNo=i;
+                }
+            }
+            _unitOfWork.Trainee.UpdateRange(traineesOfClass.ToList());
+            var saved = await _unitOfWork.SaveChangeAsync();
+            if (saved)
+            {
+                return new ResponseDTO("Chia nhóm cho lớp thành công",200,true);
+            }
+            return new ResponseDTO("Chia nhóm cho lớp thất bại", 500, false);
+        }
+
+        private async Task<ResponseDTO> CheckDivision(DevideGroupOfClassDTO devideGroupOfClassDTO)
+        {
+            var numbTrainOfClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(devideGroupOfClassDTO.ClassId)).Count();
+            if (numbTrainOfClass <= 0)
             {
                 return new ResponseDTO("Số lượng học viên bị lỗi", 400, false);
-            }   
-            if(devideGroupOfClassDTO.NumberGroup>numbTrainOfClass)
+            }
+            if (devideGroupOfClassDTO.NumberGroup > numbTrainOfClass)
             {
                 return new ResponseDTO("Số lượng nhóm không được lớn hơn số lượng học viên của lớp", 400, false);
             }
-            return new ResponseDTO("OK", 200, true);
+            var c = await _unitOfWork.Class.GetByCondition(c=>c.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(c.ProjectId));
+            if (pro == null)
+            {
+                return new ResponseDTO("Lớp thuộc dự án bị lỗi", 400, false);
+            }
+            if(!pro.Status.Equals(ProjectStatusConstant.UpComing))
+            {
+                return new ResponseDTO("Dự án đã ở trạng thâi " +pro.Status.ToString(), 400, false);
+            }
+            return new ResponseDTO("Thông tin chia nhóm của lớp hợp lệ", 200, true, c);
         }
 
         public async Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)
