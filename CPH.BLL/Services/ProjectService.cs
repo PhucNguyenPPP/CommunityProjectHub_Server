@@ -682,19 +682,20 @@ namespace CPH.BLL.Services
             }
         }
 
-        public async Task<ResponseDTO> GetAvailableProject(string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
+        public async Task<ResponseDTO> GetAvailableProject(Guid userId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
         {
             try
             {
-                //IQueryable<Project> list = _unitOfWork.Project
-                //    .GetAllByCondition(c => c.Status == true)
-                //    .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
-                //    .Include(c => c.ProjectManager).Where(c => c.ApplicationStartDate <= DateTime.Now && c.ApplicationEndDate >= DateTime.Now);
-
                 IQueryable<Project> list = _unitOfWork.Project
-                    .GetAllByCondition(c => c.Status == ProjectStatusConstant.UpComing)
+                    .GetAllByCondition(c => c.Status == ProjectStatusConstant.UpComing
+                    && c.ProjectManagerId != userId
+                    && (!c.Classes.Any(cls => cls.LecturerId == userId))
+                    && (!c.Classes.Any(cls => cls.Members != null && cls.Members.Any(m => m.AccountId == userId))))
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
-                    .Include(c => c.ProjectManager).Where(c => c.ApplicationStartDate <= DateTime.Now && c.ApplicationEndDate >= DateTime.Now);
+                    .Include(c => c.ProjectManager)
+                    .Where(c => c.ApplicationStartDate <= DateTime.Now 
+                        && c.ApplicationEndDate >= DateTime.Now);
+
                 if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null && filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
                 {
 
