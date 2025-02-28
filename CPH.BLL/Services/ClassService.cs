@@ -173,51 +173,46 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetClassDetail(Guid classId)
         {
-            //var clas = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
-            //    .Include(c => c.Trainees)
-            //    .Include(c => c.Members)
-            //    .Include(c => c.Project)
-            //    .FirstOrDefault();
-            //if (clas == null)
-            //{
-            //    return new ResponseDTO("Lớp không tồn tại", 400, false);
-            //}
+            var clas = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
+                .Include(c => c.Trainees)
+                .Include(c => c.Members)
+                .Include(c => c.Project)
+                .FirstOrDefault();
+            if (clas == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
 
-            //int lecturerSlotAvailable = 0;
+            int lecturerSlotAvailable = 0;
 
-            //if (clas.LecturerId == null)
-            //{
-            //    lecturerSlotAvailable = 1;
-            //}
+            if (clas.LecturerId == null)
+            {
+                lecturerSlotAvailable = 1;
+            }
 
-            //var projectId = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId).Select(c => c.ProjectId).FirstOrDefault();
-            //int perGroup = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).Select(c => c.NumberTraineeEachGroup).FirstOrDefault();
-            //int totalTrainees = clas.Trainees.Count();
+            var projectId = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId).Select(c => c.ProjectId).FirstOrDefault();
 
-            //int groupRequiredPerClass = (int)Math.Ceiling((double)totalTrainees / perGroup);
+            int totalTrainees = clas.Trainees.Count();
 
-            //int groupWithStudentPerClass = clas.Members
-            //        .Where(m => m.ClassId != null)
-            //        .Select(m => m.GroupSupportNo)
-            //        .Distinct()
-            //        .Count();
+            int? groupRequired = clas.NumberGroup;
 
-            //int studentSlotAvailable = Math.Max(groupRequiredPerClass - groupWithStudentPerClass, 0);
+            int groupWithStudent = clas.Members?.Count() ?? 0;
 
-            //var member = _unitOfWork.Member
-            //    .GetAllByCondition(c => c.ClassId == classId)
-            //    .Select(c => c.Account)
-            //    .ToList();
+            int ?studentSlotAvailable = groupRequired - groupWithStudent;
 
-            //var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
+            var member = _unitOfWork.Member
+                .GetAllByCondition(c => c.ClassId == classId)
+                .Select(c => c.Account)
+                .ToList();
 
-            //var dto = _mapper.Map<ClassDetailDTO>(clas);
-            //dto.LecturerSlotAvailable = lecturerSlotAvailable;
-            //dto.StudentSlotAvailable = studentSlotAvailable;
-            //dto.getMemberOfClassDTOs = memberDto;
+            var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
 
-            //return new ResponseDTO("Lấy thông tin chi tiết của lớp thành công", 200, true, dto); 
-            return new ResponseDTO("Lấy thông tin chi tiết của lớp thành công", 200, true); 
+            var dto = _mapper.Map<ClassDetailDTO>(clas);
+            dto.LecturerSlotAvailable = lecturerSlotAvailable;
+            dto.StudentSlotAvailable = studentSlotAvailable;
+            dto.getMemberOfClassDTOs = memberDto;
+
+            return new ResponseDTO("Lấy thông tin chi tiết của lớp thành công", 200, true, dto);
 
         }
     }
