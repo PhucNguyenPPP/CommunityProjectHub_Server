@@ -112,71 +112,63 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)
         {
-            //IQueryable<Class> list = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId == projectId).Include(c => c.Lecturer);
-            //if (!searchValue.IsNullOrEmpty())
-            //{
-            //    list = list.Where(c =>
-            //        c.ClassCode.ToLower().Contains(searchValue.ToLower())
-            //    );
-            //}
-            //if (!list.Any())
-            //{
-            //    return new ResponseDTO("Không có lớp của dự án", 400, false);
-            //}
+            IQueryable<Class> list = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId == projectId).Include(c => c.Lecturer).Include(c=> c.Members).Include(c=> c.Trainees);
+            if (!searchValue.IsNullOrEmpty())
+            {
+                list = list.Where(c =>
+                    c.ClassCode.ToLower().Contains(searchValue.ToLower())
+                );
+            }
+            if (!list.Any())
+            {
+                return new ResponseDTO("Không có lớp của dự án", 400, false);
+            }
 
-            //if (pageNumber == null && rowsPerPage != null)
-            //{
-            //    return new ResponseDTO("Vui lòng chọn số trang", 400, false);
-            //}
-            //if (pageNumber != null && rowsPerPage == null)
-            //{
-            //    return new ResponseDTO("Vui lòng chọn số dòng mỗi trang", 400, false);
-            //}
-            //if (pageNumber <= 0 || rowsPerPage <= 0)
-            //{
-            //    return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
-            //}
+            if (pageNumber == null && rowsPerPage != null)
+            {
+                return new ResponseDTO("Vui lòng chọn số trang", 400, false);
+            }
+            if (pageNumber != null && rowsPerPage == null)
+            {
+                return new ResponseDTO("Vui lòng chọn số dòng mỗi trang", 400, false);
+            }
+            if (pageNumber <= 0 || rowsPerPage <= 0)
+            {
+                return new ResponseDTO("Giá trị phân trang không hợp lệ", 400, false);
+            }
 
-            //int lecturerSlotAvailable = list.Count(c => c.LecturerId == null);
+            int lecturerSlotAvailable = 0;
 
-            //int perGroup = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).Select(c => c.NumberTraineeEachGroup).FirstOrDefault();
-            //var traineeCounts = list.Select(c => c.Trainees).ToList();
+            var mapList = list.ToList().Select(Class =>
+            {
+                int? groupRequiredPerClass = Class.NumberGroup;
 
-            //var mapList = list.ToList().Select(Class =>
-            //{
-            //    int totalTrainees = Class.Trainees.Count();
-            //    int groupRequiredPerClass = (int)Math.Ceiling((double)totalTrainees / perGroup);
+                int groupWithStudent = Class.Members?.Count() ?? 0;
 
-            //    int groupWithStudentPerClass = Class.Members
-            //        .Where(m => m.ClassId != null)
-            //        .Select(m => m.GroupSupportNo)
-            //        .Distinct()
-            //        .Count();
+                int? studentSlotAvailable = groupRequiredPerClass - groupWithStudent;
+                lecturerSlotAvailable = (Class.LecturerId == null) ? 1 : 0;
 
-            //    int studentSlotAvailable = Math.Max(groupRequiredPerClass - groupWithStudentPerClass, 0);
-            //    lecturerSlotAvailable = (Class.LecturerId == null) ? 1 : 0;
+                var dto = _mapper.Map<GetAllClassOfProjectDTO>(Class);
+                dto.LecturerSlotAvailable = lecturerSlotAvailable;
+                dto.StudentSlotAvailable = studentSlotAvailable;
 
-            //    var dto = _mapper.Map<GetAllClassOfProjectDTO>(Class);
-            //    dto.LecturerSlotAvailable = lecturerSlotAvailable;
-            //    dto.StudentSlotAvailable = studentSlotAvailable;
+                return dto;
+            }).ToList();
 
-            //    return dto;
-            //}).ToList();
-
-            //if (pageNumber != null && rowsPerPage != null)
-            //{
-            //    var pagedList = PagedList<GetAllClassOfProjectDTO>.ToPagedList(mapList.AsQueryable(), pageNumber, rowsPerPage);
-            //    var result = new ListClassDTO
-            //    {
-            //        GetAllClassOfProjectDTOs = pagedList,
-            //        CurrentPage = pageNumber,
-            //        RowsPerPages = rowsPerPage,
-            //        TotalCount = mapList.Count,
-            //        TotalPages = (int)Math.Ceiling(mapList.Count / (double)rowsPerPage)
-            //    };
-            //    return new ResponseDTO("Lấy các lớp của dự án thành công", 200, true, result);
-            //}
-            //return new ResponseDTO("lấy các lớp của dự án thành công", 200, true, mapList);
+            if (pageNumber != null && rowsPerPage != null)
+            {
+                var pagedList = PagedList<GetAllClassOfProjectDTO>.ToPagedList(mapList.AsQueryable(), pageNumber, rowsPerPage);
+                var result = new ListClassDTO
+                {
+                    GetAllClassOfProjectDTOs = pagedList,
+                    CurrentPage = pageNumber,
+                    RowsPerPages = rowsPerPage,
+                    TotalCount = mapList.Count,
+                    TotalPages = (int)Math.Ceiling(mapList.Count / (double)rowsPerPage)
+                };
+                return new ResponseDTO("Lấy các lớp của dự án thành công", 200, true, result);
+            }
+            return new ResponseDTO("lấy các lớp của dự án thành công", 200, true, mapList);
             return new ResponseDTO("lấy các lớp của dự án thành công", 200, true);
         }
 
