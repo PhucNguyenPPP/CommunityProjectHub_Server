@@ -8,6 +8,7 @@ using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -39,6 +40,25 @@ namespace CPH.BLL.Services
                 return false;
             }
             return true;
+        }
+
+        public async Task<ResponseDTO> DevideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO)
+        {
+            var check  = await CheckClassIdExist(devideGroupOfClassDTO.ClassId);  
+            if(!check)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+            var numbTrainOfClass = _unitOfWork.Trainee.GetAllByCondition(t=>t.ClassId.Equals(devideGroupOfClassDTO.ClassId)).Count();   
+            if(numbTrainOfClass<=0)
+            {
+                return new ResponseDTO("Số lượng học viên bị lỗi", 400, false);
+            }   
+            if(devideGroupOfClassDTO.NumberGroup>numbTrainOfClass)
+            {
+                return new ResponseDTO("Số lượng nhóm không được lớn hơn số lượng học viên của lớp", 400, false);
+            }
+            return new ResponseDTO("OK", 200, true);
         }
 
         public async Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)

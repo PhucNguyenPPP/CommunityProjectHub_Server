@@ -188,10 +188,9 @@ namespace CPH.BLL.Services
                                 }
                                 else if (acc.RoleId.Equals((int)RoleEnum.Student))
                                 {
-                                    var temp = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(registrationDTO.ClassId));
-                                    var numOfStudent = temp.Max(t => t.GroupNo);
+                                    
                                     var regisOfClass = _unitOfWork.Registration.GetAllByCondition(r => r.ClassId.Equals(registrationDTO.ClassId) && r.Status.Equals(RegistrationStatusConstant.Inspected));
-                                    if (regisOfClass.Count() >= numOfStudent)
+                                    if (regisOfClass.Count() >= cl.NumberGroup)
                                     {
                                         listError.Add("Lớp đã đủ sinh viên hỗ trợ");
                                     }
@@ -244,8 +243,8 @@ namespace CPH.BLL.Services
                     else if (acc.RoleId.Equals((int)RoleEnum.Student))
                     {
                         var stu = _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(re.ClassId));
-                        var maxGroup = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(re.ClassId)).Select(t => t.GroupNo).Max();
-                        if (stu.Count() >= maxGroup)
+                      
+                        if (stu.Count() >= clasRegis.NumberGroup)
                         {
                             return new ResponseDTO("Lớp " + clasRegis.ClassCode + " đã đủ sinh viên hỗ trợ", 400, false);
                         }

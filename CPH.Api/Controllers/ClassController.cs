@@ -1,6 +1,8 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
+using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Project;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,6 +53,19 @@ namespace CPH.Api.Controllers
                 {
                     return BadRequest(responseDTO);
                 }
+            }
+            return Ok(responseDTO);
+        }
+        [HttpPut("group-of-class")]
+        public async Task<IActionResult> DevideGroupOfClass([FromBody] DevideGroupOfClassDTO devideGroupOfClassDTO)
+        {
+
+            ResponseDTO responseDTO = await _classService.DevideGroupOfClass(devideGroupOfClassDTO);
+            if (responseDTO.IsSuccess == false)
+            {
+
+                return BadRequest(responseDTO);
+
             }
             return Ok(responseDTO);
         }
