@@ -11,7 +11,7 @@ namespace CPH.BLL.Interfaces
     public interface IClassService
     {
         Task<bool> CheckClassIdExist(Guid classId);
-        Task<ResponseDTO> DevideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO);
+        Task<ResponseDTO> DivideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO);
         Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
         Task<ResponseDTO> GetClassDetail(Guid classId);
     }

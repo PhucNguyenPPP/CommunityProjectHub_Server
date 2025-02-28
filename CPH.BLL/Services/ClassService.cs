@@ -43,7 +43,7 @@ namespace CPH.BLL.Services
             return true;
         }
 
-        public async Task<ResponseDTO> DevideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO)
+        public async Task<ResponseDTO> DivideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO)
         {
             var existed  = await CheckClassIdExist(devideGroupOfClassDTO.ClassId);  
             if(!existed)

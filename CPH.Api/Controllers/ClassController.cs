@@ -57,10 +57,10 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
         [HttpPut("group-of-class")]
-        public async Task<IActionResult> DevideGroupOfClass([FromBody] DevideGroupOfClassDTO devideGroupOfClassDTO)
+        public async Task<IActionResult> DivideGroupOfClass([FromBody] DevideGroupOfClassDTO divideGroupOfClassDTO)
         {
 
-            ResponseDTO responseDTO = await _classService.DevideGroupOfClass(devideGroupOfClassDTO);
+            ResponseDTO responseDTO = await _classService.DivideGroupOfClass(divideGroupOfClassDTO);
             if (responseDTO.IsSuccess == false)
             {
 
