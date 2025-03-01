@@ -638,7 +638,10 @@ namespace CPH.BLL.Services
             try
             {
                 var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
-
+                if (!project.Status.Equals(ProjectStatusConstant.Planning))
+                {
+                    return new ResponseDTO("Dự án hiện đang ở giai đoạn "+ project.Status.ToString()+" nên không thể chỉnh sửa", 400, false);
+                }
                 List<string> errors = new List<string>();
                 if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
                 {
