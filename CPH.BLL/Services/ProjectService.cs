@@ -73,7 +73,7 @@ namespace CPH.BLL.Services
                 Project project = _mapper.Map<Project>(projectDTO);
                 project.ProjectId = projectId;
                 project.NumberLesson = projectDTO.LessonList.Count;
-                project.Status = ProjectStatusConstant.UpComing;
+                project.Status = ProjectStatusConstant.Planning;
                 project.CreatedDate = DateTime.Now;
                 await _unitOfWork.Project.AddAsync(project);
                 for (int i = 0; i < projectDTO.LessonList.Count; i++)
