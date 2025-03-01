@@ -8,6 +8,7 @@ namespace CPH.Common.Constant
 {
     public class ProjectStatusConstant
     {
+        public const string Planning = "Lên kế hoạch";
         public const string UpComing = "Sắp diễn ra";
         public const string InProgress = "Đang diễn ra";
         public const string Completed = "Kết thúc";
