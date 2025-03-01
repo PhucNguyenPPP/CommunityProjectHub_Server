@@ -50,6 +50,7 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
+            
             var check = await CheckDivision(devideGroupOfClassDTO);
             if (!check.IsSuccess)
             {
@@ -103,7 +104,7 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Lớp thuộc dự án bị lỗi", 400, false);
             }
-            if(!pro.Status.Equals(ProjectStatusConstant.UpComing))
+            if(!pro.Status.Equals(ProjectStatusConstant.Planning))
             {
                 return new ResponseDTO("Dự án đã ở trạng thâi " +pro.Status.ToString(), 400, false);
             }
