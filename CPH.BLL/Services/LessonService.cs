@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lesson;
 using CPH.DAL.Entities;
@@ -116,6 +117,14 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Dự án không tồn tại", 404, false);
             }
+            else
+            {
+               var pro = (Project) project.Result;
+               if(pro.Status!=ProjectStatusConstant.Planning)
+                {
+                    return new ResponseDTO("Không thể cập nhật vì dự án có trạng thái: "+pro.Status.ToString(), 404, false);
+                }    
+            }    
             for (int i = 0; i < lessonOfProjectDTO.LessonOfProject.Count; i++)
             {
                 for (int j = i + 1; j < lessonOfProjectDTO.LessonOfProject.Count; j++)
