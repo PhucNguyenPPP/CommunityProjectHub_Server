@@ -115,20 +115,25 @@ namespace CPH.BLL.Services
         {
             List<string> listError = new List<string>();
 
-            var cl = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(registrationDTO.ClassId) && c.NumberGroup!=null);
+            var cl = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(registrationDTO.ClassId) && c.NumberGroup != null);
             if (cl == null)
             {
                 listError.Add("Lớp học hiện không thể đăng ký tham gia");
             }
             else
             {
-                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(cl.ProjectId) && p.Status.Equals(ProjectStatusConstant.UpComing));
+                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(cl.ProjectId));
                 if (project == null)
                 {
                     listError.Add("Dự án không tồn tại");
                 }
+
                 else
                 {
+                    if (!project.Status.Equals(ProjectStatusConstant.UpComing))
+                    {
+                        listError.Add("Không thể đăng ký vào lớp của dự án có trạng thái: "+project.Status.ToString());
+                    }
                     if (project.ApplicationStartDate > DateTime.Now || project.ApplicationEndDate < DateTime.Now)
                     {
                         listError.Add("Dự án hiện không trong thời gian đăng ký");
@@ -188,7 +193,7 @@ namespace CPH.BLL.Services
                                 }
                                 else if (acc.RoleId.Equals((int)RoleEnum.Student))
                                 {
-                                    
+
                                     var regisOfClass = _unitOfWork.Registration.GetAllByCondition(r => r.ClassId.Equals(registrationDTO.ClassId) && r.Status.Equals(RegistrationStatusConstant.Inspected));
                                     if (regisOfClass.Count() >= cl.NumberGroup)
                                     {
@@ -243,7 +248,7 @@ namespace CPH.BLL.Services
                     else if (acc.RoleId.Equals((int)RoleEnum.Student))
                     {
                         var stu = _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(re.ClassId));
-                      
+
                         if (stu.Count() >= clasRegis.NumberGroup)
                         {
                             return new ResponseDTO("Lớp " + clasRegis.ClassCode + " đã đủ sinh viên hỗ trợ", 400, false);
@@ -275,9 +280,9 @@ namespace CPH.BLL.Services
                 string messageNotification = null!;
                 if (answerRegistrationDTO.Type.Equals("Approve"))
                 {
-                    messageNotification = RegistrationNotification.AnswerRegistrationNotification("được duyệt",classRegistration,prjRegistration);
+                    messageNotification = RegistrationNotification.AnswerRegistrationNotification("được duyệt", classRegistration, prjRegistration);
                 }
-                else 
+                else
                 {
                     messageNotification = RegistrationNotification.AnswerRegistrationNotification("bị từ chối", classRegistration, prjRegistration);
                 }
@@ -310,7 +315,7 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Phần trả lời đơn đăng ký không hợp lệ", 400, false);
             }
-            var classOfRe = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId) && c.NumberGroup!=null);
+            var classOfRe = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId) && c.NumberGroup != null);
             if (classOfRe == null)
             {
                 return new ResponseDTO("Hiện không thể trả lời đơn đăng ký vào lớp này", 400, false);
