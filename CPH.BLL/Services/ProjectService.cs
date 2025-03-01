@@ -42,15 +42,19 @@ namespace CPH.BLL.Services
             try
             {
                 var project = await _unitOfWork.Project
-                    .GetByCondition(c => c.Status != ProjectStatusConstant.Cancelled && c.ProjectId.Equals(projectID));
-                /*
+                    .GetByCondition(c=>c.ProjectId.Equals(projectID));
+                /*c => c.Status != ProjectStatusConstant.Cancelled && c.Status!=ProjectStatusConstant.InProgress && c.Status!=ProjectStatusConstant.Completed && 
                                 var project = await _unitOfWork.Project
                                     .GetByCondition(c => c.ProjectId.Equals(projectID));*/
                 if (project == null)
                 {
                     return new ResponseDTO("Dự án cộng đồng không tồn tại", 404, false);
                 }
-                return new ResponseDTO("Dự án cộng đồng tồn tại", 200, true, project);
+                if (project.Status.Equals(ProjectStatusConstant.Planning) || project.Status.Equals(ProjectStatusConstant.UpComing))
+                {
+                    return new ResponseDTO("Dự án cộng đồng có thể huỷ", 200, true, project);
+                }
+                return new ResponseDTO("Dự án cộng đồng không thể huỷ", 400, false);
             }
             catch (Exception ex)
             {
