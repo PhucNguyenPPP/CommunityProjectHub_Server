@@ -1,4 +1,5 @@
-﻿using CPH.Common.DTO.WebSocket;
+﻿using CPH.Common.DTO.Message;
+using CPH.Common.DTO.WebSocket;
 using CPH.DAL.Entities;
 using Microsoft.AspNetCore.Http;
 using System.Net.WebSockets;
@@ -35,12 +36,13 @@ namespace CPH.BLL.Services
             _sockets.Remove(webSocket);
         }
 
-        public async Task BroadcastMessageAsync(Message model)
+        public async Task BroadcastMessageAsync(MessageResponseDTO model)
         {
             var messageObject = new MessageWebSocketDTO()
             {
                 MessageId = model.MessageId,
-                AccountId = model.AccountId,
+                SendAccountId = model.SendAccountId,
+                SendAccountName = model.SendAccountName,
                 ClassId = model.ClassId,
                 Content = model.Content,
                 CreatedDate = model.CreatedDate,

@@ -16,7 +16,8 @@ namespace CPH.Common.DTO.WebSocket
 
         public Guid ClassId { get; set; }
 
-        public Guid AccountId { get; set; }
+        public Guid SendAccountId { get; set; }
+        public string SendAccountName { get; set; }
         public string Type { get; set; } = null!;
     }
 }
