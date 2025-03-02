@@ -67,6 +67,7 @@ namespace CPH.Api.Profiles
             CreateMap<Class, GetAllClassOfProjectDTO>()
                 .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
                 .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
+                .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Email))
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                 .ReverseMap();
 
@@ -81,6 +82,8 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
                 .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                 .ForMember(dest => dest.ProjectTitle, opt => opt.MapFrom(src => src.Project.Title))
+                .ForMember(dest => dest.ProjectManagerId, opt => opt.MapFrom(src => src.Project.ProjectManagerId))
+                .ForMember(dest => dest.ProjectStatus, opt => opt.MapFrom(src => src.Project.Status))
                 .ReverseMap();
             CreateMap<Registration, SendRegistrationDTO>()
                .ReverseMap();

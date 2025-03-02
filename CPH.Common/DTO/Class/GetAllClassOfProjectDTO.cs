@@ -24,6 +24,8 @@ namespace CPH.Common.DTO.Class
 
         public string? LecturerPhone { get; set; }
 
+        public string? LecturerEmail { get; set; }
+
         public int LecturerSlotAvailable { get; set; } 
 
         public int? StudentSlotAvailable { get; set; }
