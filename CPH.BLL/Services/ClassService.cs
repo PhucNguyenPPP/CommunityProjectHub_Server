@@ -177,6 +177,7 @@ namespace CPH.BLL.Services
             var clas = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
                 .Include(c => c.Trainees)
                 .Include(c => c.Members)
+                .Include(c => c.Lecturer)
                 .Include(c => c.Project)
                 .FirstOrDefault();
             if (clas == null)
