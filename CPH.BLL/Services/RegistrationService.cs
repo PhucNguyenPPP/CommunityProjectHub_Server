@@ -243,6 +243,16 @@ namespace CPH.BLL.Services
                         {
                             clasRegis.LecturerId = re.AccountId;
                             _unitOfWork.Class.Update(clasRegis);
+                            ProjectLogging logging = new ProjectLogging()
+                            {
+                                ProjectNoteId = Guid.NewGuid(),
+                                ActionDate = DateTime.Now,
+                                ProjectId = clasRegis.ProjectId,
+                                ActionContent = $"{acc.FullName} đã trở thành giảng viên của lớp {clasRegis.ClassCode}",
+                                AccountId = acc.AccountId,
+
+                            };
+                            await _unitOfWork.ProjectLogging.AddAsync(logging);   
                         }
                     }
                     else if (acc.RoleId.Equals((int)RoleEnum.Student))
