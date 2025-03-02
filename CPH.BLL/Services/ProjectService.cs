@@ -630,7 +630,7 @@ namespace CPH.BLL.Services
                 return new ResponseDTO(ex.Message, 500, false);
             }
 
-         //   return new ResponseDTO("", 500, false);
+            //   return new ResponseDTO("", 500, false);
         }
 
         private async Task<ResponseDTO> CheckUpdateProject(UpdateProjectDTO projectDTO)
@@ -695,9 +695,9 @@ namespace CPH.BLL.Services
                     return new ResponseDTO("Người dùng không tồn tại", 400, false);
                 }
 
-                else if(role == RoleEnum.Student.ToString() || role == RoleEnum.Lecturer.ToString())
+                else if (role == RoleEnum.Student.ToString() || role == RoleEnum.Lecturer.ToString())
                 {
-                    if(role == RoleEnum.Lecturer.ToString())
+                    if (role == RoleEnum.Lecturer.ToString())
                     {
                         list = _unitOfWork.Project.GetAllByCondition(c => c.Status == ProjectStatusConstant.UpComing
                             && c.ProjectManagerId != userId
@@ -711,7 +711,7 @@ namespace CPH.BLL.Services
                     else
                     {
                         list = _unitOfWork.Project.GetAllByCondition(c => c.Status == ProjectStatusConstant.UpComing
-                            && !c.Classes.All(c=> c.NumberGroup == null)
+                            && !c.Classes.All(c => c.NumberGroup == null)
                             && !c.Classes.Any(cls => cls.Members != null && cls.Members.Any(m => m.AccountId == userId))
                             && c.Classes.Any(cls => cls.Members == null || cls.Members.Count() < cls.NumberGroup))
                             .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
@@ -833,6 +833,74 @@ namespace CPH.BLL.Services
             return await _unitOfWork.Project
                 .GetAllByCondition(p => p.StartDate <= today && p.Status.Equals(ProjectStatusConstant.UpComing))
                 .ToListAsync();
+        }
+
+        public async Task<ResponseDTO> UpdateProjectStatusUpcoming(Guid projectId)
+        {
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(c => c.Lessons)
+                .ThenInclude(c => c.LessonClasses)
+                .Include(c => c.Classes)
+                .FirstOrDefault();
+
+            if (project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            if (project.Status != ProjectStatusConstant.Planning)
+            {
+                return new ResponseDTO("Dự án phải đang ở trạng thái Lên kế hoạch", 400, false);
+            }
+
+            if (project.ProjectManagerId == null)
+            {
+                return new ResponseDTO("Dự án chưa có người quản lý", 400, false);
+            }
+
+            var lessonIds = project.Lessons.Select(l => l.LessonId).ToList();
+            var filteredLessonClasses = _unitOfWork.LessonClass
+                .GetAllByCondition(lc => lessonIds.Contains(lc.LessonId))
+                .Include(c => c.Class)
+                .ToList();
+
+            foreach (var i in filteredLessonClasses)
+            {
+                if (i.StartTime == null || i.EndTime == null || i.Room == null)
+                {
+                    return new ResponseDTO($"Lớp {i.Class.ClassCode} chưa được xếp lịch", 400, false);
+                }
+            }
+
+            var classList = project.Classes.ToList();
+            foreach(var i in classList)
+            {
+                if(i.NumberGroup == null)
+                {
+                    return new ResponseDTO($"Lớp {i.ClassCode} chưa được tạo nhóm", 400, false);
+                }
+            }
+
+            if(project.StartDate < DateTime.Now)
+            {
+                return new ResponseDTO("Đã quá ngày bắt đầu của dự án", 400, false);
+            }
+
+            if (project.ApplicationStartDate < DateTime.Now)
+            {
+                return new ResponseDTO("Đã quá ngày bắt đầu mở đăng ký của dự án", 400, false);
+            }
+
+            project.Status = ProjectStatusConstant.UpComing;
+            _unitOfWork.Project.Update(project);
+
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Dự án đã chuyển sang giai đoạn Sắp diễn ra", 200, true);
+            }
+            return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
         }
 
     }

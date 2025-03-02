@@ -149,5 +149,16 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpPut("to-up-coming-status")]
+        public async Task<IActionResult> UpdateProjectStatusUpcoming(Guid projectId)
+        {
+            ResponseDTO responseDTO = await _projectService.UpdateProjectStatusUpcoming(projectId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 }

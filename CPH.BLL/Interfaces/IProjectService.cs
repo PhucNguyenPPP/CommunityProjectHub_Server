@@ -21,5 +21,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> UpdateProject(UpdateProjectDTO projectDTO);
         Task<ResponseDTO> GetAvailableProject(Guid userId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder);
         Task UpdateProjectsStatusToInProgress();
+        Task <ResponseDTO> UpdateProjectStatusUpcoming(Guid projectId);
     }
 }
