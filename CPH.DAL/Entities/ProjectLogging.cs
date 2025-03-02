@@ -3,13 +3,15 @@ using System.Collections.Generic;
 
 namespace CPH.DAL.Entities;
 
-public partial class ProjectNote
+public partial class ProjectLogging
 {
     public Guid ProjectNoteId { get; set; }
 
-    public DateTime ExitedDate { get; set; }
+    public DateTime ActionDate { get; set; }
 
-    public string Reason { get; set; } = null!;
+    public string ActionContent { get; set; } = null!;
+
+    public string? NoteContent { get; set; }
 
     public Guid AccountId { get; set; }
 
