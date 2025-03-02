@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Project;
@@ -82,6 +83,16 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> CheckValidationUpdateLessonClass(Guid projectId, List<UpdateLessonClassDTO> updateLessonClassDTOs)
         {
+            var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).FirstOrDefault();
+            if (project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+            else if(project.Status != ProjectStatusConstant.Planning)
+            {
+                return new ResponseDTO("Trạng thái dự án không khả dụng để chỉnh sửa", 400, false);
+            }
+
             int totalProjectLesson = _unitOfWork.Lesson.GetAllByCondition(c => c.ProjectId == projectId).Count();
             if (updateLessonClassDTOs.Count() < totalProjectLesson || updateLessonClassDTOs.Count() > totalProjectLesson)
             {
