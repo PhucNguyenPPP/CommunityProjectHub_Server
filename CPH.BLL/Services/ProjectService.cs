@@ -164,6 +164,20 @@ namespace CPH.BLL.Services
                 }
                 */
                 await _unitOfWork.Trainee.AddRangeAsync(trainees);
+                if (projectDTO.ProjectManagerId != null)
+                {
+                    var projectManager = await _unitOfWork.Account.GetByCondition(a => a.AccountId == projectDTO.ProjectManagerId && a.RoleId.Equals((int)RoleEnum.Lecturer));
+                    ProjectLogging logging = new ProjectLogging()
+                    {
+                        ProjectNoteId = Guid.NewGuid(),
+                        ActionDate = DateTime.Now,
+                        ProjectId = projectId,
+                        ActionContent = $"{projectManager.FullName} được bổ nhiệm thành quản lý của dự án {projectDTO.Title}",
+                        AccountId = (Guid)projectDTO.ProjectManagerId,
+
+                    };
+                    await _unitOfWork.ProjectLogging.AddAsync(logging);
+                }
                 var r = await _unitOfWork.SaveChangeAsync();
                 if (!r)
                 {
