@@ -35,7 +35,7 @@ public partial class Project
 
     public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
 
-    public virtual Account? ProjectManager { get; set; }
+    public virtual ICollection<ProjectLogging> ProjectLoggings { get; set; } = new List<ProjectLogging>();
 
-    public virtual ICollection<ProjectNote> ProjectNotes { get; set; } = new List<ProjectNote>();
+    public virtual Account? ProjectManager { get; set; }
 }
