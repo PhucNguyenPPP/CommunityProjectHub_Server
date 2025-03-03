@@ -9,21 +9,21 @@ namespace CPH.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MemberController : ControllerBase
+    public class ProjectLoggingController : ControllerBase
     {
-        private readonly IMemberService _memberService;
-        public MemberController(IMemberService member)
+        private readonly IProjectLoggingService _projectLoggingService;
+        public ProjectLoggingController(IProjectLoggingService projectLoggingService)
         {
-            _memberService = member;
+            _projectLoggingService = projectLoggingService;
         }
 
-        [HttpGet("all-member-of-project")]
-        public async Task<IActionResult> GetAllMemberProject([FromQuery][Required] Guid projectId,
+        [HttpGet("all-project-logging")]
+        public async Task<IActionResult> GetAllProjectLogging([FromQuery][Required] Guid projectId,
                                                                 [FromQuery] string? searchValue,
                                                                 [FromQuery] int? pageNumber,
                                                                 [FromQuery] int? rowsPerPage)
         {
-            ResponseDTO responseDTO = await _memberService.GetAllMemberOfProject(projectId, searchValue, pageNumber, rowsPerPage);
+            ResponseDTO responseDTO = await _projectLoggingService.GetAllProjectLogging(projectId, searchValue, pageNumber, rowsPerPage);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)
@@ -37,17 +37,5 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
-
-        [HttpDelete("member")]
-        public async Task<IActionResult> RemoveMemberFromProject(Guid memberId)
-        {
-            var result = await _memberService.RemoveMemberFromProject(memberId);
-            if (result.IsSuccess)
-            {
-                return Ok(result);
-            }
-            return BadRequest(result);
-        }
-
     }
 }
