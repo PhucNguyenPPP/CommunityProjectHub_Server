@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using AutoMapper.Execution;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
@@ -13,6 +14,7 @@ using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.Enum;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.AspNetCore.Components.Forms;
@@ -30,11 +32,14 @@ namespace CPH.BLL.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IAccountService _accountService;
-        public ProjectService(IUnitOfWork unitOfWork, IMapper mapper, IAccountService accountService)
+        private readonly INotificationService _notificationService;
+        public ProjectService(IUnitOfWork unitOfWork, IMapper mapper, IAccountService accountService,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _accountService = accountService;
+            _notificationService = notificationService;
         }
 
         public async Task<ResponseDTO> CheckProjectExisted(Guid projectID)
@@ -957,6 +962,10 @@ namespace CPH.BLL.Services
             }
 
             project.ProjectManagerId = accountId;
+
+            var messageNotification = AssignPMToProjectNotification.SendAssignPMToProjectNotification(project.Title);
+            await _notificationService.CreateNotification(accountId, messageNotification);
+
             ProjectLogging logging = new ProjectLogging()
             {
                 ProjectNoteId = Guid.NewGuid(),
