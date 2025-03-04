@@ -636,7 +636,7 @@ namespace CPH.BLL.Services
 
                        }*/
                 _unitOfWork.Project.Update(project);
-                var updated = await _unitOfWork.SaveChangeAsync();
+                var updated = await _unitOfWork.SaveChangeAsync();               
                 if (updated == false)
                 {
                     return new ResponseDTO("Chỉnh sửa thất bại", 500, false);

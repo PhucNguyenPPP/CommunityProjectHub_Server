@@ -69,5 +69,19 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+        [HttpPut("updated-class")]
+        public async Task<IActionResult> UpdateClass([FromBody] UpdateClassDTO updateClassDTO)
+        {
+
+            ResponseDTO responseDTO = await _classService.UpdateClass(updateClassDTO);
+            if (responseDTO.IsSuccess == false)
+            {
+
+                return BadRequest(responseDTO);
+
+            }
+            return Ok(responseDTO);
+        }
     }
+
 }
