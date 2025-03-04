@@ -11,9 +11,9 @@ namespace CPH.BLL.Interfaces
     public interface ILecturerService
     {
         List<LecturerResponseDTO> SearchLecturer(string? searchValue);
-
         Task<ResponseDTO> GetAllLecturerOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
         Task<ResponseDTO> RemoveLecturerFromProject(Guid lecturerId, Guid classId);
+        List<LecturerResponseDTO> SearchLecturerForAssigningPM(string? searchValue, Guid projectId);
 
     }
 }

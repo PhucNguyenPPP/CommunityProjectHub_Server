@@ -924,5 +924,56 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
         }
 
+        public async Task<ResponseDTO> AssignPMToProject(Guid projectId, Guid accountId)
+        {
+            var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId)
+                .FirstOrDefault();
+            if(project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            var projectManager = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == accountId)
+                .FirstOrDefault();
+
+            if(projectManager == null)
+            {
+                return new ResponseDTO("Giảng viên không tồn tại", 400, false);
+            }
+
+            if(projectManager.RoleId != (int)RoleEnum.Lecturer)
+            {
+                return new ResponseDTO("Chỉ giảng viên mới có thể được bổ nhiệm làm quản lý dự án", 400, false);
+            }
+
+            if(project.Status == ProjectStatusConstant.Completed || project.Status == ProjectStatusConstant.Cancelled)
+            {
+                return new ResponseDTO("Dự án đã kết thúc", 400, false);
+            }
+
+            if(project.ProjectManagerId == accountId)
+            {
+                return new ResponseDTO("Giảng viên được chọn đang là quản lý của dự án", 400, false);
+            }
+
+            project.ProjectManagerId = accountId;
+            ProjectLogging logging = new ProjectLogging()
+            {
+                ProjectNoteId = Guid.NewGuid(),
+                ActionDate = DateTime.Now,
+                ProjectId = projectId,
+                ActionContent = $"{projectManager.FullName} được bổ nhiệm thành quản lý của dự án {project.Title}",
+                AccountId = accountId,
+            };
+            _unitOfWork.Project.Update(project);
+            await _unitOfWork.ProjectLogging.AddAsync(logging);
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Bổ nhiệm quản lý dự án thành công", 200, true);
+            }
+            return new ResponseDTO("Bổ nhiệm quản lý dự án thất bại", 400, false);
+        }
+
     }
 }

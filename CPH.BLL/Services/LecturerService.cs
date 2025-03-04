@@ -148,5 +148,38 @@ namespace CPH.BLL.Services
             }
 
         }
+
+        public List<LecturerResponseDTO> SearchLecturerForAssigningPM(string? searchValue, Guid projectId)
+        {
+            if (searchValue.IsNullOrEmpty())
+            {
+                return new List<LecturerResponseDTO>();
+            }
+
+            var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).FirstOrDefault();
+            if (project == null)
+            {
+                return new List<LecturerResponseDTO>();
+            }
+
+            List<Account> searchedList = new List<Account>();
+            if (project.ProjectManagerId == null)
+            {
+                searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+                || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+                || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Lecturer).ToList();
+
+            }
+            else
+            {
+                searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+               || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+               || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Lecturer && c.AccountId != project.ProjectManagerId).ToList();
+            }
+
+
+            var mappedSearchedList = _mapper.Map<List<LecturerResponseDTO>>(searchedList);
+            return mappedSearchedList;
+        }
     }
 }

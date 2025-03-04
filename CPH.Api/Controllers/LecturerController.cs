@@ -62,5 +62,19 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpGet("search-lecturer-assigning-pm")]
+        public IActionResult SearchLecturerForAssigningPM(string? searchValue, Guid projectId)
+        {
+            var result = _lecturerService.SearchLecturerForAssigningPM(searchValue, projectId);
+            if (result.Count > 0)
+            {
+                return Ok(new ResponseDTO("Tìm kiếm giảng viên thành công", 200, true, result));
+            }
+            else
+            {
+                return NotFound(new ResponseDTO("Không tìm thấy giảng viên", 404, false));
+            }
+        }
     }
 }

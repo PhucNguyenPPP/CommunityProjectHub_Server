@@ -121,6 +121,7 @@ namespace CPH.Api.Profiles
 
             CreateMap<ProjectLogging, GetAllProjectLoggingDTO>()
                 .ReverseMap();
+            CreateMap<Account, MemberResponseDTO>().ReverseMap();
         }
     }
 }
