@@ -932,6 +932,7 @@ namespace CPH.BLL.Services
         public async Task<ResponseDTO> AssignPMToProject(Guid projectId, Guid accountId)
         {
             var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(c => c.ProjectManager)
                 .FirstOrDefault();
             if(project == null)
             {
@@ -961,12 +962,29 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Giảng viên được chọn đang là quản lý của dự án", 400, false);
             }
 
-            project.ProjectManagerId = accountId;
+            List<ProjectLogging> projectLoggings = new List<ProjectLogging>();
+
+            if(project.ProjectManagerId != null)
+            {
+                var messageNotificationRemovePM = RemovePMFromProjectNotification.SendRemovePMFromProjectNotification(project.Title);
+                await _notificationService.CreateNotification((Guid)project.ProjectManagerId, messageNotificationRemovePM);
+
+                ProjectLogging loggingRemovePM = new ProjectLogging()
+                {
+                    ProjectNoteId = Guid.NewGuid(),
+                    ActionDate = DateTime.Now,
+                    ProjectId = projectId,
+                    ActionContent = $"{project.ProjectManager!.FullName} không còn là quản lý của dự án {project.Title}",
+                    AccountId = (Guid)project.ProjectManagerId,
+                };
+                projectLoggings.Add(loggingRemovePM);
+            }
+
 
             var messageNotification = AssignPMToProjectNotification.SendAssignPMToProjectNotification(project.Title);
             await _notificationService.CreateNotification(accountId, messageNotification);
 
-            ProjectLogging logging = new ProjectLogging()
+            ProjectLogging loggingAssignPM = new ProjectLogging()
             {
                 ProjectNoteId = Guid.NewGuid(),
                 ActionDate = DateTime.Now,
@@ -974,8 +992,12 @@ namespace CPH.BLL.Services
                 ActionContent = $"{projectManager.FullName} được bổ nhiệm thành quản lý của dự án {project.Title}",
                 AccountId = accountId,
             };
+            projectLoggings.Add(loggingAssignPM);
+
+            await _unitOfWork.ProjectLogging.AddRangeAsync(projectLoggings);
+
+            project.ProjectManagerId = accountId;
             _unitOfWork.Project.Update(project);
-            await _unitOfWork.ProjectLogging.AddAsync(logging);
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
             {
