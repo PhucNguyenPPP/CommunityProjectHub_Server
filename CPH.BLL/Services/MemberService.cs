@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
+using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
@@ -115,7 +117,7 @@ namespace CPH.BLL.Services
             _unitOfWork.Member.Delete(member);
 
             //Create notification
-            
+
             var classRemove = _unitOfWork.Class
                 .GetAllByCondition(c => c.ClassId == member.ClassId)
                 .Include(c => c.Project)
@@ -131,11 +133,26 @@ namespace CPH.BLL.Services
             await _notificationService.CreateNotification(accountId, messageNotification);
 
             var result = await _unitOfWork.SaveChangeAsync();
-            if(result)
+            if (result)
             {
                 return new ResponseDTO("Xóa sinh viên thành công", 200, true, null);
             }
             return new ResponseDTO("Xóa sinh viên thất bại", 500, false, null);
+        }
+
+        public List<MemberResponseDTO> SearchStudentForAssigningToClass(string? searchValue)
+        {
+            if (searchValue.IsNullOrEmpty())
+            {
+                return new List<MemberResponseDTO>();
+            }
+
+            var searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+            || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+            || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Student).ToList();
+
+            var mappedSearchedList = _mapper.Map<List<MemberResponseDTO>>(searchedList);
+            return mappedSearchedList;
         }
     }
 }
