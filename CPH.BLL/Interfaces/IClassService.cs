@@ -14,5 +14,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> DivideGroupOfClass(DevideGroupOfClassDTO devideGroupOfClassDTO);
         Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
         Task<ResponseDTO> GetClassDetail(Guid classId);
+        Task<ResponseDTO> UpdateClass(UpdateClassDTO updateClassDTO);
     }
 }
