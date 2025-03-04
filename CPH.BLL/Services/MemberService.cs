@@ -108,7 +108,11 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> RemoveMemberFromProject(Guid memberId)
         {
-            var member = await _unitOfWork.Member.GetByCondition(c => c.MemberId == memberId);
+            var member = _unitOfWork.Member.GetAllByCondition(c => c.MemberId == memberId)
+                .Include(c => c.Account)
+                .Include(c => c.Class)
+                .ThenInclude(c => c.Project)
+                .FirstOrDefault();
             if (member == null)
             {
                 return new ResponseDTO("Sinh viên không tồn tại", 400, false, null);
@@ -131,6 +135,17 @@ namespace CPH.BLL.Services
             var messageNotification = RemoveMemberNotification.SendRemovedNotification(classRemove!.ClassCode, classRemove!.Project.Title);
             var accountId = member.AccountId;
             await _notificationService.CreateNotification(accountId, messageNotification);
+
+            ProjectLogging logging = new ProjectLogging()
+            {
+                ProjectNoteId = Guid.NewGuid(),
+                ActionDate = DateTime.Now,
+                ProjectId = member.Class.Project.ProjectId,
+                ActionContent = $"{member.Account.FullName} không còn là sinh viên hỗ trợ lớp {member.Class.ClassCode} của dự án {member.Class.Project.Title}",
+                AccountId = accountId,
+            };
+
+            await _unitOfWork.ProjectLogging.AddAsync(logging);
 
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
