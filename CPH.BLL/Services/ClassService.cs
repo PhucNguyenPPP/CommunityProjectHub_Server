@@ -8,6 +8,7 @@ using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
 using CPH.Common.Enum;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -27,11 +28,13 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public ClassService(IUnitOfWork unitOfWork, IMapper mapper)
+        public ClassService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> CheckClassIdExist(Guid classId)
@@ -229,11 +232,11 @@ namespace CPH.BLL.Services
             var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(updateClassDTO.ClassId));
             var acc = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(updateClassDTO.AccountId));
             if (updateClassDTO.RoleId == (int)RoleEnum.Student)
-            {               
+            {
                 var numOfGroup = c.NumberGroup;
                 for (int i = 1; i <= numOfGroup; i++)
                 {
-                    var mem = await _unitOfWork.Member.GetByCondition(m => m.ClassId.Equals(updateClassDTO.ClassId)&&m.GroupSupportNo.Equals(i));
+                    var mem = await _unitOfWork.Member.GetByCondition(m => m.ClassId.Equals(updateClassDTO.ClassId) && m.GroupSupportNo.Equals(i));
                     if (mem == null)
                     {
                         Member member = new Member()
@@ -273,6 +276,21 @@ namespace CPH.BLL.Services
                 };
                 await _unitOfWork.ProjectLogging.AddAsync(logging);
             }
+            //Create notification
+            var sender = await _unitOfWork.Account.GetByCondition(c => c.AccountId == updateClassDTO.AccountId);
+            if (updateClassDTO.RoleId.Equals((int)RoleEnum.Student))
+            {
+                var messageNotification = UpdateClassNotification.SendUpdateClassNotification("sinh viên hỗ trợ", c.ClassCode, c.Project.Title);
+                await _notificationService.CreateNotification(updateClassDTO.AccountId, messageNotification);
+            }
+            else
+            {
+                var messageNotification = UpdateClassNotification.SendUpdateClassNotification("giảng viên", c.ClassCode, c.Project.Title);
+                await _notificationService.CreateNotification(updateClassDTO.AccountId, messageNotification);
+            }
+
+            //End of create notification
+
             var ans = await _unitOfWork.SaveChangeAsync();
             if (ans)
             {
@@ -295,10 +313,10 @@ namespace CPH.BLL.Services
                 errs.Add("Không thể phân công vào lớp chưa chia nhóm");
             }
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(clas.ProjectId));
-            if(pro.Status!= ProjectStatusConstant.UpComing && pro.Status != ProjectStatusConstant.InProgress)
+            if (pro.Status != ProjectStatusConstant.UpComing && pro.Status != ProjectStatusConstant.InProgress)
             {
-                errs.Add("Lớp thuộc dự án có trạng thái "+pro.Status.ToString()+" nên không thể phân công");
-            } 
+                errs.Add("Lớp thuộc dự án có trạng thái " + pro.Status.ToString() + " nên không thể phân công");
+            }
             var acc = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(updateClassDTO.AccountId));
             if (acc == null)
             {
@@ -308,37 +326,43 @@ namespace CPH.BLL.Services
             {
                 errs.Add("Tài khoản này không phù hợp với vị trí cần thay thế");
             }
-            if(updateClassDTO.RoleId.Equals((int)RoleEnum.Lecturer))
+            if (updateClassDTO.RoleId.Equals((int)RoleEnum.Lecturer))
             {
                 if (clas.LecturerId.HasValue)
                 {
                     errs.Add("Lớp không còn trống slot dành cho giảng viên");
                 }
+                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) && p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
                 var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
-                               (r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected))).Select(r => r.ClassId).ToList();
-                if (classOfAcc != null)
+                               r.Status.Equals(RegistrationStatusConstant.Processing)).Select(r => r.ClassId).ToList();
+                var cla = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId.Equals(updateClassDTO.AccountId)).Select(c => c.ClassId).ToList();
+                if (cla.Count > 0)
+                {
+                    classOfAcc.AddRange(cla);
+                }
+                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
+                if (classActivate != null)
                 {
                     var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
-                    if (classOfAcc != null)
+
+                    for (int i = 0; i < classActivate.Count(); i++)
                     {
-                        for (int i = 0; i < classOfAcc.Count(); i++)
+                        var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
+                        for (int j = 0; j < lscOfAccRegistered.Count(); j++)
                         {
-                            var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classOfAcc[i])).ToList(); //đã đky rồi
-                            for (int j = 0; j < lscOfAccRegistered.Count(); j++)
+                            if (lscOfAccRegistered[j].StartTime != null && lscOfAccRegistered[j].EndTime != null)
                             {
-                                if (lscOfAccRegistered[j].StartTime != null && lscOfAccRegistered[j].EndTime != null)
+                                var checklsc = lscToRegister.Where(t => !(t.StartTime < lscOfAccRegistered[j].StartTime
+                                && t.EndTime < lscOfAccRegistered[j].StartTime || t.StartTime > lscOfAccRegistered[j].EndTime && t.EndTime > lscOfAccRegistered[j].EndTime) && t.StartTime != null && t.EndTime != null);
+                                if (checklsc.Count() > 0)
                                 {
-                                    var checklsc = lscToRegister.Where(t => !(t.StartTime < lscOfAccRegistered[j].StartTime
-                                    && t.EndTime < lscOfAccRegistered[j].StartTime || t.StartTime > lscOfAccRegistered[j].EndTime && t.EndTime > lscOfAccRegistered[j].EndTime));
-                                    if (checklsc.Count() > 0)
-                                    {
-                                        var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(lscOfAccRegistered[j].ClassId));
-                                        var l = await _unitOfWork.Lesson.GetByCondition(c => c.LessonId.Equals(lscOfAccRegistered[j].LessonId));
-                                        errs.Add("Lớp học trùng lịch với buổi học " + l.LessonNo.ToString() + " của lớp " + c.ClassCode + " bạn đăng ký trước đó");
-                                    }
+                                    var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(lscOfAccRegistered[j].ClassId));
+                                    var l = await _unitOfWork.Lesson.GetByCondition(c => c.LessonId.Equals(lscOfAccRegistered[j].LessonId));
+                                    errs.Add("Lớp học trùng lịch với buổi học " + l.LessonNo.ToString() + " của lớp " + c.ClassCode + " mà " + acc.FullName + " đăng ký trước đó");
                                 }
                             }
                         }
+
                     }
                 }
             }
@@ -349,8 +373,10 @@ namespace CPH.BLL.Services
                 {
                     errs.Add("Lớp không còn trống slot dành cho sinh viên hỗ trợ");
                 }
+                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) && p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
                 var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
-                                (r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected))).Select(r => r.ClassId).ToList();
+                               r.Status.Equals(RegistrationStatusConstant.Processing)).Select(r => r.ClassId).ToList();
+                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
                 if (classOfAcc != null)
                 {
                     var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
@@ -369,7 +395,7 @@ namespace CPH.BLL.Services
                                     {
                                         var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(lscOfAccRegistered[j].ClassId));
                                         var l = await _unitOfWork.Lesson.GetByCondition(c => c.LessonId.Equals(lscOfAccRegistered[j].LessonId));
-                                        errs.Add("Lớp học trùng lịch với buổi học " + l.LessonNo.ToString() + " của lớp " + c.ClassCode + " bạn đăng ký trước đó");
+                                        errs.Add("Lớp học trùng lịch với buổi học " + l.LessonNo.ToString() + " của lớp " + c.ClassCode + " mà " + acc.FullName + " đăng ký trước đó");
                                     }
                                 }
                             }
@@ -377,9 +403,9 @@ namespace CPH.BLL.Services
                     }
                 }
             }
-            if(errs.Count>0)
+            if (errs.Count > 0)
             {
-                return new ResponseDTO("Thông tin cần cập nhật không hợp lệ",400,false,errs);   
+                return new ResponseDTO("Thông tin cần cập nhật không hợp lệ", 400, false, errs);
             }
             return new ResponseDTO("Thông tin cần cập nhật hợp lệ", 200, true);
         }
