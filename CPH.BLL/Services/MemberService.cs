@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
+using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
@@ -106,7 +108,11 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> RemoveMemberFromProject(Guid memberId)
         {
-            var member = await _unitOfWork.Member.GetByCondition(c => c.MemberId == memberId);
+            var member = _unitOfWork.Member.GetAllByCondition(c => c.MemberId == memberId)
+                .Include(c => c.Account)
+                .Include(c => c.Class)
+                .ThenInclude(c => c.Project)
+                .FirstOrDefault();
             if (member == null)
             {
                 return new ResponseDTO("Sinh viên không tồn tại", 400, false, null);
@@ -115,7 +121,7 @@ namespace CPH.BLL.Services
             _unitOfWork.Member.Delete(member);
 
             //Create notification
-            
+
             var classRemove = _unitOfWork.Class
                 .GetAllByCondition(c => c.ClassId == member.ClassId)
                 .Include(c => c.Project)
@@ -130,12 +136,38 @@ namespace CPH.BLL.Services
             var accountId = member.AccountId;
             await _notificationService.CreateNotification(accountId, messageNotification);
 
+            ProjectLogging logging = new ProjectLogging()
+            {
+                ProjectNoteId = Guid.NewGuid(),
+                ActionDate = DateTime.Now,
+                ProjectId = member.Class.Project.ProjectId,
+                ActionContent = $"{member.Account.FullName} không còn là sinh viên hỗ trợ lớp {member.Class.ClassCode} của dự án {member.Class.Project.Title}",
+                AccountId = accountId,
+            };
+
+            await _unitOfWork.ProjectLogging.AddAsync(logging);
+
             var result = await _unitOfWork.SaveChangeAsync();
-            if(result)
+            if (result)
             {
                 return new ResponseDTO("Xóa sinh viên thành công", 200, true, null);
             }
             return new ResponseDTO("Xóa sinh viên thất bại", 500, false, null);
+        }
+
+        public List<MemberResponseDTO> SearchStudentForAssigningToClass(string? searchValue)
+        {
+            if (searchValue.IsNullOrEmpty())
+            {
+                return new List<MemberResponseDTO>();
+            }
+
+            var searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+            || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+            || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Student).ToList();
+
+            var mappedSearchedList = _mapper.Map<List<MemberResponseDTO>>(searchedList);
+            return mappedSearchedList;
         }
     }
 }

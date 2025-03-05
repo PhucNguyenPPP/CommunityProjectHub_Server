@@ -49,5 +49,18 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [HttpGet("search-student-assigning-to-class")]
+        public IActionResult SearchStudentForAssigningToClass(string? searchValue)
+        {
+            var result = _memberService.SearchStudentForAssigningToClass(searchValue);
+            if (result.Count > 0)
+            {
+                return Ok(new ResponseDTO("Tìm kiếm sinh viên thành công", 200, true, result));
+            }
+            else
+            {
+                return NotFound(new ResponseDTO("Không tìm thấy sinh viên", 404, false));
+            }
+        }
     }
 }

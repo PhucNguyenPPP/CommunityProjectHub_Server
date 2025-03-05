@@ -160,5 +160,16 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(responseDTO);
         }
+
+        [HttpPut("assign-pm-to-project")]
+        public async Task<IActionResult> AssignPMToProject(Guid projectId, Guid accountId)
+        {
+            ResponseDTO responseDTO = await _projectService.AssignPMToProject(projectId, accountId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 }
