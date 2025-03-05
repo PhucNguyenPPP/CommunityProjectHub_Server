@@ -258,6 +258,7 @@ namespace CPH.BLL.Services
 
                         };
                         await _unitOfWork.ProjectLogging.AddAsync(logging);
+                        break;
                     }
                 }
             }
