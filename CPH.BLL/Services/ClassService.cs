@@ -374,13 +374,13 @@ namespace CPH.BLL.Services
                 {
                     errs.Add("Lớp không còn trống slot dành cho sinh viên hỗ trợ");
                 }
-                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) && p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
-                var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
+                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) || p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
+                List<Guid> classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
                                r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected)).Select(r => r.ClassId).ToList();
-                var mem = _unitOfWork.Member.GetAllByCondition(m => m.AccountId.Equals(updateClassDTO.AccountId)).Select(m => m.ClassId);
+                var mem = _unitOfWork.Member.GetAllByCondition(m => m.AccountId.Equals(updateClassDTO.AccountId)).Select(m => m.ClassId).ToList();
                 classOfAcc.AddRange(mem);
-                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId
-                                                                                                     ).ToList();
+                var classAct = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId)).ToList();
+                var classActivate = classAct.Where(c=> classOfAcc.Contains(c.ClassId)).Select(c=> c.ClassId).ToList();
                 var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
                 if (classActivate != null)
                 {
