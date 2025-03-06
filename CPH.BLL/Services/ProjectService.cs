@@ -484,6 +484,8 @@ namespace CPH.BLL.Services
                 .Include(cl => cl.Classes)
                     .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)
+                    .ThenInclude(c => c.Members)
+                .Include(cl => cl.Classes)
                     .ThenInclude(tc => tc.Lecturer)
                 .Include(l => l.Lessons)
                     .ThenInclude(lcl => lcl.LessonClasses)
@@ -494,6 +496,27 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Không tìm thấy dự án tương ứng", 400, false);
             }
             var projectDTO = _mapper.Map<ProjectDetailDTO>(project);
+
+            var classList = project.Classes.ToList();
+            foreach (var classItem in classList)
+            {
+                if (classItem.LecturerId != null)
+                {
+                    if (!projectDTO.LecturerIds.Contains((Guid)classItem.LecturerId))
+                    {
+                        projectDTO.LecturerIds.Add((Guid)classItem.LecturerId);
+                    }
+                }
+                var memberList = classItem.Members.ToList();
+                foreach (var member in memberList)
+                {
+                    if (!projectDTO.MemberIds.Contains(member.AccountId))
+                    {
+                        projectDTO.MemberIds.Add(member.AccountId);
+                    }
+                }
+            }
+
             return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, projectDTO);
         }
 
