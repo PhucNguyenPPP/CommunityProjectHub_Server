@@ -23,9 +23,9 @@ namespace CPH.Common.DTO.Project
         public DateTime EndDate { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập địa điểm của dự án")]
         public string Address { get; set; } = null!; //khong duoc nhieu hon so luong hoc vien
-        [Required(ErrorMessage = "Vui lòng nhập số lượng học viên của mỗi nhóm")]
+       /* [Required(ErrorMessage = "Vui lòng nhập số lượng học viên của mỗi nhóm")]
         [Range(1, int.MaxValue, ErrorMessage = "Số lượng học viên/nhóm ít nhất bằng 1")]
-        public int NumberTraineeEachGroup { get; set; }
+        public int NumberTraineeEachGroup { get; set; }*/
         [Required(ErrorMessage = "Vui lòng nhập ngày bắt đầu ứng tuyển của dự án")]
         public DateTime ApplicationStartDate { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập ngày hết hạn ứng tuyển của dự án")]

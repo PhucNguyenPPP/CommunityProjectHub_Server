@@ -19,9 +19,13 @@ namespace CPH.Common.DTO.Class
 
         public Guid ProjectId { get; set; }
 
+        public Guid ProjectManagerId { get; set; }
+
         public string? ProjectTitle { get; set; }
 
-        public Guid LecturerId { get; set; }
+        public string? ProjectStatus { get; set; }
+
+        public Guid? LecturerId { get; set; }
 
         public string? LecturerName { get; set; }
 
@@ -29,7 +33,7 @@ namespace CPH.Common.DTO.Class
 
         public int LecturerSlotAvailable { get; set; }
 
-        public int StudentSlotAvailable { get; set; }
+        public int? StudentSlotAvailable { get; set; }
 
         public int TotalTrainee { get; set; }
 

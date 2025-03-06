@@ -7,7 +7,7 @@ public partial class Trainee
 {
     public Guid TraineeId { get; set; }
 
-    public bool? Score { get; set; }
+    public decimal? Score { get; set; }
 
     public int? GroupNo { get; set; }
 

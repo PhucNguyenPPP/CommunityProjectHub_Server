@@ -12,6 +12,6 @@ namespace CPH.BLL.Interfaces
     {
         Task<ResponseDTO> CreateMessage(MessageDTO newMessage);
         Task<ResponseDTO> GetMessages(Guid accountId, Guid classId);
-        List<ClassChatDTO?> GetAllClassChat(Guid userId);
+        Task<List<ClassChatDTO?>> GetAllClassChat(string? searchValue, Guid userId);
     }
 }

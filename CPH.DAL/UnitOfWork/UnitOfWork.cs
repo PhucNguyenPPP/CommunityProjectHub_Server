@@ -27,6 +27,7 @@ namespace CPH.DAL.UnitOfWork
             Material = new MaterialRepository(_context);
             Member = new MemberRepository(_context);
             Registration = new RegistrationRepository(_context);
+            ProjectLogging = new ProjectLoggingRepository(_context);
         }
 
 
@@ -53,5 +54,6 @@ namespace CPH.DAL.UnitOfWork
         public IMemberRepository Member { get; private set; }
 
         public IRegistrationRepository Registration { get; private set; }
+        public IProjectLoggingRepository ProjectLogging { get; private set; }
     }
 }

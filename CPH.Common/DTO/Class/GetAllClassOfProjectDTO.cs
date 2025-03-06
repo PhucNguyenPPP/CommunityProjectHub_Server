@@ -18,15 +18,17 @@ namespace CPH.Common.DTO.Class
 
         public Guid ProjectId { get; set; }
 
-        public Guid LecturerId { get; set; }
+        public Guid? LecturerId { get; set; }
 
         public string? LecturerName { get; set; }
 
         public string? LecturerPhone { get; set; }
 
+        public string? LecturerEmail { get; set; }
+
         public int LecturerSlotAvailable { get; set; } 
 
-        public int StudentSlotAvailable { get; set; }
+        public int? StudentSlotAvailable { get; set; }
 
         public int TotalTrainee {  get; set; }
     }

@@ -22,8 +22,6 @@ namespace CPH.Common.DTO.Project
 
         public int NumberLesson { get; set; }
 
-        public int NumberTraineeEachGroup { get; set; }
-
         public DateTime ApplicationStartDate { get; set; }
 
         public DateTime ApplicationEndDate { get; set; }
@@ -32,8 +30,8 @@ namespace CPH.Common.DTO.Project
 
         public string Status { get; set; }
 
-        public Guid ProjectManagerId { get; set; }
+        public Guid? ProjectManagerId { get; set; }
 
-        public string ProjectManagerName { get; set; }
+        public string? ProjectManagerName { get; set; }
     }
 }

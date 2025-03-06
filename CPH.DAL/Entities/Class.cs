@@ -13,6 +13,8 @@ public partial class Class
 
     public DateTime? ReportCreatedDate { get; set; }
 
+    public int? NumberGroup { get; set; }
+
     public Guid ProjectId { get; set; }
 
     public Guid? LecturerId { get; set; }

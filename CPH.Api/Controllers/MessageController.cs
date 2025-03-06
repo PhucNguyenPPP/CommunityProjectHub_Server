@@ -24,10 +24,6 @@ namespace CPH.Api.Controllers
             ResponseDTO responseDTO = await _messageService.GetMessages(accountId, classId);
             if (responseDTO.IsSuccess == false)
             {
-                if (responseDTO.StatusCode == 404)
-                {
-                    return NotFound(responseDTO);
-                }
                 if (responseDTO.StatusCode == 500 || responseDTO.StatusCode == 400)
                 {
                     return BadRequest(responseDTO);
@@ -56,17 +52,11 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("chat-classes")]
-        public IActionResult GetAllClassChat(Guid accountId)
-        {
-            var result = _messageService.GetAllClassChat(accountId);
-            if (result.Count > 0)
-            {
-                return Ok(new ResponseDTO("Lấy toàn bộ đoạn chat thành công", 200, true, result));
-            }
-            else
-            {
-                return NotFound(new ResponseDTO("Không tìm thấy đoạn chat nào", 404, false, result));
-            }
+        public async Task<IActionResult> GetAllClassChat(string? searchValue, Guid accountId)
+        { 
+            var result = await _messageService.GetAllClassChat(searchValue, accountId);
+
+            return Ok(new ResponseDTO("Lấy các đoạn chat thành công", 200, true, result));
         }
     }
 }

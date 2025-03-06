@@ -128,13 +128,14 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("available-project")]
-        public async Task<IActionResult> GetAllAvailableProject([FromQuery] string? searchValue,
+        public async Task<IActionResult> GetAllAvailableProject([FromQuery] Guid userId,
+                                                        [FromQuery] string? searchValue,
                                                         [FromQuery] int? pageNumber,
                                                         [FromQuery] int? rowsPerPage,
                                                         [FromQuery] string? filterField,
                                                         [FromQuery] string? filterOrder)
         {
-            ResponseDTO responseDTO = await _projectService.GetAvailableProject(searchValue, pageNumber, rowsPerPage, filterField, filterOrder);
+            ResponseDTO responseDTO = await _projectService.GetAvailableProject(userId, searchValue, pageNumber, rowsPerPage, filterField, filterOrder);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)
@@ -147,6 +148,28 @@ namespace CPH.Api.Controllers
                 }
             }
             return Ok(responseDTO);
+        }
+
+        [HttpPut("to-up-coming-status")]
+        public async Task<IActionResult> UpdateProjectStatusUpcoming(Guid projectId)
+        {
+            ResponseDTO responseDTO = await _projectService.UpdateProjectStatusUpcoming(projectId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
+        [HttpPut("assign-pm-to-project")]
+        public async Task<IActionResult> AssignPMToProject(Guid projectId, Guid accountId)
+        {
+            ResponseDTO responseDTO = await _projectService.AssignPMToProject(projectId, accountId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
         }
     }
 }
