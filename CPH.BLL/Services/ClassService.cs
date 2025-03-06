@@ -258,6 +258,7 @@ namespace CPH.BLL.Services
 
                         };
                         await _unitOfWork.ProjectLogging.AddAsync(logging);
+                        break;
                     }
                 }
             }
@@ -332,7 +333,7 @@ namespace CPH.BLL.Services
                 {
                     errs.Add("Lớp không còn trống slot dành cho giảng viên");
                 }
-                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) && p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
+            //    var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) || p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId).ToList();
                 var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
                                r.Status.Equals(RegistrationStatusConstant.Processing)).Select(r => r.ClassId).ToList();
                 var cla = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId.Equals(updateClassDTO.AccountId)).Select(c => c.ClassId).ToList();
@@ -340,13 +341,19 @@ namespace CPH.BLL.Services
                 {
                     classOfAcc.AddRange(cla);
                 }
-                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
+                var classAct = _unitOfWork.Class.GetAllByCondition(c => c.Project.Status.Equals(ProjectStatusConstant.UpComing) || c.Project.Status.Equals(ProjectStatusConstant.InProgress)).ToList();
+                var classActivate = classAct.Where(c => classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
                 if (classActivate != null)
                 {
                     var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
 
                     for (int i = 0; i < classActivate.Count(); i++)
                     {
+                        if (classActivate[i].Equals(updateClassDTO.ClassId))
+                        {
+                            errs.Add("Bạn đã đăng ký hoặc được phân công vào lớp này trước đó");
+                            break;
+                        }    
                         var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
                         for (int j = 0; j < lscOfAccRegistered.Count(); j++)
                         {
@@ -373,34 +380,39 @@ namespace CPH.BLL.Services
                 {
                     errs.Add("Lớp không còn trống slot dành cho sinh viên hỗ trợ");
                 }
-                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) && p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
-                var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
-                               r.Status.Equals(RegistrationStatusConstant.Processing)).Select(r => r.ClassId).ToList();
-                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
-                if (classOfAcc != null)
+                var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) || p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
+                List<Guid> classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
+                               r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected)).Select(r => r.ClassId).ToList();
+                var mem = _unitOfWork.Member.GetAllByCondition(m => m.AccountId.Equals(updateClassDTO.AccountId)).Select(m => m.ClassId).ToList();
+                classOfAcc.AddRange(mem);
+                var classAct = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId)).ToList();
+                var classActivate = classAct.Where(c=> classOfAcc.Contains(c.ClassId)).Select(c=> c.ClassId).ToList();
+                var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
+                if (classActivate != null)
                 {
-                    var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
-                    if (classOfAcc != null)
+                    for (int i = 0; i < classActivate.Count(); i++)
                     {
-                        for (int i = 0; i < classOfAcc.Count(); i++)
+                        if (classActivate[i].Equals(updateClassDTO.ClassId))
                         {
-                            var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classOfAcc[i])).ToList(); //đã đky rồi
-                            for (int j = 0; j < lscOfAccRegistered.Count(); j++)
+                            errs.Add("Bạn đã đăng ký hoặc được phân công vào lớp này trước đó");
+                        }    
+                        var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
+                        for (int j = 0; j < lscOfAccRegistered.Count(); j++)
+                        {
+                            if (lscOfAccRegistered[j].StartTime != null && lscOfAccRegistered[j].EndTime != null)
                             {
-                                if (lscOfAccRegistered[j].StartTime != null && lscOfAccRegistered[j].EndTime != null)
+                                var checklsc = lscToRegister.Where(t => !(t.StartTime < lscOfAccRegistered[j].StartTime
+                                && t.EndTime < lscOfAccRegistered[j].StartTime || t.StartTime > lscOfAccRegistered[j].EndTime && t.EndTime > lscOfAccRegistered[j].EndTime));
+                                if (checklsc.Count() > 0)
                                 {
-                                    var checklsc = lscToRegister.Where(t => !(t.StartTime < lscOfAccRegistered[j].StartTime
-                                    && t.EndTime < lscOfAccRegistered[j].StartTime || t.StartTime > lscOfAccRegistered[j].EndTime && t.EndTime > lscOfAccRegistered[j].EndTime));
-                                    if (checklsc.Count() > 0)
-                                    {
-                                        var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(lscOfAccRegistered[j].ClassId));
-                                        var l = await _unitOfWork.Lesson.GetByCondition(c => c.LessonId.Equals(lscOfAccRegistered[j].LessonId));
-                                        errs.Add("Lớp học trùng lịch với buổi học " + l.LessonNo.ToString() + " của lớp " + c.ClassCode + " mà " + acc.FullName + " đăng ký trước đó");
-                                    }
+                                    var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(lscOfAccRegistered[j].ClassId));
+                                    var l = await _unitOfWork.Lesson.GetByCondition(c => c.LessonId.Equals(lscOfAccRegistered[j].LessonId));
+                                    errs.Add("Lớp học trùng lịch với buổi học " + l.LessonNo.ToString() + " của lớp " + c.ClassCode + " mà " + acc.FullName + " đăng ký trước đó");
                                 }
                             }
                         }
                     }
+
                 }
             }
             if (errs.Count > 0)
