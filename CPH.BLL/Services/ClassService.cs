@@ -376,16 +376,20 @@ namespace CPH.BLL.Services
                 }
                 var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) && p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
                 var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
-                               r.Status.Equals(RegistrationStatusConstant.Processing)).Select(r => r.ClassId).ToList();
-                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
-                if (classOfAcc != null)
+                               r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected)).Select(r => r.ClassId).ToList();
+                var mem = _unitOfWork.Member.GetAllByCondition(m => m.AccountId.Equals(updateClassDTO.AccountId)).Select(m =>m.ClassId);
+                classOfAcc.AddRange(mem);
+                var classActivate = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId) && classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId
+                                                                                                        ).ToList();
+        
+                if (classActivate != null)
                 {
                     var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
-                    if (classOfAcc != null)
+                    if (classActivate != null)
                     {
-                        for (int i = 0; i < classOfAcc.Count(); i++)
+                        for (int i = 0; i < classActivate.Count(); i++)
                         {
-                            var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classOfAcc[i])).ToList(); //đã đky rồi
+                            var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
                             for (int j = 0; j < lscOfAccRegistered.Count(); j++)
                             {
                                 if (lscOfAccRegistered[j].StartTime != null && lscOfAccRegistered[j].EndTime != null)
