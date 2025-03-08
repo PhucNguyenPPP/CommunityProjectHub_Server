@@ -2,6 +2,7 @@
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Trainee;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,6 +39,28 @@ namespace CPH.Api.Controllers
                 }
             }
             return Ok(responseDTO);
+        }
+
+        [HttpPut("update-trainee-score")]
+        public async Task<IActionResult> UpdateTraineeScore(ScoreTraineeRequestDTO model)
+        {
+            ResponseDTO result = await _traineeService.UpdateScoreTrainee(model);
+            if(result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+
+        [HttpGet("score-trainee-list")]
+        public async Task<IActionResult> GetScoreTraineeList(Guid classId)
+        {
+            ResponseDTO result = await _traineeService.GetScoreTraineeList(classId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
         }
     }
 }
