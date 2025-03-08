@@ -145,7 +145,7 @@ namespace CPH.BLL.Services
 
         public async Task<LoginResponseDTO?> CheckLogin(LoginRequestDTO loginRequestDTO)
         {
-            var user = _unitOfWork.Account.GetAllByCondition(x => x.AccountName == loginRequestDTO.UserName)
+            var user = _unitOfWork.Account.GetAllByCondition(x => x.AccountName == loginRequestDTO.UserName || x.Email == loginRequestDTO.UserName)
                 .Include(u => u.Role).FirstOrDefault();
 
             if (user == null)

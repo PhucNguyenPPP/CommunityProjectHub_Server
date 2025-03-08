@@ -82,6 +82,18 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpPut("all-class-of-lecturer")]
+        public async Task<IActionResult> GetAllClassOfLecturer(Guid lecturerId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllClassOfLecturer(lecturerId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 
 }
