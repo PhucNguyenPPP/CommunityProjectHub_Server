@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.LessonClass;
@@ -113,9 +114,15 @@ namespace CPH.BLL.Services
                 .Include(c => c.Class)
                 .ThenInclude(c => c.Project)
                 .FirstOrDefault();
+
             if (member == null)
             {
                 return new ResponseDTO("Sinh viên không tồn tại", 400, false, null);
+            }
+
+            if(member.Class.Project.Status != ProjectStatusConstant.UpComing)
+            {
+                return new ResponseDTO("Không thể xóa sinh viên ở giai đoạn này của dự án", 400, false, null);
             }
 
             _unitOfWork.Member.Delete(member);
