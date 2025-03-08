@@ -9,6 +9,8 @@ namespace CPH.BLL.Interfaces
 {
     public interface ITraineeService
     {
-        Task<ResponseDTO> GetAllTraineeOfClass (Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder);
+        Task<ResponseDTO> GetAllTraineeOfClass(Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder);
+
+        Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason);
     }
 }

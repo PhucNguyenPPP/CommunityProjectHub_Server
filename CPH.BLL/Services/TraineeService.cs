@@ -10,6 +10,7 @@ using CPH.Common.DTO.General;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Trainee;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -21,11 +22,13 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper)
+        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<ResponseDTO> GetAllTraineeOfClass(Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
@@ -135,5 +138,67 @@ namespace CPH.BLL.Services
                     : list.OrderBy(c => c.Account.Email)
             };
         }
+
+        public async Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason)
+        {
+            var account = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == accountId).FirstOrDefault();
+
+            if (account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            var classRemove = _unitOfWork.Class
+                .GetAllByCondition(c => c.ClassId == classId)
+                .Include(c => c.Project)
+                .FirstOrDefault();
+
+            if (classRemove == null)
+            {
+                return new ResponseDTO("Không tìm thấy lớp học", 400, false, null);
+            }
+
+            var trainee = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId && c.AccountId == accountId).FirstOrDefault();
+            if (trainee == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại trong lớp", 400, false);
+            }
+
+            var status = classRemove.Project.Status;
+
+            if (status == ProjectStatusConstant.Cancelled ||
+                status == ProjectStatusConstant.InProgress ||
+                status == ProjectStatusConstant.Planning ||
+                status == ProjectStatusConstant.Completed)
+            {
+                return new ResponseDTO("Học viên chỉ được xóa khi dự án sắp diễn ra", 400, false);
+            }
+
+            _unitOfWork.Trainee.Delete(trainee);
+
+            var messageNotification = RemoveTraineeNotification.SendRemovedNotification(classRemove!.ClassCode, classRemove!.Project.Title);
+            await _notificationService.CreateNotification(accountId, messageNotification);
+
+            ProjectLogging logging = new ProjectLogging()
+            {
+                ProjectNoteId = Guid.NewGuid(),
+                ActionDate = DateTime.Now,
+                ProjectId = classRemove.Project.ProjectId,
+                ActionContent = $"{trainee.Account.FullName} không còn là sinh viên hỗ trợ lớp {classRemove.ClassCode} của dự án {classRemove.Project.Title}",
+                AccountId = accountId,
+            };
+
+            await _unitOfWork.ProjectLogging.AddAsync(logging);
+
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Xóa học viên thành công", 200, true, null);
+            }
+
+            return new ResponseDTO("Xóa học viên thất bại", 500, false, null);
+
+        }
+
     }
 }
