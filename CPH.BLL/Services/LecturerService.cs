@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using AutoMapper.Execution;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.Member;
@@ -136,9 +138,15 @@ namespace CPH.BLL.Services
                 .Include(c => c.Lecturer)
                 .Include(c => c.Project)
                 .FirstOrDefault();
+
             if (lecturerClass == null)
             {
                 return new ResponseDTO("Giảng viên hiện không đảm nhận lớp này", 400, false);
+            }
+
+            if (lecturerClass.Project.Status != ProjectStatusConstant.UpComing)
+            {
+                return new ResponseDTO("Không thể xóa giảng viên ở giai đoạn này của dự án", 400, false, null);
             }
 
             _unitOfWork.Class.Update(lecturerClass);
