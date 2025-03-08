@@ -16,5 +16,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetClassDetail(Guid classId);
         Task<ResponseDTO> UpdateClass(UpdateClassDTO updateClassDTO);
         Task<ResponseDTO> GetAllClassOfLecturer(Guid lecturerId);
+        Task<ResponseDTO> RemoveUpdateClass(RemoveUpdateClassDTO model);
     }
 }

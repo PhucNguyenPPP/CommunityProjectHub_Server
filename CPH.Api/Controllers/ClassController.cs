@@ -94,6 +94,18 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(responseDTO);
         }
+
+        [HttpPut("remove-update-class")]
+        public async Task<IActionResult> RemoveUpdateClass([FromBody] RemoveUpdateClassDTO model)
+        {
+
+            ResponseDTO responseDTO = await _classService.RemoveUpdateClass(model);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 
 }
