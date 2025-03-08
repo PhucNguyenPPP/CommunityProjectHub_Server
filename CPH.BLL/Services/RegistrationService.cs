@@ -274,6 +274,16 @@ namespace CPH.BLL.Services
 
                             };
                             await _unitOfWork.Member.AddAsync(mem);
+                            ProjectLogging logging = new ProjectLogging()
+                            {
+                                ProjectNoteId = Guid.NewGuid(),
+                                ActionDate = DateTime.Now,
+                                ProjectId = clasRegis.ProjectId,
+                                ActionContent = $"{acc.FullName} đã tham gia hỗ trợ lớp {clasRegis.ClassCode}",
+                                AccountId = acc.AccountId,
+
+                            };
+                            await _unitOfWork.ProjectLogging.AddAsync(logging);
                         }
 
                     }

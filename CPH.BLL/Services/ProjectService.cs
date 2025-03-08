@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using AutoMapper.Execution;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
@@ -13,6 +14,7 @@ using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.Enum;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.AspNetCore.Components.Forms;
@@ -30,11 +32,14 @@ namespace CPH.BLL.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IAccountService _accountService;
-        public ProjectService(IUnitOfWork unitOfWork, IMapper mapper, IAccountService accountService)
+        private readonly INotificationService _notificationService;
+        public ProjectService(IUnitOfWork unitOfWork, IMapper mapper, IAccountService accountService,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _accountService = accountService;
+            _notificationService = notificationService;
         }
 
         public async Task<ResponseDTO> CheckProjectExisted(Guid projectID)
@@ -479,6 +484,8 @@ namespace CPH.BLL.Services
                 .Include(cl => cl.Classes)
                     .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)
+                    .ThenInclude(c => c.Members)
+                .Include(cl => cl.Classes)
                     .ThenInclude(tc => tc.Lecturer)
                 .Include(l => l.Lessons)
                     .ThenInclude(lcl => lcl.LessonClasses)
@@ -489,6 +496,27 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Không tìm thấy dự án tương ứng", 400, false);
             }
             var projectDTO = _mapper.Map<ProjectDetailDTO>(project);
+
+            var classList = project.Classes.ToList();
+            foreach (var classItem in classList)
+            {
+                if (classItem.LecturerId != null)
+                {
+                    if (!projectDTO.LecturerIds.Contains((Guid)classItem.LecturerId))
+                    {
+                        projectDTO.LecturerIds.Add((Guid)classItem.LecturerId);
+                    }
+                }
+                var memberList = classItem.Members.ToList();
+                foreach (var member in memberList)
+                {
+                    if (!projectDTO.MemberIds.Contains(member.AccountId))
+                    {
+                        projectDTO.MemberIds.Add(member.AccountId);
+                    }
+                }
+            }
+
             return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, projectDTO);
         }
 
@@ -636,7 +664,7 @@ namespace CPH.BLL.Services
 
                        }*/
                 _unitOfWork.Project.Update(project);
-                var updated = await _unitOfWork.SaveChangeAsync();
+                var updated = await _unitOfWork.SaveChangeAsync();               
                 if (updated == false)
                 {
                     return new ResponseDTO("Chỉnh sửa thất bại", 500, false);
@@ -922,6 +950,83 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Dự án đã chuyển sang giai đoạn Sắp diễn ra", 200, true);
             }
             return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
+        }
+
+        public async Task<ResponseDTO> AssignPMToProject(Guid projectId, Guid accountId)
+        {
+            var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(c => c.ProjectManager)
+                .FirstOrDefault();
+            if(project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            var projectManager = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == accountId)
+                .FirstOrDefault();
+
+            if(projectManager == null)
+            {
+                return new ResponseDTO("Giảng viên không tồn tại", 400, false);
+            }
+
+            if(projectManager.RoleId != (int)RoleEnum.Lecturer)
+            {
+                return new ResponseDTO("Chỉ giảng viên mới có thể được bổ nhiệm làm quản lý dự án", 400, false);
+            }
+
+            if(project.Status == ProjectStatusConstant.Completed || project.Status == ProjectStatusConstant.Cancelled)
+            {
+                return new ResponseDTO("Dự án đã kết thúc", 400, false);
+            }
+
+            if(project.ProjectManagerId == accountId)
+            {
+                return new ResponseDTO("Giảng viên được chọn đang là quản lý của dự án", 400, false);
+            }
+
+            List<ProjectLogging> projectLoggings = new List<ProjectLogging>();
+
+            if(project.ProjectManagerId != null)
+            {
+                var messageNotificationRemovePM = RemovePMFromProjectNotification.SendRemovePMFromProjectNotification(project.Title);
+                await _notificationService.CreateNotification((Guid)project.ProjectManagerId, messageNotificationRemovePM);
+
+                ProjectLogging loggingRemovePM = new ProjectLogging()
+                {
+                    ProjectNoteId = Guid.NewGuid(),
+                    ActionDate = DateTime.Now,
+                    ProjectId = projectId,
+                    ActionContent = $"{project.ProjectManager!.FullName} không còn là quản lý của dự án {project.Title}",
+                    AccountId = (Guid)project.ProjectManagerId,
+                };
+                projectLoggings.Add(loggingRemovePM);
+            }
+
+
+            var messageNotification = AssignPMToProjectNotification.SendAssignPMToProjectNotification(project.Title);
+            await _notificationService.CreateNotification(accountId, messageNotification);
+
+            ProjectLogging loggingAssignPM = new ProjectLogging()
+            {
+                ProjectNoteId = Guid.NewGuid(),
+                ActionDate = DateTime.Now,
+                ProjectId = projectId,
+                ActionContent = $"{projectManager.FullName} được bổ nhiệm thành quản lý của dự án {project.Title}",
+                AccountId = accountId,
+            };
+            projectLoggings.Add(loggingAssignPM);
+
+            await _unitOfWork.ProjectLogging.AddRangeAsync(projectLoggings);
+
+            project.ProjectManagerId = accountId;
+            _unitOfWork.Project.Update(project);
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Bổ nhiệm quản lý dự án thành công", 200, true);
+            }
+            return new ResponseDTO("Bổ nhiệm quản lý dự án thất bại", 400, false);
         }
 
     }

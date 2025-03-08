@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
+using AutoMapper.Execution;
 using CPH.BLL.Interfaces;
+using CPH.Common.Constant;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lecturer;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Paging;
 using CPH.Common.Enum;
+using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -21,11 +24,13 @@ namespace CPH.BLL.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public LecturerService(IUnitOfWork unitOfWork, IMapper mapper)
+        public LecturerService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
         public List<LecturerResponseDTO> SearchLecturer(string? searchValue)
         {
@@ -129,15 +134,38 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
 
-            var lecturerClass = await _unitOfWork.Class.GetByCondition(c => c.ClassId == classId && c.LecturerId == lecturerId);
+            var lecturerClass = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId && c.LecturerId == lecturerId)
+                .Include(c => c.Lecturer)
+                .Include(c => c.Project)
+                .FirstOrDefault();
+
             if (lecturerClass == null)
             {
                 return new ResponseDTO("Giảng viên hiện không đảm nhận lớp này", 400, false);
             }
 
-            lecturerClass.LecturerId = null;
+            if (lecturerClass.Project.Status != ProjectStatusConstant.UpComing)
+            {
+                return new ResponseDTO("Không thể xóa giảng viên ở giai đoạn này của dự án", 400, false, null);
+            }
 
             _unitOfWork.Class.Update(lecturerClass);
+
+            var messageNotification = RemoveMemberNotification.SendRemovedLecturerNotification(lecturerClass!.ClassCode, lecturerClass.Project.Title);
+            await _notificationService.CreateNotification((Guid)lecturerClass.LecturerId!, messageNotification);
+
+            ProjectLogging logging = new ProjectLogging()
+            {
+                ProjectNoteId = Guid.NewGuid(),
+                ActionDate = DateTime.Now,
+                ProjectId = lecturerClass.ProjectId,
+                ActionContent = $"{lecturerClass.Lecturer!.FullName} không còn là giảng viên của lớp {lecturerClass.ClassCode} của dự án {lecturerClass.Project.Title}",
+                AccountId = (Guid)lecturerClass.LecturerId,
+            };
+
+            lecturerClass.LecturerId = null;
+            await _unitOfWork.ProjectLogging.AddAsync(logging);
+
             var result = await _unitOfWork.SaveChangeAsync();
             if(result)
             {
@@ -147,6 +175,39 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Xóa giảng viên thất bại", 500, true);
             }
 
+        }
+
+        public List<LecturerResponseDTO> SearchLecturerForAssigningPM(string? searchValue, Guid projectId)
+        {
+            if (searchValue.IsNullOrEmpty())
+            {
+                return new List<LecturerResponseDTO>();
+            }
+
+            var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).FirstOrDefault();
+            if (project == null)
+            {
+                return new List<LecturerResponseDTO>();
+            }
+
+            List<Account> searchedList = new List<Account>();
+            if (project.ProjectManagerId == null)
+            {
+                searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+                || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+                || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Lecturer).ToList();
+
+            }
+            else
+            {
+                searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+               || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+               || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Lecturer && c.AccountId != project.ProjectManagerId).ToList();
+            }
+
+
+            var mappedSearchedList = _mapper.Map<List<LecturerResponseDTO>>(searchedList);
+            return mappedSearchedList;
         }
     }
 }

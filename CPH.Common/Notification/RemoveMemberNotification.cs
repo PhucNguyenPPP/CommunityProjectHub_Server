@@ -13,5 +13,11 @@ namespace CPH.Common.Notification
             var result = $"Bạn không còn là thành viên của lớp {className} dự án {projectName}";
             return result;
         }
+
+        public static string SendRemovedLecturerNotification(string className, string projectName)
+        {
+            var result = $"Bạn không còn là giảng viên của lớp {className} dự án {projectName}";
+            return result;
+        }
     }
 }

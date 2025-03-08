@@ -15,6 +15,7 @@ using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CPH.BLL.Services
 {
@@ -117,7 +118,7 @@ namespace CPH.BLL.Services
                     return new ResponseDTO("Tìm kiếm học viên thành công", 200, true, listDTO);
                 }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return new ResponseDTO("Tìm kiếm học viên thất bại", 500, false);
             }
@@ -137,6 +138,94 @@ namespace CPH.BLL.Services
                     ? list.OrderByDescending(c => c.Account.Email)
                     : list.OrderBy(c => c.Account.Email)
             };
+        }
+
+        public async Task<ResponseDTO> UpdateScoreTrainee(ScoreTraineeRequestDTO model)
+        {
+            var classObj = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == model.ClassId)
+                .Include(c => c.Trainees)
+                .ThenInclude(c => c.Account)
+                .Include(c => c.Project)
+                .FirstOrDefault();
+
+            if (classObj == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+
+            if(classObj.Project.Status != ProjectStatusConstant.InProgress)
+            {
+                return new ResponseDTO("Không thể cập nhật điểm ở giai đoạn này của dự án", 400, false);
+            }
+
+            var traineeClassList = classObj.Trainees.ToList();
+            List<string> errors = new List<string>();
+            foreach (var i in model.ScoreTrainees)
+            {
+                var trainee = traineeClassList.FirstOrDefault(c => c.TraineeId == i.TraineeId);
+                if (trainee == null)
+                {
+                    return new ResponseDTO($"Danh sách có chứa học viên không tồn tại trong lớp", 400, false);
+                }
+
+                if (i.Score != null && (i.Score < 0 || i.Score > 10))
+                {
+                    errors.Add($"Điểm số của học viên {trainee.Account.AccountName} (Mã học viên: {trainee.Account.AccountCode}) không hợp lệ");
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                return new ResponseDTO("Có lỗi xảy ra", 400, false, errors);
+            }
+
+            bool checkUpdate = false;
+            foreach (var i in model.ScoreTrainees)
+            {
+                var trainee = traineeClassList.FirstOrDefault(c => c.TraineeId == i.TraineeId);
+                if (trainee!.Score != i.Score)
+                {
+                    checkUpdate = true;
+                }
+
+                if(i.Score != null)
+                {
+                    trainee!.Score = Math.Round((decimal)i.Score, 2);
+                } else
+                {
+                    trainee!.Score = null;
+                }
+
+                _unitOfWork.Trainee.Update(trainee);
+            }
+
+            if (checkUpdate)
+            {
+                var result = await _unitOfWork.SaveChangeAsync();
+                if (result)
+                {
+                    return new ResponseDTO("Chỉnh sửa điểm số thành công", 200, true);
+                }
+                return new ResponseDTO("Chỉnh sửa điểm số thất bại", 400, false);
+            }
+            return new ResponseDTO("Chỉnh sửa điểm số thành công", 200, true);
+        }
+
+        public async Task<ResponseDTO> GetScoreTraineeList(Guid classId)
+        {
+            var classObj = await _unitOfWork.Class.GetByCondition(c => c.ClassId == classId);
+
+            if (classObj == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+
+            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId)
+                .Include(c => c.Account)
+                .ThenInclude(c => c.Role);
+
+            var listDTO = _mapper.Map<List<GetAllTraineeOfClassDTO>>(traineeList);
+            return new ResponseDTO("Lấy danh sách điểm của học viên thành công", 200, true, listDTO);
         }
 
         public async Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason)
