@@ -13,5 +13,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetAllTraineeOfClass (Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder);
         Task<ResponseDTO> UpdateScoreTrainee(ScoreTraineeRequestDTO model);
         Task<ResponseDTO> GetScoreTraineeList(Guid classId);
+        Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason);
     }
 }

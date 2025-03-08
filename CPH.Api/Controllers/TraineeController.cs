@@ -62,5 +62,16 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpDelete("trainee")]
+        public async Task<IActionResult> RemoverTrainee([Required]Guid classId, [Required] Guid accountId, string? reason)
+        {
+            var result = await _traineeService.RemoveTrainee(classId, accountId, reason);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }
