@@ -84,10 +84,10 @@ namespace CPH.Api.Controllers
         }
 
         [HttpPut("all-class-of-lecturer")]
-        public async Task<IActionResult> GetAllClassOfLecturer(Guid lecturerId)
+        public async Task<IActionResult> GetAllClassOfLecturer(string? searchValue, Guid lecturerId)
         {
 
-            ResponseDTO responseDTO = await _classService.GetAllClassOfLecturer(lecturerId);
+            ResponseDTO responseDTO = await _classService.GetAllClassOfLecturer(searchValue, lecturerId);
             if (responseDTO.IsSuccess)
             {
                 return Ok(responseDTO);
