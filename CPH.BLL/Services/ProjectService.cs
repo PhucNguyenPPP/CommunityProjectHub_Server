@@ -859,23 +859,33 @@ namespace CPH.BLL.Services
                 foreach (var item in projectsToUpdate)
                 {
                     item.Status = ProjectStatusConstant.InProgress;
-                    var cOfPro = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).Select(c => c.ClassId);
-                    var regis = _unitOfWork.Registration.GetAllByCondition(r => cOfPro.Contains(r.ClassId) && r.Status.Equals(RegistrationStatusConstant.Processing));
-                    foreach (var reg in regis)
+                    var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).ToListAsync();
+
+                    // Kiểm tra xem có lớp học nào không đáp ứng điều kiện hay không
+                    bool hasInvalidClass = classesOfProject.Any(c => !c.LecturerId.HasValue || _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(c.ClassId)).Count() < c.NumberGroup);
+
+                    if (!hasInvalidClass)
                     {
-                        reg.Status = RegistrationStatusConstant.Rejected;
+                        var classIdsOfProject = classesOfProject.Select(c => c.ClassId).ToList();
+                        // Tối ưu hóa truy vấn regis bằng cách thêm điều kiện lọc vào truy vấn ban đầu
+                        var registrations = await _unitOfWork.Registration.GetAllByCondition(r => classIdsOfProject.Contains(r.ClassId) && r.Status.Equals(RegistrationStatusConstant.Processing)).ToListAsync();
+
+                        foreach (var reg in registrations)
+                        {
+                            reg.Status = RegistrationStatusConstant.Rejected;
+                        }
+
+                        _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
+                        bool saveChanges = await _unitOfWork.SaveChangeAsync();
+
+                        if (!saveChanges)
+                        {
+                            throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
+                        }
                     }
                 }
-                _unitOfWork.Project.UpdateRange(projectsToUpdate);
-                bool savechange = await _unitOfWork.SaveChangeAsync();
-                if (!savechange)
-                {
-                    throw new Exception("Không thể update project status");
-                }
             }
-
         }
-
         private async Task<List<Project>> GetProjectsWithStartDateNow()
         {
             var today = DateTime.Now; // Sử dụng UTC để tránh vấn đề múi giờ
@@ -1029,5 +1039,40 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Bổ nhiệm quản lý dự án thất bại", 400, false);
         }
 
+        public async Task UpdateProjectsStatusToCompleted()
+        {
+            List<Project> projectsToUpdate = await GetProjectsWithEndDateNow();
+            if (projectsToUpdate.Count > 0)
+            {
+                foreach (var item in projectsToUpdate)
+                {
+                    item.Status = ProjectStatusConstant.InProgress;
+                    var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).ToListAsync();
+
+                    // Kiểm tra xem có lớp học nào không đáp ứng điều kiện hay không
+                    bool hasInvalidClass = classesOfProject.Any(c => c.ReportContent.IsNullOrEmpty() );
+
+                    if (!hasInvalidClass)
+                    {
+
+                        _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
+                        bool saveChanges = await _unitOfWork.SaveChangeAsync();
+
+                        if (!saveChanges)
+                        {
+                            throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task<List<Project>> GetProjectsWithEndDateNow()
+        {
+            var today = DateTime.Now; // Sử dụng UTC để tránh vấn đề múi giờ
+            return await _unitOfWork.Project
+                .GetAllByCondition(p => p.EndDate <= today && p.Status.Equals(ProjectStatusConstant.InProgress))
+                .ToListAsync();
+        }
     }
 }
