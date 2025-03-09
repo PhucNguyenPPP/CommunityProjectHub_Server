@@ -83,7 +83,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
-        [HttpPut("all-class-of-lecturer")]
+        [HttpGet("all-class-of-lecturer")]
         public async Task<IActionResult> GetAllClassOfLecturer(string? searchValue, Guid lecturerId)
         {
 

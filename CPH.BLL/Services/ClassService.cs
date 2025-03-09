@@ -431,14 +431,21 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Giảng viên không tồn tại", 400, false);
             }
 
-            var classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
-                .Include(c => c.Project)
-                .Include(c => c.Lecturer);
 
-            if(searchValue != null)
+            List<Class>? classLecturer = new List<Class>();
+            if (searchValue.IsNullOrEmpty())
             {
-                classLecturer.Where(c => c.ClassCode.Contains(searchValue)
-                || c.Project.Title.Contains(searchValue));
+                classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
+                   .Include(c => c.Project)
+                   .Include(c => c.Lecturer)
+                   .ToList();
+            } else
+            {
+                classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
+                  .Include(c => c.Project)
+                  .Include(c => c.Lecturer)
+                  .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
+                  .ToList();
             }
 
             var mappedList = _mapper.Map<List<GetAllClassOfLecturer>>(classLecturer);
@@ -548,7 +555,7 @@ namespace CPH.BLL.Services
                 await _unitOfWork.ProjectLogging.AddAsync(addNewLogging);
 
                 var result = await _unitOfWork.SaveChangeAsync();
-                if(result)
+                if (result)
                 {
                     return new ResponseDTO("Phân công sinh viên khác thành công", 200, true);
                 }
