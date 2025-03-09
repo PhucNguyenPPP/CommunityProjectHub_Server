@@ -422,9 +422,10 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Thông tin cần cập nhật hợp lệ", 200, true);
         }
 
-        public async Task<ResponseDTO> GetAllClassOfLecturer(Guid lecturerId)
+        public async Task<ResponseDTO> GetAllClassOfLecturer(string? searchValue, Guid lecturerId)
         {
             var lecturer = await _unitOfWork.Account.GetByCondition(c => c.AccountId == lecturerId && c.RoleId == (int)RoleEnum.Lecturer);
+
             if (lecturer == null)
             {
                 return new ResponseDTO("Giảng viên không tồn tại", 400, false);
@@ -433,6 +434,12 @@ namespace CPH.BLL.Services
             var classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
                 .Include(c => c.Project)
                 .Include(c => c.Lecturer);
+
+            if(searchValue != null)
+            {
+                classLecturer.Where(c => c.ClassCode.Contains(searchValue)
+                || c.Project.Title.Contains(searchValue));
+            }
 
             var mappedList = _mapper.Map<List<GetAllClassOfLecturer>>(classLecturer);
             return new ResponseDTO("Lấy danh sách lớp của giảng viên thành công", 200, true, mappedList);
