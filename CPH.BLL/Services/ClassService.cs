@@ -314,7 +314,7 @@ namespace CPH.BLL.Services
                 errs.Add("Không thể phân công vào lớp chưa chia nhóm");
             }
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(clas.ProjectId));
-            if (pro.Status != ProjectStatusConstant.UpComing && pro.Status != ProjectStatusConstant.InProgress)
+            if (pro.Status != ProjectStatusConstant.UpComing)
             {
                 errs.Add("Lớp thuộc dự án có trạng thái " + pro.Status.ToString() + " nên không thể phân công");
             }
