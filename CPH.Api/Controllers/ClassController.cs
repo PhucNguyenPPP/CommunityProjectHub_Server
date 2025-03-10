@@ -106,6 +106,30 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(responseDTO);
         }
+
+        [HttpGet("all-class-of-trainee")]
+        public async Task<IActionResult> GetAllClassOfTrainee(string? searchValue, Guid accountId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllClassOfTrainee(searchValue, accountId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
+        [HttpGet("all-class-of-student")]
+        public async Task<IActionResult> GetAllClassOfStudent(string? searchValue, Guid accountId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllClassOfStudent(searchValue, accountId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 
 }
