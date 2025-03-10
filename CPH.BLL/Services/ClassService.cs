@@ -630,5 +630,79 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Phân công giảng viên khác thất bại", 400, false);
             }
         }
+
+        public async Task<ResponseDTO> GetAllClassOfTrainee(string? searchValue, Guid accountId)
+        {
+            var trainee = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+
+            if (trainee == null)
+            {
+                return new ResponseDTO("Học viên không tồn tại", 400, false);
+            }
+
+
+            List<Class>? classTrainee = new List<Class>();
+            if (searchValue.IsNullOrEmpty())
+            {
+                classTrainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Project)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Lecturer)
+                   .Select(c => c.Class)
+                   .ToList();
+            }
+            else
+            {
+                classTrainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Project)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Lecturer)
+                  .Select(c => c.Class)
+                  .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
+                  .ToList();
+            }
+
+            var mappedList = _mapper.Map<List<GetAllClassOfTrainee>>(classTrainee);
+            return new ResponseDTO("Lấy danh sách lớp của học viên thành công", 200, true, mappedList);
+        }
+
+        public async Task<ResponseDTO> GetAllClassOfStudent(string? searchValue, Guid accountId)
+        {
+            var student = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+
+            if (student == null)
+            {
+                return new ResponseDTO("Sinh viên không tồn tại", 400, false);
+            }
+
+
+            List<Class>? classStudent = new List<Class>();
+            if (searchValue.IsNullOrEmpty())
+            {
+                classStudent = _unitOfWork.Member.GetAllByCondition(c => c.AccountId == accountId)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Project)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Lecturer)
+                   .Select(c => c.Class)
+                   .ToList();
+            }
+            else
+            {
+                classStudent = _unitOfWork.Member.GetAllByCondition(c => c.AccountId == accountId)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Project)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Lecturer)
+                  .Select(c => c.Class)
+                  .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
+                  .ToList();
+            }
+
+            var mappedList = _mapper.Map<List<GetAllClassOfStudent>>(classStudent);
+            return new ResponseDTO("Lấy danh sách lớp của sinh viên thành công", 200, true, mappedList);
+        }
     }
 }
