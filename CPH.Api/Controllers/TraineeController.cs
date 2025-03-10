@@ -73,5 +73,15 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+        [HttpPost("trainee")]
+        public async Task<IActionResult> AddTraineeHadAccount([FromBody] AddTraineeHadAccountDTO addTraineeHadAccountDTO)
+        {
+            var result = await _traineeService.AddTraineeHadAccount(addTraineeHadAccountDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

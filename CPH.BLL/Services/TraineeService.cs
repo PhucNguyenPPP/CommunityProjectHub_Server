@@ -10,10 +10,12 @@ using CPH.Common.DTO.General;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Trainee;
+using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -153,7 +155,7 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
 
-            if(classObj.Project.Status != ProjectStatusConstant.InProgress)
+            if (classObj.Project.Status != ProjectStatusConstant.InProgress)
             {
                 return new ResponseDTO("Không thể cập nhật điểm ở giai đoạn này của dự án", 400, false);
             }
@@ -188,10 +190,11 @@ namespace CPH.BLL.Services
                     checkUpdate = true;
                 }
 
-                if(i.Score != null)
+                if (i.Score != null)
                 {
                     trainee!.Score = Math.Round((decimal)i.Score, 2);
-                } else
+                }
+                else
                 {
                     trainee!.Score = null;
                 }
@@ -289,5 +292,116 @@ namespace CPH.BLL.Services
 
         }
 
+        public async Task<ResponseDTO> AddTraineeHadAccount(AddTraineeHadAccountDTO addTraineeHadAccountDTO)
+        {
+            ResponseDTO responseDTO = await CheckAddTraineeHadAccount(addTraineeHadAccountDTO);
+            if (!responseDTO.IsSuccess)
+            {
+                return responseDTO;
+            }
+            Trainee trainee = new Trainee()
+            {
+                TraineeId = Guid.NewGuid(),
+                AccountId = addTraineeHadAccountDTO.AccountId,
+                ClassId = addTraineeHadAccountDTO.ClassId,
+            };
+            var classToAdd = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(addTraineeHadAccountDTO.ClassId));
+            if (classToAdd.NumberGroup.HasValue)
+            {
+                var traineeInClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(classToAdd.ClassId));
+                var traineesGroupedByGroupNo = traineeInClass
+    .GroupBy(t => t.GroupNo); // Nhóm trainees theo GroupNo
+
+                var groupCounts = traineesGroupedByGroupNo
+            .Select(group => new { GroupNo = group.Key, Count = group.Count() });
+
+                int maxGroupSize = groupCounts.Any() ? groupCounts.Max(g => g.Count) : 0;
+
+                var smallerGroupNo = groupCounts
+                    .Where(g => g.Count < maxGroupSize)
+                    .Select(g => g.GroupNo).FirstOrDefault();
+                if (smallerGroupNo == null)
+                {
+                    trainee.GroupNo = 1;
+                }
+                else
+                {
+                    trainee.GroupNo = smallerGroupNo.Value;
+                }
+
+            }
+            await _unitOfWork.Trainee.AddAsync(trainee);
+            var s = await _unitOfWork.SaveChangeAsync();
+            if (!s)
+            {
+                return new ResponseDTO("Thêm học viên vào lớp thất bại", 500, false);
+            }
+
+            return new ResponseDTO("Thêm học viên vào lớp thành công", 201, true);
+        }
+
+        private async Task<ResponseDTO> CheckAddTraineeHadAccount(AddTraineeHadAccountDTO addTraineeHadAccountDTO)
+        {
+            List<string> listErr = new List<string>();
+            // 1. Kiểm tra accountId có tồn tại
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(addTraineeHadAccountDTO.AccountId));
+            if (account == null)
+            {
+                listErr.Add("Tài khoản không tồn tại");
+            }
+            if (!account.RoleId.Equals((int)RoleEnum.Trainee))
+            {
+                listErr.Add("Tài khoản không phải của học viên");
+            }
+            // 2. Kiểm tra classId có tồn tại và lấy projectId từ class
+            var classToAdd = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(addTraineeHadAccountDTO.ClassId));
+            if (classToAdd == null)
+            {
+                listErr.Add("Lớp không tồn tại");
+            }
+            else
+            {
+                var projectId = classToAdd.ProjectId; // Lấy projectId từ class
+
+                // 3. Kiểm tra stage project đang là "Sắp diễn ra"
+                var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId == projectId);
+                if (project == null)
+                {
+                    listErr.Add("Dự án không tồn tại");
+                }
+                else
+                {
+                    if (project.Status != ProjectStatusConstant.Planning)
+                    {
+                        listErr.Add("Dự án không thể thêm học viên");
+                    }
+                }
+                // Lấy danh sách các ClassId từ dự án
+                var allClassOfProjectIds = _unitOfWork.Class
+     .GetAllByCondition(c => c.ProjectId.Equals(projectId))
+     .Select(c => c.ClassId)
+     .ToList();
+
+                var existingTrainee = _unitOfWork.Trainee
+    .GetAllByCondition(t => allClassOfProjectIds.Contains(t.ClassId))
+    .Where(t => t.AccountId.Equals(addTraineeHadAccountDTO.AccountId))
+    .ToList();
+
+
+
+                if (existingTrainee.Count() > 0)
+                {
+                    listErr.Add("Học viên đã ở trong 1 lớp của dự án này");
+                }
+            }
+            if (listErr.Count > 0)
+            {
+                return new ResponseDTO("Thông tin thêm học viên không hợp lệ", 400, false, listErr);
+            }
+            return new ResponseDTO("Thông tin thêm học viên hợp lệ", 200, true);
+
+
+        }
     }
 }
+
