@@ -16,5 +16,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetScoreTraineeList(Guid classId);
         Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason);
         Task<ResponseDTO> ImportTraineeScoreByExcel(IFormFile file, Guid classId);
+        MemoryStream ExportTraineeListExcel(Guid classId);
     }
 }

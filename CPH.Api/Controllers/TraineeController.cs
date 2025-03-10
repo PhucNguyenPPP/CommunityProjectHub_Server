@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.IO;
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
@@ -13,9 +14,11 @@ namespace CPH.Api.Controllers
     public class TraineeController : ControllerBase
     {
         private readonly ITraineeService _traineeService;
-        public TraineeController(ITraineeService traineeService)
+        private readonly IClassService _classService;
+        public TraineeController(ITraineeService traineeService, IClassService classService)
         {
             _traineeService = traineeService;
+            _classService = classService;
         }
 
         [HttpGet("all-trainee")]
@@ -83,6 +86,21 @@ namespace CPH.Api.Controllers
                 return Ok(result);
             }
             return BadRequest(result);
+        }
+
+        [HttpPost("export-trainee")]
+        public async Task<IActionResult> ExportTrainee(Guid classId)
+        {
+            var check = await _classService.CheckClassIdExist(classId);
+            if (!check)
+            {
+                return BadRequest(new ResponseDTO("Lớp không tồn tại", 400, false));
+            }
+
+            var stream = _traineeService.ExportTraineeListExcel(classId);
+            string fileName = "DanhSachHocVien.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }
