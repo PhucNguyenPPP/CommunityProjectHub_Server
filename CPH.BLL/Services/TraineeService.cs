@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -299,13 +300,11 @@ namespace CPH.BLL.Services
 
             return new ResponseDTO("Xóa học viên thất bại", 500, false, null);
         }
-
         public async Task<ResponseDTO> ImportTraineeScoreByExcel(IFormFile file, Guid classId)
         {
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
             var classObj = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
                 .Include(c => c.Trainees)
                 .FirstOrDefault();
@@ -313,26 +312,22 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
-
             var traineeOfClass = classObj.Trainees.ToList();
-            if(traineeOfClass.Any(c => c.Score != null))
+            if (traineeOfClass.Any(c => c.Score != null))
             {
                 return new ResponseDTO("Sinh viên của lớp đã được cập nhật điểm trước đó", 400, false);
             }
-
             var studentScores = new List<TraineeScoreExcelDTO>();
             var errors = new List<string>();
             using (var package = new ExcelPackage(stream))
             {
                 var worksheet = package.Workbook.Worksheets[0];
                 int rowCount = worksheet.Dimension.Rows;
-
                 for (int row = 2; row <= rowCount; row++)
                 {
                     string? accountCode = worksheet.Cells[row, 2].Text.Trim();
                     string? traineeFullName = worksheet.Cells[row, 3].Text.Trim();
                     string? scoreText = worksheet.Cells[row, 4].Text.Trim();
-
                     studentScores.Add(new TraineeScoreExcelDTO()
                     {
                         AccountCode = accountCode,
@@ -341,15 +336,54 @@ namespace CPH.BLL.Services
                     });
                 }
             }
-
             for (int i = 0; i < studentScores.Count; i++)
             {
                 if (string.IsNullOrEmpty(studentScores[i].AccountCode))
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Mã học viên bị thiếu");
                 }
-
+                var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == studentScores[i].AccountCode);
+                if (!string.IsNullOrEmpty(studentScores[i].AccountCode) && account == null)
+                {
+                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} không tồn tại");
+                }
+                if (account != null)
+                {
+                    var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account.AccountId && c.ClassId == classId);
+                    if (trainee == null)
+                    {
+                        errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} không thuộc lớp hiện tại");
+                    }
+                }
+                decimal score = 0;
+                if (!decimal.TryParse(studentScores[i].Score, out score) || string.IsNullOrEmpty(studentScores[i].Score))
+                {
+                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
+                }
+                if (decimal.TryParse(studentScores[i].Score, out score) && (score < 0 || score > 10))
+                {
+                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
+                }
+            }
+            if (errors.Count > 0)
+            {
+                return new ResponseDTO("File excel không hợp lệ", 400, false, errors);
+            }
+            foreach (var i in studentScores)
+            {
+                var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == i.AccountCode);
+                var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account!.AccountId && c.ClassId == classId);
+                trainee!.Score = decimal.Parse(i.Score!);
+                _unitOfWork.Trainee.Update(trainee!);
+            }
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Lưu điểm học viên thành công", 200, true);
+            }
+            return new ResponseDTO("Lưu điểm học viên thất bại", 400, false);
         }
+
 
         public async Task<ResponseDTO> AddTraineeHadAccount(AddTraineeHadAccountDTO addTraineeHadAccountDTO)
         {
@@ -445,9 +479,6 @@ namespace CPH.BLL.Services
     .GetAllByCondition(t => allClassOfProjectIds.Contains(t.ClassId))
     .Where(t => t.AccountId.Equals(addTraineeHadAccountDTO.AccountId))
     .ToList();
-
-
-
                 if (existingTrainee.Count() > 0)
                 {
                     listErr.Add("Học viên đã ở trong 1 lớp của dự án này");
@@ -458,50 +489,7 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Thông tin thêm học viên không hợp lệ", 400, false, listErr);
             }
             return new ResponseDTO("Thông tin thêm học viên hợp lệ", 200, true);
-
-
-                if (account != null)
-                {
-                    var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account.AccountId && c.ClassId == classId);
-                    if (trainee == null)
-                    {
-                        errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} không thuộc lớp hiện tại");
-                    }
-                }
-
-                decimal score = 0;
-                if (!decimal.TryParse(studentScores[i].Score, out score) || string.IsNullOrEmpty(studentScores[i].Score))
-                {
-                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
-                }
-
-                if (decimal.TryParse(studentScores[i].Score, out score) && (score < 0 || score > 10))
-                {
-                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
-                }
-            }
-
-            if (errors.Count > 0)
-            {
-                return new ResponseDTO("File excel không hợp lệ", 400, false, errors);
-            }
-
-            foreach(var i in studentScores)
-            {
-                var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == i.AccountCode);
-                var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account!.AccountId && c.ClassId == classId);
-                trainee!.Score = decimal.Parse(i.Score!);
-                _unitOfWork.Trainee.Update(trainee!);
-            }
-
-            var result = await _unitOfWork.SaveChangeAsync();
-            if (result)
-            {
-                return new ResponseDTO("Lưu điểm học viên thành công", 200, true);
-            }
-            return new ResponseDTO("Lưu điểm học viên thất bại", 400, false);
         }
-
         public MemoryStream ExportTraineeListExcel(Guid classId)
         {
             var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId).Include(c => c.Account);
@@ -547,3 +535,5 @@ namespace CPH.BLL.Services
         }
     }
 }
+    
+
