@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Trainee;
+using Microsoft.AspNetCore.Http;
 
 namespace CPH.BLL.Interfaces
 {
@@ -14,5 +15,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> UpdateScoreTrainee(ScoreTraineeRequestDTO model);
         Task<ResponseDTO> GetScoreTraineeList(Guid classId);
         Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason);
+        Task<ResponseDTO> ImportTraineeScoreByExcel(IFormFile file, Guid classId);
     }
 }

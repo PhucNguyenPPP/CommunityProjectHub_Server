@@ -73,5 +73,16 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpPost("import-trainee-score")]
+        public async Task<IActionResult> ImportTraineeScoreByExcel(IFormFile file, Guid classId)
+        {
+            var result = await _traineeService.ImportTraineeScoreByExcel(file, classId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }
