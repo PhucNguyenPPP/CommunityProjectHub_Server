@@ -159,16 +159,23 @@ namespace CPH.BLL.Services
             }
 
             var traineeClassList = classObj.Trainees.ToList();
+
             List<string> errors = new List<string>();
             foreach (var i in model.ScoreTrainees)
             {
                 var trainee = traineeClassList.FirstOrDefault(c => c.TraineeId == i.TraineeId);
+
                 if (trainee == null)
                 {
-                    return new ResponseDTO($"Danh sách có chứa học viên không tồn tại trong lớp", 400, false);
+                    return new ResponseDTO("Danh sách có chứa học viên không tồn tại trong lớp", 400, false);
                 }
 
-                if (i.Score != null && (i.Score < 0 || i.Score > 10))
+                if (trainee.Score == null)
+                {
+                    return new ResponseDTO("Không thể cập nhật điểm cho học viên nếu học viên chưa được chấm điểm trước đó", 400, false);
+                }
+
+                if (i.Score == null || i.Score < 0 || i.Score > 10)
                 {
                     errors.Add($"Điểm số của học viên {trainee.Account.AccountName} (Mã học viên: {trainee.Account.AccountCode}) không hợp lệ");
                 }
