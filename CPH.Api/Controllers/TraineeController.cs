@@ -102,5 +102,15 @@ namespace CPH.Api.Controllers
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
+        [HttpPost("trainee")]
+        public async Task<IActionResult> AddTraineeHadAccount([FromBody] AddTraineeHadAccountDTO addTraineeHadAccountDTO)
+        {
+            var result = await _traineeService.AddTraineeHadAccount(addTraineeHadAccountDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }
