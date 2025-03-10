@@ -395,5 +395,48 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Lưu điểm học viên thất bại", 400, false);
         }
 
+        public MemoryStream ExportTraineeListExcel(Guid classId)
+        {
+            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId).Include(c => c.Account);
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("DanhSachDiem");
+
+                worksheet.Cells[1, 1].Value = "STT";
+                worksheet.Cells[1, 2].Value = "Mã học viên";
+                worksheet.Cells[1, 3].Value = "Tên học viên";
+                worksheet.Cells[1, 4].Value = "Điểm";
+
+                using (var range = worksheet.Cells[1, 1, 1, 4])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Font.Size = 12;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
+
+                int row = 2;
+                int stt = 1;
+                foreach (var trainee in traineeList)
+                {
+                    worksheet.Cells[row, 1].Value = stt;
+                    worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
+                    worksheet.Cells[row, 3].Value = trainee.Account.FullName;
+                    worksheet.Cells[row, 4].Value = trainee.Score;
+                    row++;
+                    stt++;
+                }
+
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
     }
 }
