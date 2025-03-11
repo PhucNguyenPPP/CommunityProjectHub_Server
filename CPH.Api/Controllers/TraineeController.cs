@@ -113,6 +113,18 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpPut("trainee-report")]
+        public async Task<IActionResult> UpdateReport([Required] Guid accountId, [Required] Guid classId, [Required] IFormFile file)
+        {
+            Console.WriteLine($"File received: {file?.FileName}, Size: {file?.Length}");
+            var result = await _traineeService.UpdateReport(accountId, classId, file);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
         [HttpPost("new-account-of-trainee")]
         public async Task<IActionResult> SignUp([FromForm] SignUpRequestOfTraineeDTO model)
         {
