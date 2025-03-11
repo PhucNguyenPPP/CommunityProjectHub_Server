@@ -41,14 +41,17 @@ namespace CPH.BLL.Services
         private readonly IAccountService _accountService;
         private readonly IEmailService _emailService;
 
-        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, 
+        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, IAccountService accountService, IEmailService emailService,
             IImageService imageService, IConfiguration config)
-
-        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, IAccountService accountService, IEmailService emailService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            
+        
+            _accountService = accountService;
+            _emailService = emailService;
+
             _imageService = imageService;
             _config = config;
             _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
@@ -65,9 +68,6 @@ namespace CPH.BLL.Services
             {
                 _firebaseApp = FirebaseApp.DefaultInstance;
             }
-        }
-            _accountService = accountService;
-            _emailService = emailService;
         }
 
         public async Task<ResponseDTO> GetAllTraineeOfClass(Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
