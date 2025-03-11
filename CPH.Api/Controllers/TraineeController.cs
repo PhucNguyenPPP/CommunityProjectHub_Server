@@ -150,5 +150,19 @@ namespace CPH.Api.Controllers
                 return BadRequest(new ResponseDTO("Thêm học viên vào lớp thất bại", 400, true, null));
             }
         }
+
+        [HttpGet("search-trainee-add-to-class")]
+        public IActionResult SearchStudentForAssigningToClass(string? searchValue)
+        {
+            var result = _traineeService.SearchTraineeToAddToClass(searchValue);
+            if (result.Count > 0)
+            {
+                return Ok(new ResponseDTO("Tìm kiếm học viên thành công", 200, true, result));
+            }
+            else
+            {
+                return NotFound(new ResponseDTO("Không tìm thấy học viên", 404, false));
+            }
+        }
     }
 }

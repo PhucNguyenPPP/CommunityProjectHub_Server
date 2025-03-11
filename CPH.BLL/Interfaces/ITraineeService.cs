@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Trainee;
 using Microsoft.AspNetCore.Http;
 
@@ -22,5 +23,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> AddTraineeNoAccount(SignUpRequestOfTraineeDTO model);
         Task<ResponseDTO> UpdateReport(Guid accountId, Guid classId, IFormFile file);
         Task<string> StoreFileAndGetLink(IFormFile file, string folderName);
+        List<MemberResponseDTO> SearchTraineeToAddToClass(string? searchValue);
     }
 }

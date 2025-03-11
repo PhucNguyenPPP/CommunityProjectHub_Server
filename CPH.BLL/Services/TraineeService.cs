@@ -9,6 +9,7 @@ using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Trainee;
@@ -668,14 +669,14 @@ namespace CPH.BLL.Services
             var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(model.ClassId));
             if (classOfTrainee == null)
             {
-                return new ResponseDTO("Lớp không tồn tại",400,false);
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
-            var project = await _unitOfWork.Project.GetByCondition(c=>c.ProjectId.Equals(classOfTrainee.ProjectId)); 
-            if(project == null)
+            var project = await _unitOfWork.Project.GetByCondition(c => c.ProjectId.Equals(classOfTrainee.ProjectId));
+            if (project == null)
             {
                 return new ResponseDTO("Dự án không tồn tại", 400, false);
             }
-            if(!project.Status.Equals(ProjectStatusConstant.Planning))
+            if (!project.Status.Equals(ProjectStatusConstant.Planning))
             {
                 return new ResponseDTO("Dự án không nằm trong giai đoạn lên kế hoạch", 400, false);
             }
@@ -741,7 +742,7 @@ namespace CPH.BLL.Services
             account.RoleId = (int)RoleEnum.Trainee;
             await _unitOfWork.Account.AddAsync(account);
 
-            
+
             Trainee trainee = new Trainee()
             {
                 TraineeId = Guid.NewGuid(),
@@ -782,7 +783,23 @@ namespace CPH.BLL.Services
             await _emailService.SendAccountEmail(account.Email, account.AccountName, generatedPassword, "The Community Project Hub's account");
             return new ResponseDTO("Thêm học viên vào lớp thành công", 201, true);
         }
+
+        public List<MemberResponseDTO> SearchTraineeToAddToClass(string? searchValue)
+        {
+            if (searchValue.IsNullOrEmpty())
+            {
+                return new List<MemberResponseDTO>();
+            }
+
+            var searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+            || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+            || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Trainee).ToList();
+
+            var mappedSearchedList = _mapper.Map<List<MemberResponseDTO>>(searchedList);
+            return mappedSearchedList;
+        }
     }
 }
-    
+
+
 
