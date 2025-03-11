@@ -18,5 +18,7 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> ImportTraineeScoreByExcel(IFormFile file, Guid classId);
         MemoryStream ExportTraineeListExcel(Guid classId);
         Task<ResponseDTO> AddTraineeHadAccount(AddTraineeHadAccountDTO addTraineeHadAccountDTO);
+        Task<ResponseDTO> CheckValidationTrainee(SignUpRequestOfTraineeDTO model);
+        Task<ResponseDTO> AddTraineeNoAccount(SignUpRequestOfTraineeDTO model);
     }
 }
