@@ -15,8 +15,12 @@ using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
+using Firebase.Storage;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
@@ -29,12 +33,33 @@ namespace CPH.BLL.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly INotificationService _notificationService;
+        private readonly IConfiguration _config;
+        private readonly FirebaseApp _firebaseApp;
+        private readonly string _firebaseBucket;
+        private readonly IImageService _imageService;
 
-        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService)
+        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, 
+            IImageService imageService, IConfiguration config)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            _imageService = imageService;
+            _config = config;
+            _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
+
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                _firebaseApp = FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("firebase.json"),
+                    ProjectId = _config.GetSection("FirebaseConfig")["project_id"],
+                });
+            }
+            else
+            {
+                _firebaseApp = FirebaseApp.DefaultInstance;
+            }
         }
 
         public async Task<ResponseDTO> GetAllTraineeOfClass(Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
@@ -532,6 +557,105 @@ namespace CPH.BLL.Services
 
                 return stream;
             }
+        }
+
+        public async Task<string> StoreFileAndGetLink(IFormFile file, string folderName)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                var firebaseStorage = new FirebaseStorage(
+                    _firebaseBucket,
+                    new FirebaseStorageOptions
+                    {
+                        AuthTokenAsyncFactory = () => Task.FromResult(string.Empty),
+                        ThrowOnCancel = true
+                    });
+
+                var storageUrl = await firebaseStorage
+                    .Child(folderName)
+                    .Child(fileName)
+                    .PutAsync(memoryStream);
+
+                return storageUrl;
+            }
+        }
+
+        public async Task<ResponseDTO> UpdateReport (Guid accountId, Guid classId, IFormFile file)
+        {
+            var account = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+            if(account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            var clas = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId).Include(c=> c.Project).FirstOrDefault();
+            if (clas == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+
+            var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.ClassId == classId && c.AccountId == accountId);
+            if(trainee == null)
+            {
+                return new ResponseDTO("Không tìm thấy học viên này trong lớp", 400, false);
+            }
+
+            var status = clas.Project.Status.ToString();
+            if (!status.Equals(ProjectStatusConstant.InProgress))
+            {
+                return new ResponseDTO($"Dự án đang ở trạng thái {status}không thể cập nhật báo cáo", 400, false);
+            }
+
+            var lesson = _unitOfWork.Lesson
+                .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
+                .OrderByDescending(c => c.LessonNo)
+                .FirstOrDefault();
+
+
+            var finishTime = _unitOfWork.LessonClass
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson.LessonId)
+                .Select(c=> c.EndTime)
+                .FirstOrDefault();
+
+            if(finishTime <= DateTime.Now)
+            {
+                return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {finishTime}", 400, false);
+            }
+
+            if(trainee.FeedbackContent != null)
+            {
+                await _imageService.DeleteFileFromFirebase(trainee.FeedbackContent);
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                return new ResponseDTO("File không hợp lệ!", 400, false);
+            }
+
+            var url = await StoreFileAndGetLink(file, "cph_trainee_report");
+            if (url.IsNullOrEmpty())
+            {
+                return new ResponseDTO("Lưu tài liệu không thành công", 400, false);
+            }
+
+            trainee.FeedbackContent = url;
+            trainee.FeedbackCreatedDate = DateTime.Now;
+
+            _unitOfWork.Trainee.Update(trainee);
+
+            await _unitOfWork.SaveChangeAsync();
+
+            return new ResponseDTO("Cập nhật báo cáo thành công", 200, true);
         }
     }
 }
