@@ -47,11 +47,8 @@ namespace CPH.BLL.Services
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
-            
-        
             _accountService = accountService;
             _emailService = emailService;
-
             _imageService = imageService;
             _config = config;
             _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
