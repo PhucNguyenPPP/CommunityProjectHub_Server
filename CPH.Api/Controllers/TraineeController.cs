@@ -2,6 +2,7 @@
 using System.IO;
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
+using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Trainee;
 using Microsoft.AspNetCore.Http;
@@ -101,6 +102,41 @@ namespace CPH.Api.Controllers
             string fileName = "DanhSachHocVien.xlsx";
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+        [HttpPost("trainee")]
+        public async Task<IActionResult> AddTraineeHadAccount([FromBody] AddTraineeHadAccountDTO addTraineeHadAccountDTO)
+        {
+            var result = await _traineeService.AddTraineeHadAccount(addTraineeHadAccountDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+        [HttpPost("new-account-of-trainee")]
+        public async Task<IActionResult> SignUp([FromForm] SignUpRequestOfTraineeDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ResponseDTO(ModelState.ToString() ?? "Unknow error", 400, false, null));
+            }
+
+            var checkValid = await _traineeService.CheckValidationTrainee(model);
+            if (!checkValid.IsSuccess)
+            {
+                return BadRequest(checkValid);
+            }
+
+            var signUpResult = await _traineeService.AddTraineeNoAccount(model);
+            if (signUpResult.IsSuccess)
+            {
+                return Created("Sucessfully",
+                    new ResponseDTO("Thêm học viên vào lớp thành công", 201, true, null));
+            }
+            else
+            {
+                return BadRequest(new ResponseDTO("Thêm học viên vào lớp thất bại", 400, true, null));
+            }
         }
 
         [HttpGet("search-trainee-add-to-class")]

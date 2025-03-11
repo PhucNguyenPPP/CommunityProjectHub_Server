@@ -23,5 +23,6 @@ namespace CPH.BLL.Interfaces
         Task UpdateProjectsStatusToInProgress();
         Task <ResponseDTO> UpdateProjectStatusUpcoming(Guid projectId);
         Task <ResponseDTO> AssignPMToProject(Guid projectId, Guid accountId);
+        Task UpdateProjectsStatusToCompleted();
     }
 }

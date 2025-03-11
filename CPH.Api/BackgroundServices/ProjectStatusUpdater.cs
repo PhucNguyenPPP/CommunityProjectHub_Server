@@ -30,8 +30,10 @@ public class ProjectStatusUpdater : BackgroundService
                 try
                 {
                     await projectService.UpdateProjectsStatusToInProgress();
-                    _logger.LogInformation("Cập nhật trạng thái dự án thành công");
-          //          Console.WriteLine(" _logger.LogInformation(\"Project status updated successfully");
+                    _logger.LogInformation("Cập nhật trạng thái dự án thành đang diễn ra thành công");
+                    //          Console.WriteLine(" _logger.LogInformation(\"Project status updated successfully");
+                    await projectService.UpdateProjectsStatusToCompleted();
+                    _logger.LogInformation("Cập nhật trạng thái dự án thành đã kết thúc thành công");
                 }
                 catch (Exception ex)
                 {
@@ -46,4 +48,5 @@ public class ProjectStatusUpdater : BackgroundService
 
         _logger.LogInformation("ProjectStatusUpdater service stopped.");
     }
+   
 }
