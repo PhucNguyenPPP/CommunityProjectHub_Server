@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Trainee;
 using Microsoft.AspNetCore.Http;
 
@@ -17,5 +18,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> RemoveTrainee(Guid classId, Guid accountId, string? reason);
         Task<ResponseDTO> ImportTraineeScoreByExcel(IFormFile file, Guid classId);
         MemoryStream ExportTraineeListExcel(Guid classId);
+        List<MemberResponseDTO> SearchTraineeToAddToClass(string? searchValue);
     }
 }

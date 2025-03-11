@@ -7,9 +7,11 @@ using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Trainee;
+using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
@@ -437,6 +439,21 @@ namespace CPH.BLL.Services
 
                 return stream;
             }
+        }
+
+        public List<MemberResponseDTO> SearchTraineeToAddToClass(string? searchValue)
+        {
+            if (searchValue.IsNullOrEmpty())
+            {
+                return new List<MemberResponseDTO>();
+            }
+
+            var searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
+            || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
+            || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Trainee).ToList();
+
+            var mappedSearchedList = _mapper.Map<List<MemberResponseDTO>>(searchedList);
+            return mappedSearchedList;
         }
     }
 }
