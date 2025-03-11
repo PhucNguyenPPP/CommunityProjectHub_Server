@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
+using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Paging;
 using CPH.Common.DTO.Project;
@@ -37,9 +38,13 @@ namespace CPH.BLL.Services
         private readonly FirebaseApp _firebaseApp;
         private readonly string _firebaseBucket;
         private readonly IImageService _imageService;
+        private readonly IAccountService _accountService;
+        private readonly IEmailService _emailService;
 
         public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, 
             IImageService imageService, IConfiguration config)
+
+        public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, IAccountService accountService, IEmailService emailService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
@@ -60,6 +65,9 @@ namespace CPH.BLL.Services
             {
                 _firebaseApp = FirebaseApp.DefaultInstance;
             }
+        }
+            _accountService = accountService;
+            _emailService = emailService;
         }
 
         public async Task<ResponseDTO> GetAllTraineeOfClass(Guid classId, string? searchValue, int? pageNumber, int? rowsPerPage, string? filterField, string? filterOrder)
@@ -656,6 +664,126 @@ namespace CPH.BLL.Services
             await _unitOfWork.SaveChangeAsync();
 
             return new ResponseDTO("Cập nhật báo cáo thành công", 200, true);
+        }
+
+        public async Task<ResponseDTO> CheckValidationTrainee(SignUpRequestOfTraineeDTO model)
+        {
+            var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(model.ClassId));
+            if (classOfTrainee == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại",400,false);
+            }
+            var project = await _unitOfWork.Project.GetByCondition(c=>c.ProjectId.Equals(classOfTrainee.ProjectId)); 
+            if(project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+            if(!project.Status.Equals(ProjectStatusConstant.Planning))
+            {
+                return new ResponseDTO("Dự án không nằm trong giai đoạn lên kế hoạch", 400, false);
+            }
+            return new ResponseDTO("Thông tin thêm trainee hợp lệ", 200, true);
+
+        }
+        public async Task<ResponseDTO> CheckValidationSignUpOfTrainee(SignUpRequestOfTraineeDTO model)
+        {
+            if (model.DateOfBirth >= DateTime.Now)
+            {
+                return new ResponseDTO("Ngày sinh phải nhỏ hơn ngày hiện tại", 400, false);
+            }
+
+            if (model.Gender != GenderConstant.Male
+                && model.Gender != GenderConstant.Female)
+            {
+                return new ResponseDTO("Giới tính không hợp lệ", 400, false);
+            }
+
+            var checkAccountNameExist = _accountService.CheckAccountNameExist(model.AccountName);
+            if (checkAccountNameExist)
+            {
+                return new ResponseDTO("Tên tài khoản đã tồn tại", 400, false);
+            }
+
+            var checkEmailExist = _accountService.CheckEmailExist(model.Email);
+            if (checkEmailExist)
+            {
+                return new ResponseDTO("Email đã tồn tại", 400, false);
+            }
+
+            var checkPhoneExist = _accountService.CheckPhoneExist(model.Phone);
+            if (checkPhoneExist)
+            {
+                return new ResponseDTO("Số điện thoại đã tồn tại", 400, false);
+            }
+            return new ResponseDTO("Kiểm tra thành công", 200, true);
+        }
+        public async Task<ResponseDTO> AddTraineeNoAccount(SignUpRequestOfTraineeDTO model)
+        {
+            var check1 = await CheckValidationTrainee(model);
+            if (!check1.IsSuccess)
+            {
+                return check1;
+            }
+            var check2 = await CheckValidationSignUpOfTrainee(model);
+            if (!check2.IsSuccess)
+            {
+                return check2;
+            }
+            var account = _mapper.Map<Account>(model);
+
+            var salt = _accountService.GenerateSalt();
+            var generatedPassword = _accountService.GeneratePasswordString();
+            var passwordHash = _accountService.GenerateHashedPassword(generatedPassword, salt);
+            //var avatarLink = await _imageService.StoreImageAndGetLink(model.AvatarLink, FileNameFirebaseStorage.UserImage);
+            var accountId = Guid.NewGuid();
+            account.AccountId = accountId;
+            account.AccountCode = _accountService.GenerateAccountCode((int)RoleEnum.Trainee);
+            account.Salt = salt;
+            account.PasswordHash = passwordHash;
+            account.Status = true;
+            account.RoleId = (int)RoleEnum.Trainee;
+            await _unitOfWork.Account.AddAsync(account);
+
+            
+            Trainee trainee = new Trainee()
+            {
+                TraineeId = Guid.NewGuid(),
+                AccountId = accountId,
+                ClassId = model.ClassId,
+            };
+            var classToAdd = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(model.ClassId));
+            if (classToAdd.NumberGroup.HasValue)
+            {
+                var traineeInClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(classToAdd.ClassId));
+                var traineesGroupedByGroupNo = traineeInClass
+    .GroupBy(t => t.GroupNo); // Nhóm trainees theo GroupNo
+
+                var groupCounts = traineesGroupedByGroupNo
+            .Select(group => new { GroupNo = group.Key, Count = group.Count() });
+
+                int maxGroupSize = groupCounts.Any() ? groupCounts.Max(g => g.Count) : 0;
+
+                var smallerGroupNo = groupCounts
+                    .Where(g => g.Count < maxGroupSize)
+                    .Select(g => g.GroupNo).FirstOrDefault();
+                if (smallerGroupNo == null)
+                {
+                    trainee.GroupNo = 1;
+                }
+                else
+                {
+                    trainee.GroupNo = smallerGroupNo.Value;
+                }
+
+            }
+            await _unitOfWork.Trainee.AddAsync(trainee);
+            var s = await _unitOfWork.SaveChangeAsync();
+            if (!s)
+            {
+                return new ResponseDTO("Thêm học viên vào lớp thất bại", 500, false);
+            }
+            await _emailService.SendAccountEmail(account.Email, account.AccountName, generatedPassword, "The Community Project Hub's account");
+            return new ResponseDTO("Thêm học viên vào lớp thành công", 201, true);
         }
     }
 }
