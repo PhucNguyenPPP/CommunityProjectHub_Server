@@ -113,6 +113,18 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpPut("trainee-report")]
+        public async Task<IActionResult> UpdateReport([Required] Guid accountId, [Required] Guid classId, [Required] IFormFile file)
+        {
+            Console.WriteLine($"File received: {file?.FileName}, Size: {file?.Length}");
+            var result = await _traineeService.UpdateReport(accountId, classId, file);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
         [HttpPost("new-account-of-trainee")]
         public async Task<IActionResult> SignUp([FromForm] SignUpRequestOfTraineeDTO model)
         {
@@ -136,6 +148,20 @@ namespace CPH.Api.Controllers
             else
             {
                 return BadRequest(new ResponseDTO("Thêm học viên vào lớp thất bại", 400, true, null));
+            }
+        }
+
+        [HttpGet("search-trainee-add-to-class")]
+        public IActionResult SearchTraineeForAssigningToClass(string? searchValue)
+        {
+            var result = _traineeService.SearchTraineeToAddToClass(searchValue);
+            if (result.Count > 0)
+            {
+                return Ok(new ResponseDTO("Tìm kiếm học viên thành công", 200, true, result));
+            }
+            else
+            {
+                return NotFound(new ResponseDTO("Không tìm thấy học viên", 404, false));
             }
         }
     }
