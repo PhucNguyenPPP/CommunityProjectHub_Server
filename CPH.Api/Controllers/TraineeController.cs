@@ -152,7 +152,7 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("search-trainee-add-to-class")]
-        public IActionResult SearchStudentForAssigningToClass(string? searchValue)
+        public IActionResult SearchTraineeForAssigningToClass(string? searchValue)
         {
             var result = _traineeService.SearchTraineeToAddToClass(searchValue);
             if (result.Count > 0)
