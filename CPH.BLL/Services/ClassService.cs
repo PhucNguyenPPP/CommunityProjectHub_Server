@@ -439,7 +439,8 @@ namespace CPH.BLL.Services
                    .Include(c => c.Project)
                    .Include(c => c.Lecturer)
                    .ToList();
-            } else
+            }
+            else
             {
                 classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
                   .Include(c => c.Project)
@@ -641,7 +642,7 @@ namespace CPH.BLL.Services
             }
 
 
-            List<Class>? classTrainee = new List<Class>();
+            List<GetAllClassOfTrainee>? classTrainee = new List<GetAllClassOfTrainee>();
             if (searchValue.IsNullOrEmpty())
             {
                 classTrainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
@@ -649,23 +650,66 @@ namespace CPH.BLL.Services
                    .ThenInclude(c => c.Project)
                    .Include(c => c.Class)
                    .ThenInclude(c => c.Lecturer)
-                   .Select(c => c.Class)
-                   .ToList();
+                    .Select(c => new GetAllClassOfTrainee
+                    {
+                        ClassId = c.Class.ClassId,
+                        ClassCode = c.Class.ClassCode,
+                        ReportContent = c.Class.ReportContent,
+                        ReportCreatedDate = c.Class.ReportCreatedDate,
+                        TraineeReportContent = c.ReportContent,
+                        TraineeReportCreatedDate = c.ReportCreatedDate,
+                        ProjectId = c.Class.Project.ProjectId,
+                        ProjectTitle = c.Class.Project.Title,
+                        ProjectStartDate = c.Class.Project.StartDate,
+                        ProjectEndDate = c.Class.Project.EndDate,
+                        ProjectAddress = c.Class.Project.Address,
+                        ProjectNumberLesson = c.Class.Project.NumberLesson,
+                        ProjectApplicationStartDate = c.Class.Project.ApplicationStartDate,
+                        ProjectApplicationEndDate = c.Class.Project.ApplicationEndDate,
+                        ProjectCreatedDate = c.Class.Project.CreatedDate,
+                        ProjectStatus = c.Class.Project.Status,
+                        ProjectManagerId = c.Class.Project.ProjectManagerId,
+                        LecturerId = c.Class.Lecturer.AccountId,
+                        LecturerName = c.Class.Lecturer.FullName,
+                        LecturerPhone = c.Class.Lecturer.Phone,
+                        LecturerEmail = c.Class.Lecturer.Email
+                    }).ToList();
             }
             else
             {
                 classTrainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
-                  .Include(c => c.Class)
-                  .ThenInclude(c => c.Project)
-                  .Include(c => c.Class)
-                  .ThenInclude(c => c.Lecturer)
-                  .Select(c => c.Class)
-                  .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
-                  .ToList();
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Project)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Lecturer)
+                    .Select(c => new GetAllClassOfTrainee
+                    {
+                        ClassId = c.Class.ClassId,
+                        ClassCode = c.Class.ClassCode,
+                        ReportContent = c.Class.ReportContent,
+                        ReportCreatedDate = c.Class.ReportCreatedDate,
+                        TraineeReportContent = c.ReportContent,
+                        TraineeReportCreatedDate = c.ReportCreatedDate,
+                        ProjectId = c.Class.Project.ProjectId,
+                        ProjectTitle = c.Class.Project.Title,
+                        ProjectStartDate = c.Class.Project.StartDate,
+                        ProjectEndDate = c.Class.Project.EndDate,
+                        ProjectAddress = c.Class.Project.Address,
+                        ProjectNumberLesson = c.Class.Project.NumberLesson,
+                        ProjectApplicationStartDate = c.Class.Project.ApplicationStartDate,
+                        ProjectApplicationEndDate = c.Class.Project.ApplicationEndDate,
+                        ProjectCreatedDate = c.Class.Project.CreatedDate,
+                        ProjectStatus = c.Class.Project.Status,
+                        ProjectManagerId = c.Class.Project.ProjectManagerId,
+                        LecturerId = c.Class.Lecturer.AccountId,
+                        LecturerName = c.Class.Lecturer.FullName,
+                        LecturerPhone = c.Class.Lecturer.Phone,
+                        LecturerEmail = c.Class.Lecturer.Email
+                    })
+                    .Where(c => c.ClassCode.Contains(searchValue!) || c.ProjectTitle.Contains(searchValue!))
+                    .ToList();
             }
-
-            var mappedList = _mapper.Map<List<GetAllClassOfTrainee>>(classTrainee);
-            return new ResponseDTO("Lấy danh sách lớp của học viên thành công", 200, true, mappedList);
+            return new ResponseDTO("Lấy danh sách lớp của học viên thành công", 200, true, classTrainee);
         }
 
         public async Task<ResponseDTO> GetAllClassOfStudent(string? searchValue, Guid accountId)

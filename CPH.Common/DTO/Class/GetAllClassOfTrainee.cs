@@ -16,6 +16,10 @@ namespace CPH.Common.DTO.Class
 
         public DateTime? ReportCreatedDate { get; set; }
 
+        public string? TraineeReportContent { get; set; }
+
+        public DateTime? TraineeReportCreatedDate { get; set; }
+
         public Guid ProjectId { get; set; }
 
         public string ProjectTitle { get; set; } = null!;
