@@ -633,7 +633,7 @@ namespace CPH.BLL.Services
                 .Select(c=> c.EndTime)
                 .FirstOrDefault();
 
-            if(finishTime <= DateTime.Now)
+            if(finishTime >= DateTime.Now)
             {
                 return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {finishTime}", 400, false);
             }
