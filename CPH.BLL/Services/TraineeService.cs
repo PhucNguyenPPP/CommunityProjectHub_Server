@@ -653,9 +653,8 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Lưu tài liệu không thành công", 400, false);
             }
-
-            trainee.FeedbackContent = url;
-            trainee.FeedbackCreatedDate = DateTime.Now;
+            trainee.ReportContent = url;
+            trainee.ReportCreatedDate = DateTime.Now;
 
             _unitOfWork.Trainee.Update(trainee);
 
