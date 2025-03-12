@@ -874,6 +874,11 @@ namespace CPH.BLL.Services
                         {
                             reg.Status = RegistrationStatusConstant.Rejected;
                         }
+                    }
+                    else
+                    {
+                        item.Status = ProjectStatusConstant.Cancelled;
+                    }
 
                         _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
                         bool saveChanges = await _unitOfWork.SaveChangeAsync();
@@ -882,7 +887,7 @@ namespace CPH.BLL.Services
                         {
                             throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
                         }
-                    }
+                    
                 }
             }
         }
