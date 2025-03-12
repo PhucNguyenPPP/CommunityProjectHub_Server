@@ -19,6 +19,10 @@ namespace CPH.Common.DTO.Trainee
 
         public DateTime? FeedbackCreatedDate { get; set; }
 
+        public string? ReportContent { get; set; }
+
+        public DateTime? ReportCreatedDate { get; set; }
+
         public Guid ClassId { get; set; }
 
         public Guid AccountId { get; set; }
