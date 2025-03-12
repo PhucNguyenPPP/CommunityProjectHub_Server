@@ -80,6 +80,7 @@ namespace CPH.BLL.Services
                 {
                     i = 1;
                     trainee.GroupNo = i;
+                    i++;
                 }
             }
             _unitOfWork.Trainee.UpdateRange(traineesOfClass.ToList());
