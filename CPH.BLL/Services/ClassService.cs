@@ -214,7 +214,7 @@ namespace CPH.BLL.Services
                 .ToList();
 
             var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
-            
+
             var traineeList = _unitOfWork.Trainee
                 .GetAllByCondition(c => c.ClassId == classId)
                 .Select(c => c.Account)
@@ -762,7 +762,21 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
         {
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId));
+            if (account == null)
+            {
+                return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
+            }
             var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId == currentClassId);
+            if (classOfTrainee == null)
+            {
+                return new ResponseDTO("Lớp của học viên không tồn tại", 400, false);
+            }
+            var trainee = await _unitOfWork.Trainee.GetByCondition(t=>t.AccountId.Equals(accountId) && t.ClassId.Equals(currentClassId));
+            if(trainee == null)
+            {
+                return new ResponseDTO("Thông tin học viên và lớp hiện tại không khớp nhau", 400, false);
+            }    
             var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfTrainee.ProjectId));
             if (project == null || !project.Status.Equals(ProjectStatusConstant.UpComing))
             {
@@ -773,15 +787,20 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
             }
+             var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
+            var sqlQuery = query.ToQueryString(); // Chỉ hoạt động với EF Core 5.0+
+            Console.WriteLine(sqlQuery);
             var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
+
             if (!traineesOfClassAvailable.Any())
             {
                 return new ResponseDTO("Các lớp có thể chuyển vào đã bị lỗi", 400, false);
             }
+
             var availableClasses = new List<Class>();
             foreach (var classId in otherClassIds)
             {
-                var currentClassToCheck = await _unitOfWork.Class.GetByCondition(c=>c.ClassId.Equals(classId)); // Giả sử bạn có GetById
+                var currentClassToCheck = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(classId)); // Giả sử bạn có GetById
                 if (currentClassToCheck == null) continue; // Lớp có thể đã bị xóa.
                 var traineesInClass = traineesOfClassAvailable.Where(t => t.ClassId == classId).ToList();
                 if (!traineesInClass.Any())
