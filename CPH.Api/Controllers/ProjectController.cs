@@ -171,5 +171,20 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(responseDTO);
         }
+
+        [HttpPost("export-final-report-of-project")]
+        public async Task<IActionResult> ExportFinalReportOfProject(Guid projectId)
+        {
+            var check = await _projectService.CheckProjectIdExisted(projectId);
+            if (!check)
+            {
+                return BadRequest(new ResponseDTO("Dự án không tồn tại", 400, false));
+            }
+
+            var stream = _projectService.ExportFinalReportOfProjectExcel(projectId);
+            string fileName = "FinalReport.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 }
