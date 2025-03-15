@@ -97,7 +97,8 @@ namespace CPH.BLL.Services
                             c.Account.AccountCode.ToLower().Contains(searchValue.ToLower()) ||
                             c.Account.AccountName.ToLower().Contains(searchValue.ToLower()) ||
                             c.Account.Email.ToLower().Contains(searchValue.ToLower()) ||
-                            c.Account.Phone.ToLower().Contains(searchValue.ToLower())
+                            c.Account.Phone.ToLower().Contains(searchValue.ToLower()) ||
+                            (c.GroupNo != null && c.GroupNo.ToString()!.Contains(searchValue.ToLower()))
                         );
                     }
 
@@ -112,7 +113,7 @@ namespace CPH.BLL.Services
 
                     if (!filterField.IsNullOrEmpty() && !filterOrder.IsNullOrEmpty())
                     {
-                        if (!filterField.Equals("fullName") && !filterField.Equals("accountCode") && !filterField.Equals("email"))
+                        if (!filterField.Equals("fullName") && !filterField.Equals("accountCode") && !filterField.Equals("email") && !filterField.Equals("groupNo"))
                         {
                             return new ResponseDTO("Trường lọc không hợp lệ", 400, false);
                         }
@@ -173,7 +174,10 @@ namespace CPH.BLL.Services
                     : list.OrderBy(c => c.Account.AccountCode),
                 "email" => filterOrder == FilterConstant.Descending
                     ? list.OrderByDescending(c => c.Account.Email)
-                    : list.OrderBy(c => c.Account.Email)
+                    : list.OrderBy(c => c.Account.Email),
+                "groupNo" => filterOrder == FilterConstant.Descending
+                    ? list.OrderByDescending(c => c.GroupNo)
+                    : list.OrderBy(c => c.GroupNo)
             };
         }
 
@@ -300,12 +304,9 @@ namespace CPH.BLL.Services
 
             var status = classRemove.Project.Status;
 
-            if (status == ProjectStatusConstant.Cancelled ||
-                status == ProjectStatusConstant.InProgress ||
-                status == ProjectStatusConstant.Planning ||
-                status == ProjectStatusConstant.Completed)
+            if (status != ProjectStatusConstant.Planning)
             {
-                return new ResponseDTO("Học viên chỉ được xóa khi dự án sắp diễn ra", 400, false);
+                return new ResponseDTO("Học viên chỉ được xóa khi dự án ở giai đoạn Lên kế hoạch", 400, false);
             }
 
             _unitOfWork.Trainee.Delete(trainee);
@@ -320,6 +321,7 @@ namespace CPH.BLL.Services
                 ProjectId = classRemove.Project.ProjectId,
                 ActionContent = $"{trainee.Account.FullName} không còn là sinh viên hỗ trợ lớp {classRemove.ClassCode} của dự án {classRemove.Project.Title}",
                 AccountId = accountId,
+                NoteContent = reason,
             };
 
             await _unitOfWork.ProjectLogging.AddAsync(logging);
@@ -358,8 +360,8 @@ namespace CPH.BLL.Services
                 for (int row = 2; row <= rowCount; row++)
                 {
                     string? accountCode = worksheet.Cells[row, 2].Text.Trim();
-                    string? traineeFullName = worksheet.Cells[row, 3].Text.Trim();
-                    string? scoreText = worksheet.Cells[row, 4].Text.Trim();
+                    string? traineeFullName = worksheet.Cells[row, 4].Text.Trim();
+                    string? scoreText = worksheet.Cells[row, 5].Text.Trim();
                     studentScores.Add(new TraineeScoreExcelDTO()
                     {
                         AccountCode = accountCode,
@@ -524,7 +526,7 @@ namespace CPH.BLL.Services
         }
         public MemoryStream ExportTraineeListExcel(Guid classId)
         {
-            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId).Include(c => c.Account);
+            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId).Include(c => c.Account).OrderBy(c => c.GroupNo);
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using (var package = new ExcelPackage())
@@ -534,9 +536,10 @@ namespace CPH.BLL.Services
                 worksheet.Cells[1, 1].Value = "STT";
                 worksheet.Cells[1, 2].Value = "Mã học viên";
                 worksheet.Cells[1, 3].Value = "Tên học viên";
-                worksheet.Cells[1, 4].Value = "Điểm";
+                worksheet.Cells[1, 4].Value = "Nhóm";
+                worksheet.Cells[1, 5].Value = "Điểm";
 
-                using (var range = worksheet.Cells[1, 1, 1, 4])
+                using (var range = worksheet.Cells[1, 1, 1, 5])
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Font.Size = 12;
@@ -551,7 +554,8 @@ namespace CPH.BLL.Services
                     worksheet.Cells[row, 1].Value = stt;
                     worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
                     worksheet.Cells[row, 3].Value = trainee.Account.FullName;
-                    worksheet.Cells[row, 4].Value = trainee.Score;
+                    worksheet.Cells[row, 4].Value = trainee.GroupNo;
+                    worksheet.Cells[row, 5].Value = trainee.Score;
                     row++;
                     stt++;
                 }

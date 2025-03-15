@@ -47,7 +47,7 @@ namespace CPH.BLL.Services
             try
             {
                 var project = await _unitOfWork.Project
-                    .GetByCondition(c=>c.ProjectId.Equals(projectID));
+                    .GetByCondition(c => c.ProjectId.Equals(projectID));
                 /*c => c.Status != ProjectStatusConstant.Cancelled && c.Status!=ProjectStatusConstant.InProgress && c.Status!=ProjectStatusConstant.Completed && 
                                 var project = await _unitOfWork.Project
                                     .GetByCondition(c => c.ProjectId.Equals(projectID));*/
@@ -664,7 +664,7 @@ namespace CPH.BLL.Services
 
                        }*/
                 _unitOfWork.Project.Update(project);
-                var updated = await _unitOfWork.SaveChangeAsync();               
+                var updated = await _unitOfWork.SaveChangeAsync();
                 if (updated == false)
                 {
                     return new ResponseDTO("Chỉnh sửa thất bại", 500, false);
@@ -686,7 +686,7 @@ namespace CPH.BLL.Services
                 var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
                 if (!project.Status.Equals(ProjectStatusConstant.Planning))
                 {
-                    return new ResponseDTO("Dự án hiện đang ở giai đoạn "+ project.Status.ToString()+" nên không thể chỉnh sửa", 400, false);
+                    return new ResponseDTO("Dự án hiện đang ở giai đoạn " + project.Status.ToString() + " nên không thể chỉnh sửa", 400, false);
                 }
                 List<string> errors = new List<string>();
                 if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
@@ -880,14 +880,14 @@ namespace CPH.BLL.Services
                         item.Status = ProjectStatusConstant.Cancelled;
                     }
 
-                        _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
-                        bool saveChanges = await _unitOfWork.SaveChangeAsync();
+                    _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
+                    bool saveChanges = await _unitOfWork.SaveChangeAsync();
 
-                        if (!saveChanges)
-                        {
-                            throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
-                        }
-                    
+                    if (!saveChanges)
+                    {
+                        throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
+                    }
+
                 }
             }
         }
@@ -938,15 +938,15 @@ namespace CPH.BLL.Services
             }
 
             var classList = project.Classes.ToList();
-            foreach(var i in classList)
+            foreach (var i in classList)
             {
-                if(i.NumberGroup == null)
+                if (i.NumberGroup == null)
                 {
                     return new ResponseDTO($"Lớp {i.ClassCode} chưa được tạo nhóm", 400, false);
                 }
             }
 
-            if(project.StartDate < DateTime.Now)
+            if (project.StartDate < DateTime.Now)
             {
                 return new ResponseDTO("Đã quá ngày bắt đầu của dự án", 400, false);
             }
@@ -972,7 +972,7 @@ namespace CPH.BLL.Services
             var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(c => c.ProjectManager)
                 .FirstOrDefault();
-            if(project == null)
+            if (project == null)
             {
                 return new ResponseDTO("Dự án không tồn tại", 400, false);
             }
@@ -980,29 +980,29 @@ namespace CPH.BLL.Services
             var projectManager = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == accountId)
                 .FirstOrDefault();
 
-            if(projectManager == null)
+            if (projectManager == null)
             {
                 return new ResponseDTO("Giảng viên không tồn tại", 400, false);
             }
 
-            if(projectManager.RoleId != (int)RoleEnum.Lecturer)
+            if (projectManager.RoleId != (int)RoleEnum.Lecturer)
             {
                 return new ResponseDTO("Chỉ giảng viên mới có thể được bổ nhiệm làm quản lý dự án", 400, false);
             }
 
-            if(project.Status == ProjectStatusConstant.Completed || project.Status == ProjectStatusConstant.Cancelled)
+            if (project.Status == ProjectStatusConstant.Completed || project.Status == ProjectStatusConstant.Cancelled)
             {
                 return new ResponseDTO("Dự án đã kết thúc", 400, false);
             }
 
-            if(project.ProjectManagerId == accountId)
+            if (project.ProjectManagerId == accountId)
             {
                 return new ResponseDTO("Giảng viên được chọn đang là quản lý của dự án", 400, false);
             }
 
             List<ProjectLogging> projectLoggings = new List<ProjectLogging>();
 
-            if(project.ProjectManagerId != null)
+            if (project.ProjectManagerId != null)
             {
                 var messageNotificationRemovePM = RemovePMFromProjectNotification.SendRemovePMFromProjectNotification(project.Title);
                 await _notificationService.CreateNotification((Guid)project.ProjectManagerId, messageNotificationRemovePM);
@@ -1055,7 +1055,7 @@ namespace CPH.BLL.Services
                     var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).ToListAsync();
 
                     // Kiểm tra xem có lớp học nào không đáp ứng điều kiện hay không
-                    bool hasInvalidClass = classesOfProject.Any(c => c.ReportContent.IsNullOrEmpty() );
+                    bool hasInvalidClass = classesOfProject.Any(c => c.ReportContent.IsNullOrEmpty());
 
                     if (!hasInvalidClass)
                     {
@@ -1078,6 +1078,70 @@ namespace CPH.BLL.Services
             return await _unitOfWork.Project
                 .GetAllByCondition(p => p.EndDate <= today && p.Status.Equals(ProjectStatusConstant.InProgress))
                 .ToListAsync();
+        }
+
+        public MemoryStream ExportFinalReportOfProjectExcel(Guid projectId)
+        {
+            var classList = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId == projectId).ToList();
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                foreach (var classItem in classList)
+                {
+                    var worksheet = package.Workbook.Worksheets.Add($"{classItem.ClassCode}");
+
+                    worksheet.Cells[1, 1].Value = "STT";
+                    worksheet.Cells[1, 2].Value = "Mã học viên";
+                    worksheet.Cells[1, 3].Value = "Tên học viên";
+                    worksheet.Cells[1, 4].Value = "Nhóm";
+                    worksheet.Cells[1, 5].Value = "Điểm";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Font.Size = 12;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+
+                    var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classItem.ClassId)
+                        .Include(c => c.Account)
+                        .OrderBy(c => c.GroupNo)
+                        .ToList();
+                    int row = 2;
+                    int stt = 1;
+                    foreach (var trainee in traineeList)
+                    {
+                        worksheet.Cells[row, 1].Value = stt;
+                        worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
+                        worksheet.Cells[row, 3].Value = trainee.Account.FullName;
+                        worksheet.Cells[row, 4].Value = trainee.GroupNo;
+                        worksheet.Cells[row, 5].Value = trainee.Score;
+                        row++;
+                        stt++;
+                    }
+
+                    worksheet.Cells.AutoFitColumns();
+                }
+
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
+
+        public async Task<bool> CheckProjectIdExisted(Guid projectId)
+        {
+            var project = await _unitOfWork.Project.GetByCondition(c => c.ProjectId == projectId);
+            if (project == null)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

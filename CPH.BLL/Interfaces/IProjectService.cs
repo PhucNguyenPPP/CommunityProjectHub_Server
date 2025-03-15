@@ -24,5 +24,7 @@ namespace CPH.BLL.Interfaces
         Task <ResponseDTO> UpdateProjectStatusUpcoming(Guid projectId);
         Task <ResponseDTO> AssignPMToProject(Guid projectId, Guid accountId);
         Task UpdateProjectsStatusToCompleted();
+        Task<bool> CheckProjectIdExisted(Guid projectId);
+        MemoryStream ExportFinalReportOfProjectExcel(Guid projectId);
     }
 }
