@@ -759,5 +759,58 @@ namespace CPH.BLL.Services
             var mappedList = _mapper.Map<List<GetAllClassOfStudent>>(classStudent);
             return new ResponseDTO("Lấy danh sách lớp của sinh viên thành công", 200, true, mappedList);
         }
+
+        public async Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
+        {
+            var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId == currentClassId);
+            var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfTrainee.ProjectId));
+            if (project == null || !project.Status.Equals(ProjectStatusConstant.UpComing))
+            {
+                return new ResponseDTO("Dự án này hiện không thể đổi lớp", 400, false);
+            }
+            var otherClassIds = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(classOfTrainee.ProjectId) && !c.ClassId.Equals(currentClassId)).Select(c => c.ClassId).ToList();
+            if (!otherClassIds.Any())
+            {
+                return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
+            }
+            var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
+            if (!traineesOfClassAvailable.Any())
+            {
+                return new ResponseDTO("Các lớp có thể chuyển vào đã bị lỗi", 400, false);
+            }
+            var availableClasses = new List<Class>();
+            foreach (var classId in otherClassIds)
+            {
+                var currentClassToCheck = await _unitOfWork.Class.GetByCondition(c=>c.ClassId.Equals(classId)); // Giả sử bạn có GetById
+                if (currentClassToCheck == null) continue; // Lớp có thể đã bị xóa.
+                var traineesInClass = traineesOfClassAvailable.Where(t => t.ClassId == classId).ToList();
+                if (!traineesInClass.Any())
+                {
+                    // Lớp không có học viên, bỏ qua
+                    continue;
+                }
+                var groupCounts = traineesInClass.Where(t => t.GroupNo.HasValue).GroupBy(t => t.GroupNo.Value).ToDictionary(g => g.Key, g => g.Count());
+
+                if (!groupCounts.Any())
+                {
+                    // Lớp không có nhóm, bỏ qua
+                    continue;
+                }
+                // Tìm kích thước nhóm tối đa
+                int maxGroupSize = groupCounts.Values.Max();
+                // Kiểm tra xem có nhóm nào còn chỗ trống không
+                if (groupCounts.Any(group => group.Value < maxGroupSize))
+                {
+                    availableClasses.Add(currentClassToCheck);
+                }
+            }
+            if (!availableClasses.Any())
+            {
+                return new ResponseDTO("Không có lớp nào có nhóm còn chỗ trống.", 400, false);
+            }
+            return new ResponseDTO("Lấy danh sách lớp thành công", 200, true, availableClasses);
+        }
+
     }
+
 }

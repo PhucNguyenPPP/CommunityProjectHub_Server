@@ -130,6 +130,17 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(responseDTO);
         }
+        [HttpGet("all-available-class")]
+        public async Task<IActionResult> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllAvailableClassOfTrainee(accountId, currentClassId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 
 }
