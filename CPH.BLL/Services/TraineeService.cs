@@ -80,7 +80,8 @@ namespace CPH.BLL.Services
 
                 IQueryable<Trainee> list = _unitOfWork.Trainee
                     .GetAllByCondition(c => c.ClassId == classId)
-                    .Include(c => c.Account).ThenInclude(c => c.Role);
+                    .Include(c => c.Account).ThenInclude(c => c.Role)
+                    .OrderBy(c=> c.GroupNo);
 
                 if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null && filterField.IsNullOrEmpty() && filterOrder.IsNullOrEmpty())
                 {
