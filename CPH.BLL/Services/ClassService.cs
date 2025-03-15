@@ -7,6 +7,7 @@ using CPH.Common.DTO.General;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
+using CPH.Common.DTO.Trainee;
 using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
@@ -213,11 +214,20 @@ namespace CPH.BLL.Services
                 .ToList();
 
             var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
+            
+            var traineeList = _unitOfWork.Trainee
+                .GetAllByCondition(c => c.ClassId == classId)
+                .Select(c => c.Account)
+                .ToList();
+
+            var traineeListDto = _mapper.Map<List<GetTraineeOfClassDTO>>(traineeList);
+
 
             var dto = _mapper.Map<ClassDetailDTO>(clas);
             dto.LecturerSlotAvailable = lecturerSlotAvailable;
             dto.StudentSlotAvailable = studentSlotAvailable;
             dto.getMemberOfClassDTOs = memberDto;
+            dto.getTraineeOfClassDTOs = traineeListDto;
 
             return new ResponseDTO("Lấy thông tin chi tiết của lớp thành công", 200, true, dto);
 

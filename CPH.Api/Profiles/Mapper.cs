@@ -174,6 +174,9 @@ namespace CPH.Api.Profiles
                .ForMember(dest => dest.ProjectManagerId, opt => opt.MapFrom(src => src.Project.ProjectManagerId))
                .ReverseMap();
             CreateMap<SignUpRequestOfTraineeDTO, Account>().ReverseMap();
+
+            CreateMap<Account, GetTraineeOfClassDTO>()
+                .ReverseMap();
         }
     }
 }
