@@ -52,6 +52,40 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Lấy tổng số học viên không thành công", 400, false);
         }
 
+        public async Task<ResponseDTO> GetAllNumberOfProject(Guid accountId)
+        {
+            var account = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+            if (account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            if (account.RoleId == 2) // số dự án làm dưới role PM
+            {
+                int projectAmount = _unitOfWork.Project.GetAllByCondition(c=> c.ProjectManagerId == accountId).Count();
+                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
+            }
+
+            if (account.RoleId == 4)
+            {
+                int projectAmount = _unitOfWork.Project.GetAll().Count();
+                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
+            }
+
+            if (account.RoleId == 5)
+            {
+                int projectAmount = _unitOfWork.Project.GetAll().Count();
+                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
+            }
+
+            if (account.RoleId == 6)
+            {
+                return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
+            }
+
+            return new ResponseDTO("Lấy tổng số dự án không thành công", 400, false);
+        }
+
 
     }
 }
