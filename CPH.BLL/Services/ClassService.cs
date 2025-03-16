@@ -4,6 +4,7 @@ using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
@@ -787,9 +788,8 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
             }
-             var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
-            var sqlQuery = query.ToQueryString(); // Chỉ hoạt động với EF Core 5.0+
-            Console.WriteLine(sqlQuery);
+            var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
+            Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
             var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
 
             if (!traineesOfClassAvailable.Any())
@@ -827,7 +827,24 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp nào có nhóm còn chỗ trống.", 400, false);
             }
-            return new ResponseDTO("Lấy danh sách lớp thành công", 200, true, availableClasses);
+            List<ClassAvailableDTO> classAvailableDTOs = _mapper.Map<List<ClassAvailableDTO>>(availableClasses);
+            foreach (var classAvailableDTO in classAvailableDTOs)
+            {
+                var lecturer = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(classAvailableDTO.LecturerId));
+                if (lecturer == null)
+                {
+                    return new ResponseDTO("Lỗi giảng viên của lớp học", 500, false);
+                }
+                classAvailableDTO.LecturerName = lecturer.FullName;
+                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId));
+                if (lessonClass == null)
+                {
+                    return new ResponseDTO("Thông tin buổi học của danh sách lớp học bị lỗi", 500,false);
+                }    
+                classAvailableDTO.Lessons = _mapper.Map<List<LessonClassOfClassAvailableDTO>> (lessonClass);
+            }
+            return new ResponseDTO("Lấy danh sách lớp thành công", 200, true, classAvailableDTOs);
+
         }
 
     }
