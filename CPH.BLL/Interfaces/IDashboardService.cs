@@ -12,5 +12,7 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetAllNumberOfStudent();
 
         Task<ResponseDTO> GetAllNumberOfLecturer();
+
+        Task<ResponseDTO> GetAllNumberOfTrainee(Guid accountId);
     }
 }

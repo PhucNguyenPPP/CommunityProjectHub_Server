@@ -51,5 +51,23 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("trainee-amount")]
+        public async Task<IActionResult> GetAllNumberOfTrainee(Guid accountId)
+        {
+            ResponseDTO responseDTO = await _dashboardService.GetAllNumberOfTrainee(accountId);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 404)
+                {
+                    return NotFound(responseDTO);
+                }
+                else
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }
