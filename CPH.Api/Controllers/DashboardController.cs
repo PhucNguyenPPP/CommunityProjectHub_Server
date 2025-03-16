@@ -69,5 +69,42 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+
+        [HttpGet("project-amount")]
+        public async Task<IActionResult> GetAllNumberOfProject(Guid accountId)
+        {
+            ResponseDTO responseDTO = await _dashboardService.GetAllNumberOfProject(accountId);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 404)
+                {
+                    return NotFound(responseDTO);
+                }
+                else
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("project-with-status-amount")]
+        public async Task<IActionResult> GetAllNumberOfProjectWithStatus(Guid accountId)
+        {
+            ResponseDTO responseDTO = await _dashboardService.GetAllNumberOfProjectWithStatus(accountId);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 404)
+                {
+                    return NotFound(responseDTO);
+                }
+                else
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }
