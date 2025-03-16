@@ -4,6 +4,7 @@ using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
@@ -214,7 +215,7 @@ namespace CPH.BLL.Services
                 .ToList();
 
             var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
-            
+
             var traineeList = _unitOfWork.Trainee
                 .GetAllByCondition(c => c.ClassId == classId)
                 .Select(c => c.Account)
@@ -762,7 +763,21 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
         {
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId));
+            if (account == null)
+            {
+                return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
+            }
             var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId == currentClassId);
+            if (classOfTrainee == null)
+            {
+                return new ResponseDTO("Lớp của học viên không tồn tại", 400, false);
+            }
+            var trainee = await _unitOfWork.Trainee.GetByCondition(t=>t.AccountId.Equals(accountId) && t.ClassId.Equals(currentClassId));
+            if(trainee == null)
+            {
+                return new ResponseDTO("Thông tin học viên và lớp hiện tại không khớp nhau", 400, false);
+            }    
             var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfTrainee.ProjectId));
             if (project == null || !project.Status.Equals(ProjectStatusConstant.UpComing))
             {
@@ -773,15 +788,19 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
             }
+            var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
+            Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
             var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
+
             if (!traineesOfClassAvailable.Any())
             {
                 return new ResponseDTO("Các lớp có thể chuyển vào đã bị lỗi", 400, false);
             }
+
             var availableClasses = new List<Class>();
             foreach (var classId in otherClassIds)
             {
-                var currentClassToCheck = await _unitOfWork.Class.GetByCondition(c=>c.ClassId.Equals(classId)); // Giả sử bạn có GetById
+                var currentClassToCheck = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(classId)); // Giả sử bạn có GetById
                 if (currentClassToCheck == null) continue; // Lớp có thể đã bị xóa.
                 var traineesInClass = traineesOfClassAvailable.Where(t => t.ClassId == classId).ToList();
                 if (!traineesInClass.Any())
@@ -808,7 +827,24 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp nào có nhóm còn chỗ trống.", 400, false);
             }
-            return new ResponseDTO("Lấy danh sách lớp thành công", 200, true, availableClasses);
+            List<ClassAvailableDTO> classAvailableDTOs = _mapper.Map<List<ClassAvailableDTO>>(availableClasses);
+            foreach (var classAvailableDTO in classAvailableDTOs)
+            {
+                var lecturer = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(classAvailableDTO.LecturerId));
+                if (lecturer == null)
+                {
+                    return new ResponseDTO("Lỗi giảng viên của lớp học", 500, false);
+                }
+                classAvailableDTO.LecturerName = lecturer.FullName;
+                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId));
+                if (lessonClass == null)
+                {
+                    return new ResponseDTO("Thông tin buổi học của danh sách lớp học bị lỗi", 500,false);
+                }    
+                classAvailableDTO.Lessons = _mapper.Map<List<LessonClassOfClassAvailableDTO>> (lessonClass);
+            }
+            return new ResponseDTO("Lấy danh sách lớp thành công", 200, true, classAvailableDTOs);
+
         }
 
     }

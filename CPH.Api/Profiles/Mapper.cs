@@ -177,6 +177,8 @@ namespace CPH.Api.Profiles
 
             CreateMap<Account, GetTraineeOfClassDTO>()
                 .ReverseMap();
+            CreateMap<Class, ClassAvailableDTO>().ReverseMap();
+            CreateMap<LessonClass, LessonClassOfClassAvailableDTO>().ReverseMap();
         }
     }
 }
