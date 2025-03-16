@@ -10,5 +10,7 @@ namespace CPH.BLL.Interfaces
     public interface IDashboardService
     {
         Task<ResponseDTO> GetAllNumberOfStudent();
+
+        Task<ResponseDTO> GetAllNumberOfLecturer();
     }
 }

@@ -23,6 +23,12 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Lấy tổng số sinh viên hỗ trợ thành công", 200, true, studentAmount);
         }
 
+        public async Task<ResponseDTO> GetAllNumberOfLecturer()
+        {
+            int lectureAmount = _unitOfWork.Class.GetAllByCondition(c=> c.LecturerId != null).Count();
+            return new ResponseDTO("Lấy tổng số giảng viên giảng dạy thành công", 200, true, lectureAmount);
+        }
+
 
     }
 }

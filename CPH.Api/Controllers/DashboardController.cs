@@ -33,5 +33,23 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("lecturer-amount")]
+        public async Task<IActionResult> GetAllNumberOfLecturer()
+        {
+            ResponseDTO responseDTO = await _dashboardService.GetAllNumberOfLecturer();
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 404)
+                {
+                    return NotFound(responseDTO);
+                }
+                else
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }
