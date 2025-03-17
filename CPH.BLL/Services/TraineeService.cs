@@ -802,6 +802,99 @@ namespace CPH.BLL.Services
             var mappedSearchedList = _mapper.Map<List<MemberResponseDTO>>(searchedList);
             return mappedSearchedList;
         }
+
+        public async Task<ResponseDTO> MoveTraineeClass(MoveTraineeClassDTO moveTraineeClassDTO)
+        {
+            var check = await CheckValdMoveTraineeClass(moveTraineeClassDTO);
+            if (!check.IsSuccess)
+            { 
+                return check;
+            }
+            Trainee trainee = (Trainee)check.Result;
+            if(trainee  == null)
+            {
+                return new ResponseDTO("Thông tin học viên lỗi", 400, false);
+            }  
+             _unitOfWork.Trainee.Update(trainee);
+            var updated = await _unitOfWork.SaveChangeAsync();
+            if(updated)
+            {
+                return new ResponseDTO("Chuyển đổi lớp thành công", 200, true);
+            }    
+            return new ResponseDTO("Chuyển đổi lớp thất bại",400,false);
+        }
+
+        private async Task<ResponseDTO> CheckValdMoveTraineeClass(MoveTraineeClassDTO moveTraineeClassDTO)
+        {
+            // 1. Kiểm tra tài khoản học viên
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(moveTraineeClassDTO.AccountId) && a.RoleId.Equals((int)RoleEnum.Trainee));
+            if (account == null)
+            {
+                return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
+            }
+            var newClass = await _unitOfWork.Class.GetByCondition(c => c.ClassId == moveTraineeClassDTO.NewClassId);
+            if (newClass == null)
+            {
+                return new ResponseDTO("Lớp mới không tồn tại", 400, false);
+            }
+            var trainee =  _unitOfWork.Trainee.GetAllByCondition(t => t.AccountId.Equals(moveTraineeClassDTO.AccountId)).Select(t => t.ClassId);
+            if(trainee == null)
+            {
+                return new ResponseDTO("Học viên chưa từng tham gia lớp nào để chuyển lớp", 400, false);
+            }    
+            var traineeClassDuplicate = await _unitOfWork.Trainee.GetByCondition(t => t.AccountId.Equals(moveTraineeClassDTO.AccountId) && t.ClassId.Equals(moveTraineeClassDTO.NewClassId));
+            if (traineeClassDuplicate != null)
+            {
+                return new ResponseDTO("Học viên đã trong lớp này trước đó", 400, false);
+            }
+            var projectCurrent =  _unitOfWork.Class.GetAllByCondition(c => trainee.Contains(c.ClassId)).Select(t => t.ProjectId);
+            // 3. Kiểm tra dự án
+            var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(newClass.ProjectId));
+            if (project == null || !project.Status.Equals(ProjectStatusConstant.UpComing))
+            {
+                return new ResponseDTO("Dự án này hiện không thể đổi lớp", 400, false);
+            }
+            if(!projectCurrent.Contains(project.ProjectId))
+            {
+                return new ResponseDTO("Lớp hiện tại và lớp mới không cùng dự án để có thể đổi lớp", 400, false);
+            }
+            var classCurrent =  _unitOfWork.Class.GetAllByCondition(c=>c.ProjectId.Equals(newClass.ProjectId)).Select(c=>c.ClassId);
+            var traineeToUpdate =await _unitOfWork.Trainee.GetByCondition(t => t.AccountId.Equals(moveTraineeClassDTO.AccountId) && classCurrent.Contains(t.ClassId));
+            if (traineeToUpdate == null)
+            {
+                return new ResponseDTO("Thông tin về học viên và lớp cũ bị đổi", 400, false);
+            }
+            // 4. Kiểm tra available trực tiếp trên newClass
+            var traineesInNewClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId == moveTraineeClassDTO.NewClassId).ToList();
+            if (!traineesInNewClass.Any())
+            {
+                // Lớp không có học viên, không available
+                return new ResponseDTO("Lớp mới bị lỗi danh sách lớp", 500, false);
+            }
+
+            var groupCounts = traineesInNewClass.Where(t => t.GroupNo.HasValue).GroupBy(t => t.GroupNo.Value).ToDictionary(g => g.Key, g => g.Count());
+            if (!groupCounts.Any())
+            {
+                // Lớp không có nhóm, không available
+                return new ResponseDTO("Lớp mới chưa chia nhóm.", 400, false);
+            }
+
+            int maxGroupSize = groupCounts.Values.Max();
+            if (groupCounts.Any(group => group.Value < maxGroupSize))
+            {
+                var smallestAvailableGroup = groupCounts.Where(group => group.Value < maxGroupSize)
+                                            .OrderBy(group => group.Key)
+                                            .FirstOrDefault();
+                traineeToUpdate.GroupNo = smallestAvailableGroup.Value;
+                traineeToUpdate.ClassId = moveTraineeClassDTO.NewClassId;
+                // Có nhóm còn chỗ trống, available
+                return new ResponseDTO("Lớp mới hợp lệ", 200,true, traineeToUpdate);
+            }
+            else
+            {
+                return new ResponseDTO("Lớp mới không có nhóm còn chỗ trống.", 400, false);
+            }
+        }
     }
 }
 
