@@ -763,7 +763,7 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
         {
-            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId));
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId) && a.RoleId.Equals((int) RoleEnum.Trainee));
             if (account == null)
             {
                 return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
