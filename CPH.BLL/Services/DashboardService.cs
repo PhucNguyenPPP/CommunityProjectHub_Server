@@ -43,7 +43,7 @@ namespace CPH.BLL.Services
             }
 
             if(account.Role.RoleName == RoleEnum.BusinessRelation.ToString() ||
-                account.Role.RoleName == RoleEnum.DepartmentHead.ToString())
+               account.Role.RoleName == RoleEnum.DepartmentHead.ToString())
             {
                 int traineeAmount = _unitOfWork.Trainee.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số học viên thành công", 200, true, traineeAmount);
@@ -65,19 +65,20 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Người dùng không tồn tại", 400, false);
             }
 
-            if (account.RoleId == 2) // số dự án làm dưới role PM
+            if (account.Role.RoleName == RoleEnum.Lecturer.ToString()) // số dự án làm dưới role PM
             {
                 int projectAmount = _unitOfWork.Project.GetAllByCondition(c=> c.ProjectManagerId == accountId).Count();
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
-            if (account.RoleId == 4 || account.RoleId == 6)
+            if (account.Role.RoleName == RoleEnum.BusinessRelation.ToString() || 
+                account.Role.RoleName == RoleEnum.DepartmentHead.ToString())
             {
                 int projectAmount = _unitOfWork.Project.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
-            if (account.RoleId == 5)
+            if (account.Role.RoleName == RoleEnum.Associate.ToString())
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }
