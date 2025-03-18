@@ -763,7 +763,7 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
         {
-            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId) && a.RoleId.Equals((int) RoleEnum.Trainee));
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId));
             if (account == null)
             {
                 return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
@@ -788,8 +788,8 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
             }
-            var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
-            Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
+         //   var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
+           // Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
             var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
 
             if (!traineesOfClassAvailable.Any())
