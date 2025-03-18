@@ -49,7 +49,7 @@ namespace CPH.Api.Controllers
         public async Task<IActionResult> UpdateTraineeScore(ScoreTraineeRequestDTO model)
         {
             ResponseDTO result = await _traineeService.UpdateScoreTrainee(model);
-            if(result.IsSuccess)
+            if (result.IsSuccess)
             {
                 return Ok(result);
             }
@@ -68,7 +68,7 @@ namespace CPH.Api.Controllers
         }
 
         [HttpDelete("trainee")]
-        public async Task<IActionResult> RemoverTrainee([Required]Guid classId, [Required] Guid accountId, string? reason)
+        public async Task<IActionResult> RemoverTrainee([Required] Guid classId, [Required] Guid accountId, string? reason)
         {
             var result = await _traineeService.RemoveTrainee(classId, accountId, reason);
             if (result.IsSuccess)
@@ -163,6 +163,28 @@ namespace CPH.Api.Controllers
             {
                 return NotFound(new ResponseDTO("Không tìm thấy học viên", 404, false));
             }
+        }
+
+
+        [HttpPut("trainee-moving-class")]
+        public async Task<IActionResult> MovingTraineeToAnotherClass(MoveTraineeClassDTO moveTraineeClassDTO)
+        {
+            ResponseDTO result = await _traineeService.MoveTraineeClass(moveTraineeClassDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+        [HttpGet("available-group-of-class")]
+        public async Task<IActionResult> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId)
+        {
+            ResponseDTO result = await _traineeService.GetAvailableGroupOfClass(currentClassId,accountId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
         }
     }
 }
