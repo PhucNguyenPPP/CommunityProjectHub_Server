@@ -7,6 +7,7 @@ using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Dashboard;
 using CPH.Common.DTO.General;
+using CPH.Common.Enum;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 
@@ -41,13 +42,14 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Người dùng không tồn tại", 400, false);
             }
 
-            if(account.RoleId == 6 || account.RoleId == 4)
+            if(account.Role.RoleName == RoleEnum.BusinessRelation.ToString() ||
+                account.Role.RoleName == RoleEnum.DepartmentHead.ToString())
             {
                 int traineeAmount = _unitOfWork.Trainee.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số học viên thành công", 200, true, traineeAmount);
             }
 
-            if(account.RoleId == 5)
+            if(account.Role.RoleName == RoleEnum.Associate.ToString())
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }
