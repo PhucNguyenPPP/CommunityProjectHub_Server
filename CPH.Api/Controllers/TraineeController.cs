@@ -176,5 +176,15 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+        [HttpGet("available-group-of-class")]
+        public async Task<IActionResult> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId)
+        {
+            ResponseDTO result = await _traineeService.GetAvailableGroupOfClass(currentClassId,accountId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }
