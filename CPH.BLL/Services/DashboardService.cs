@@ -7,7 +7,6 @@ using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Dashboard;
 using CPH.Common.DTO.General;
-using CPH.Common.Enum;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 
@@ -42,14 +41,13 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Người dùng không tồn tại", 400, false);
             }
 
-            if(account.Role.RoleName == RoleEnum.BusinessRelation.ToString() ||
-               account.Role.RoleName == RoleEnum.DepartmentHead.ToString())
+            if(account.RoleId == 6 || account.RoleId == 4)
             {
                 int traineeAmount = _unitOfWork.Trainee.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số học viên thành công", 200, true, traineeAmount);
             }
 
-            if(account.Role.RoleName == RoleEnum.Associate.ToString())
+            if(account.RoleId == 5)
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }
@@ -65,20 +63,19 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Người dùng không tồn tại", 400, false);
             }
 
-            if (account.Role.RoleName == RoleEnum.Lecturer.ToString()) // số dự án làm dưới role PM
+            if (account.RoleId == 2) // số dự án làm dưới role PM
             {
                 int projectAmount = _unitOfWork.Project.GetAllByCondition(c=> c.ProjectManagerId == accountId).Count();
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
-            if (account.Role.RoleName == RoleEnum.BusinessRelation.ToString() || 
-                account.Role.RoleName == RoleEnum.DepartmentHead.ToString())
+            if (account.RoleId == 4 || account.RoleId == 6)
             {
                 int projectAmount = _unitOfWork.Project.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
-            if (account.Role.RoleName == RoleEnum.Associate.ToString())
+            if (account.RoleId == 5)
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }
