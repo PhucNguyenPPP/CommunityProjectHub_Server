@@ -41,13 +41,13 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Người dùng không tồn tại", 400, false);
             }
 
-            if(account.RoleId == 5)
+            if(account.RoleId == 6 || account.RoleId == 4)
             {
                 int traineeAmount = _unitOfWork.Trainee.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số học viên thành công", 200, true, traineeAmount);
             }
 
-            if(account.RoleId == 6)
+            if(account.RoleId == 5)
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }
@@ -69,19 +69,13 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
-            if (account.RoleId == 4)
+            if (account.RoleId == 4 || account.RoleId == 6)
             {
                 int projectAmount = _unitOfWork.Project.GetAll().Count();
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
             if (account.RoleId == 5)
-            {
-                int projectAmount = _unitOfWork.Project.GetAll().Count();
-                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
-            }
-
-            if (account.RoleId == 6)
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }
@@ -118,21 +112,15 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, list);
             }
 
-            if (account.RoleId == 4)
+            if (account.RoleId == 4 || account.RoleId == 6)
             {
                 var project = _unitOfWork.Project.GetAll().ToList();
                 var list = CompleteList(project);
                 return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, list);
             }
+
 
             if (account.RoleId == 5)
-            {
-                var project = _unitOfWork.Project.GetAll().ToList();
-                var list = CompleteList(project);
-                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, list);
-            }
-
-            if (account.RoleId == 6)
             {
                 return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
             }

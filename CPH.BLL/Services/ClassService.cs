@@ -790,8 +790,8 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
             }
-            var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
-            Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
+         //   var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
+           // Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
             var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
 
             if (!traineesOfClassAvailable.Any())

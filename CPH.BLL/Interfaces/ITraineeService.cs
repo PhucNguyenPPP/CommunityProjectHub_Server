@@ -24,5 +24,8 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> UpdateReport(Guid accountId, Guid classId, IFormFile file);
         Task<string> StoreFileAndGetLink(IFormFile file, string folderName);
         List<MemberResponseDTO> SearchTraineeToAddToClass(string? searchValue);
+        Task<ResponseDTO> MoveTraineeClass(MoveTraineeClassDTO moveTraineeClassDTO);
+        Task<ResponseDTO> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId);
+        Task<ResponseDTO> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO);
     }
 }
