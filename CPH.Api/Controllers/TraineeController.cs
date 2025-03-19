@@ -186,5 +186,15 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+        [HttpPut("trainee-moving-group")]
+        public async Task<IActionResult> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO)
+        {
+            ResponseDTO result = await _traineeService.MoveTraineeToAnotherGroupInClass(traineeToAnotherGroupInClassDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

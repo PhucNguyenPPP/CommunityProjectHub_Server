@@ -823,7 +823,7 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Chuyển đổi lớp thành công", 200, true);
             }
-            return new ResponseDTO("Chuyển đổi lớp thất bại", 400, false);
+            return new ResponseDTO("Chuyển đổi lớp thất bại", 500, false);
         }
 
         private async Task<ResponseDTO> CheckValdMoveTraineeClass(MoveTraineeClassDTO moveTraineeClassDTO)
@@ -905,42 +905,83 @@ namespace CPH.BLL.Services
 
         public async Task<ResponseDTO> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId)
         {
+            List<string> errs = new List<string>(); 
             var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId) && a.RoleId.Equals((int)RoleEnum.Trainee));
             if (account == null)
             {
-                return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
+                errs.Add("Tài khoản của học viên không tồn tại");
             }
             var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId == currentClassId);
             if (classOfTrainee == null)
             {
-                return new ResponseDTO("Lớp của học viên không tồn tại", 400, false);
+                errs.Add("Lớp của học viên không tồn tại");
             }
             var trainee = await _unitOfWork.Trainee.GetByCondition(t => t.AccountId.Equals(accountId) && t.ClassId.Equals(currentClassId));
             if (trainee == null)
             {
-                return new ResponseDTO("Thông tin học viên và lớp không khớp nhau", 400, false);
+                errs.Add("Thông tin học viên và lớp không khớp nhau");
             }
             var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfTrainee.ProjectId));
             if (project == null || !project.Status.Equals(ProjectStatusConstant.UpComing))
             {
-                return new ResponseDTO("Dự án này hiện không thể đổi nhóm", 400, false);
+                errs.Add("Dự án này hiện không thể đổi nhóm");
             }
             var groupNo = _unitOfWork.Trainee.GetAllByCondition(c =>  c.ClassId.Equals(currentClassId)).ToList();
             if (!groupNo.Any())
             {
-                return new ResponseDTO("Không có nhóm để chuyển vào", 400, false);
+                errs.Add("Không có nhóm để chuyển vào");
             }
             var groupCounts = groupNo.Where(t => t.GroupNo.HasValue).GroupBy(t => t.GroupNo.Value).ToDictionary(g => g.Key, g => g.Count());
             if (!groupCounts.Any())
             {
                 // Lớp không có nhóm, bỏ qua
-                return new ResponseDTO("lớp không có nhóm", 400, false);
+                errs.Add("lớp không có nhóm");
             }
             // Tìm kích thước nhóm tối đa
             int maxGroupSize = groupCounts.Values.Max();
             // Kiểm tra xem có nhóm nào còn chỗ trống không
-            var result = groupCounts.Where(t => t.Value < maxGroupSize && t.Key !=trainee.GroupNo).Select(t => t.Key);
-            return new ResponseDTO("Lấy thông tin nhóm có thể chuyển vào thành công", 200, true,result);
+            var result = groupCounts.Where(t => t.Value < maxGroupSize && t.Key !=trainee.GroupNo).Select(t => t.Key).ToList();
+            if (errs.Count == 0)
+            {
+                if (result.Any())
+                {
+                    return new ResponseDTO("Lấy thông tin nhóm có thể chuyển vào thành công", 200, true, result);
+                }
+                return new ResponseDTO("Không có nhóm phù hợp để chuyển vào", 400, false);
+            }
+            return new ResponseDTO("Thông tin không hợp lệ",400,false, errs);   
+        }
+
+        public async Task<ResponseDTO> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO)
+        {
+            var check = await GetAvailableGroupOfClass(traineeToAnotherGroupInClassDTO.ClassId, traineeToAnotherGroupInClassDTO.AccountId);
+            if (!check.IsSuccess)
+            {
+                return check;
+            }
+            List<int> groupNo = (List<int>)check.Result;
+            if (groupNo == null || groupNo.Count() <= 0)
+            {
+                return new ResponseDTO("Không có nhóm phù hợp để chuyển vào", 400, false);
+            }
+            var trainee = await _unitOfWork.Trainee.GetByCondition(t => t.AccountId.Equals(traineeToAnotherGroupInClassDTO.AccountId) && t.ClassId.Equals(traineeToAnotherGroupInClassDTO.ClassId));
+            if(trainee.GroupNo.Equals(traineeToAnotherGroupInClassDTO.NewGroupNo))
+            {
+                return new ResponseDTO("Học viên đang ở trong nhóm " + traineeToAnotherGroupInClassDTO.NewGroupNo.ToString(), 400, false);
+
+            }
+            if (!groupNo.Contains(traineeToAnotherGroupInClassDTO.NewGroupNo))
+            {
+                return new ResponseDTO("Nhóm "+traineeToAnotherGroupInClassDTO.NewGroupNo.ToString()+" không phù hợp để chuyển vào", 400, false);
+            }
+            trainee.GroupNo = traineeToAnotherGroupInClassDTO.NewGroupNo;
+            _unitOfWork.Trainee.Update(trainee);
+            var updated = await _unitOfWork.SaveChangeAsync();
+            if (updated)
+            {
+                return new ResponseDTO("Chuyển đổi nhóm thành công", 200, true);
+            }
+            return new ResponseDTO("Chuyển đổi nhóm thất bại", 500, false);
         }
     }
 
