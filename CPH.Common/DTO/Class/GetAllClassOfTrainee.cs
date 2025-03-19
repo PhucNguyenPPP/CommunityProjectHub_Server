@@ -16,6 +16,8 @@ namespace CPH.Common.DTO.Class
 
         public DateTime? ReportCreatedDate { get; set; }
 
+        public decimal? TraineeScore { get; set; }
+
         public string? TraineeReportContent { get; set; }
 
         public DateTime? TraineeReportCreatedDate { get; set; }
