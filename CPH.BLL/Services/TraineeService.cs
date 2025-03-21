@@ -631,18 +631,33 @@ namespace CPH.BLL.Services
 
             var lesson = _unitOfWork.Lesson
                 .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-                .OrderByDescending(c => c.LessonNo)
-                .FirstOrDefault();
+                .OrderByDescending(c => c.LessonNo).ToList();
 
 
             var finishTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson.LessonId)
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+                .Select(c => c.StartTime)
+                .FirstOrDefault();
+
+            var startTime = _unitOfWork.LessonClass
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
                 .Select(c => c.EndTime)
                 .FirstOrDefault();
 
-            if (finishTime >= DateTime.Now)
+            if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
             {
-                return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {finishTime}", 400, false);
+                string formattedFinishTime = finishTime.HasValue
+                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+                : "Không xác định";
+
+                string formattedStartTime = startTime.HasValue
+                    ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+                    : "Không xác định";
+
+                if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+                {
+                    return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+                }
             }
 
             if (trainee.FeedbackContent != null)
