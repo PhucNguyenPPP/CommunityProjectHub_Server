@@ -631,18 +631,33 @@ namespace CPH.BLL.Services
 
             var lesson = _unitOfWork.Lesson
                 .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-                .OrderByDescending(c => c.LessonNo)
-                .FirstOrDefault();
+                .OrderByDescending(c => c.LessonNo).ToList();
 
 
             var finishTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson.LessonId)
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+                .Select(c => c.StartTime)
+                .FirstOrDefault();
+
+            var startTime = _unitOfWork.LessonClass
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
                 .Select(c => c.EndTime)
                 .FirstOrDefault();
 
-            if (finishTime >= DateTime.Now)
+            if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
             {
-                return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {finishTime}", 400, false);
+                string formattedFinishTime = finishTime.HasValue
+                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+                : "Không xác định";
+
+                string formattedStartTime = startTime.HasValue
+                    ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+                    : "Không xác định";
+
+                if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+                {
+                    return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+                }
             }
 
             if (trainee.FeedbackContent != null)
@@ -925,7 +940,7 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Dự án này hiện không thể đổi nhóm", 400, false);
             }
-            var groupNo = _unitOfWork.Trainee.GetAllByCondition(c =>  c.ClassId.Equals(currentClassId)).ToList();
+            var groupNo = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId.Equals(currentClassId)).ToList();
             if (!groupNo.Any())
             {
                 return new ResponseDTO("Không có nhóm để chuyển vào", 400, false);
@@ -939,8 +954,8 @@ namespace CPH.BLL.Services
             // Tìm kích thước nhóm tối đa
             int maxGroupSize = groupCounts.Values.Max();
             // Kiểm tra xem có nhóm nào còn chỗ trống không
-            var result = groupCounts.Where(t => t.Value < maxGroupSize && t.Key !=trainee.GroupNo).Select(t => t.Key);
-            return new ResponseDTO("Lấy thông tin nhóm có thể chuyển vào thành công", 200, true,result);
+            var result = groupCounts.Where(t => t.Value < maxGroupSize && t.Key != trainee.GroupNo).Select(t => t.Key);
+            return new ResponseDTO("Lấy thông tin nhóm có thể chuyển vào thành công", 200, true, result);
         }
     }
 
