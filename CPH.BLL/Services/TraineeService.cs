@@ -993,8 +993,6 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Chuyển đổi nhóm thành công", 200, true);
             }
             return new ResponseDTO("Chuyển đổi nhóm thất bại", 500, false);
-            var result = groupCounts.Where(t => t.Value < maxGroupSize && t.Key != trainee.GroupNo).Select(t => t.Key);
-            return new ResponseDTO("Lấy thông tin nhóm có thể chuyển vào thành công", 200, true, result);
         }
     }
 
