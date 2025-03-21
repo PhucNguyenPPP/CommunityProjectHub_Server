@@ -41,6 +41,7 @@ namespace CPH.BLL.Services
                 var lesson = _unitOfWork.LessonClass
                 .GetAllByCondition(lc => classes.Contains(lc.ClassId) && lc.Class.LecturerId == accountId)
                 .Include(c=> c.Lesson)
+                .Include(c => c.Class).ThenInclude(c => c.Project)
                 .ToList();
 
                 var mappedList = _mapper.Map<List<GetAllLessonClassForScheduleDTO>>(lesson);
@@ -58,6 +59,7 @@ namespace CPH.BLL.Services
                 var lessons = _unitOfWork.LessonClass
                     .GetAllByCondition(lc => classIds.Contains(lc.ClassId))
                     .Include(lc => lc.Lesson)
+                    .Include(c => c.Class).ThenInclude(c => c.Project)
                     .ToList();
 
                 var mappedList = _mapper.Map<List<GetAllLessonClassForScheduleDTO>>(lessons);
@@ -74,6 +76,7 @@ namespace CPH.BLL.Services
                 var lessons = _unitOfWork.LessonClass
                     .GetAllByCondition(c=> classIds.Contains(c.ClassId))
                     .Include(lc => lc.Lesson)
+                    .Include(c => c.Class).ThenInclude(c=> c.Project)
                     .ToList();
 
                 var mappedList = _mapper.Map<List<GetAllLessonClassForScheduleDTO>>(lessons);
