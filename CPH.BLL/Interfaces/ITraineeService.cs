@@ -26,5 +26,6 @@ namespace CPH.BLL.Interfaces
         List<MemberResponseDTO> SearchTraineeToAddToClass(string? searchValue);
         Task<ResponseDTO> MoveTraineeClass(MoveTraineeClassDTO moveTraineeClassDTO);
         Task<ResponseDTO> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId);
+        Task<ResponseDTO> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO);
     }
 }

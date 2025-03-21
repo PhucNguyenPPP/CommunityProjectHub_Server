@@ -253,7 +253,18 @@ namespace CPH.BLL.Services
                     }
                     else
                     {*/
-                    errors.Add(response.Message.ToString());
+                    if(response.Result!=null)
+                    {
+                        List<string> strings= (List<string>) response.Result;
+                        foreach (var item in strings)
+                        {
+                           errors.Add(item.ToString());
+                        }
+                    }
+                    else
+                    {
+                        errors.Add(response.Message.ToString());
+                    }
                 }
                 var listTrainee = (List<ImportTraineeDTO>)response.Result;
                 for (int i = 0; i < projectDTO.LessonList.Count; i++)
