@@ -19,6 +19,8 @@ public partial class Project
 
     public int NumberLesson { get; set; }
 
+    public int NumberGroup { get; set; }
+
     public DateTime ApplicationStartDate { get; set; }
 
     public DateTime ApplicationEndDate { get; set; }
@@ -28,6 +30,10 @@ public partial class Project
     public string Status { get; set; } = null!;
 
     public Guid? ProjectManagerId { get; set; }
+
+    public Guid AssociateId { get; set; }
+
+    public virtual Account Associate { get; set; } = null!;
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
