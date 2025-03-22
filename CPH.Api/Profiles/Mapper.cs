@@ -179,6 +179,13 @@ namespace CPH.Api.Profiles
                 .ReverseMap();
             CreateMap<Class, ClassAvailableDTO>().ReverseMap();
             CreateMap<LessonClass, LessonClassOfClassAvailableDTO>().ReverseMap();
+
+            CreateMap<LessonClass, GetAllLessonClassForScheduleDTO>()
+                .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode))
+                .ForMember(dest => dest.LessonName, opt => opt.MapFrom(src => src.Lesson.LessonContent))
+                .ForMember(dest => dest.LessonNo, opt => opt.MapFrom(src => src.Lesson.LessonNo))
+                .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Class.Project.Title))
+                .ReverseMap();
         }
     }
 }
