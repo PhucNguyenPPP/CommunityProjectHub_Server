@@ -37,6 +37,8 @@ public partial class Account
 
     public int RoleId { get; set; }
 
+    public virtual Associate? Associate { get; set; }
+
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Member> Members { get; set; } = new List<Member>();
@@ -45,9 +47,11 @@ public partial class Account
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
+    public virtual ICollection<Project> ProjectAssociates { get; set; } = new List<Project>();
+
     public virtual ICollection<ProjectLogging> ProjectLoggings { get; set; } = new List<ProjectLogging>();
 
-    public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
+    public virtual ICollection<Project> ProjectProjectManagers { get; set; } = new List<Project>();
 
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
