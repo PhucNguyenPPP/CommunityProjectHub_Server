@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Associate;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.Lecturer;
@@ -185,6 +186,10 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.LessonName, opt => opt.MapFrom(src => src.Lesson.LessonContent))
                 .ForMember(dest => dest.LessonNo, opt => opt.MapFrom(src => src.Lesson.LessonNo))
                 .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Class.Project.Title))
+                .ReverseMap();
+
+            CreateMap<Account, AssociateResponseDTO>()
+                .ForMember(dest => dest.AssociateName, opt => opt.MapFrom(src => src.Associate!.AssociateName))
                 .ReverseMap();
         }
     }

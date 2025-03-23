@@ -72,7 +72,7 @@ namespace CPH.BLL.Services
         {
             IQueryable<Account> list = _unitOfWork.Account.GetAllByCondition(c => c.RoleId != (int)RoleEnum.Admin)
                 .Include(c => c.Role);
-            if(searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
+            if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
             {
                 var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
                 return new ResponseDTO("Lấy danh sách tài khoản thành công", 200, true, mapList);
@@ -81,11 +81,11 @@ namespace CPH.BLL.Services
             {
                 if (!searchValue.IsNullOrEmpty())
                 {
-                    list = list.Where(c => 
+                    list = list.Where(c =>
                         c.AccountName.ToLower().Contains(searchValue.ToLower()) ||
                         c.FullName.ToLower().Contains(searchValue.ToLower()) ||
                         c.AccountCode.ToLower().Contains(searchValue.ToLower()) ||
-                        c.Email.ToLower().Contains(searchValue.ToLower())||
+                        c.Email.ToLower().Contains(searchValue.ToLower()) ||
                         c.Phone.ToLower().Contains(searchValue.ToLower())
                     );
                 }
@@ -930,5 +930,13 @@ namespace CPH.BLL.Services
 
             return password.ToString();
         }
-    }  
+
+        public bool CheckAssociateNameExist(string associateName)
+        {
+            bool exists = _unitOfWork.Account.GetAll()
+                .Any(c => c.Associate != null 
+                && c.Associate.AssociateName.ToLower() == associateName.ToLower());
+            return exists;
+        }
+    }
 }
