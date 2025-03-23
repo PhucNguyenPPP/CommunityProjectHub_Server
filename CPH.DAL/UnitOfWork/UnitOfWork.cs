@@ -1,4 +1,5 @@
 ﻿using CPH.DAL.Context;
+using CPH.DAL.Entities;
 using CPH.DAL.Interfaces;
 using CPH.DAL.Repositories;
 using System;
@@ -28,6 +29,7 @@ namespace CPH.DAL.UnitOfWork
             Member = new MemberRepository(_context);
             Registration = new RegistrationRepository(_context);
             ProjectLogging = new ProjectLoggingRepository(_context);
+            Associate = new AssociateRepository(_context);
         }
 
 
@@ -52,8 +54,8 @@ namespace CPH.DAL.UnitOfWork
         public ILessonClassRepository LessonClass { get; private set; }
         public IMaterialRepository Material { get; private set; }
         public IMemberRepository Member { get; private set; }
-
         public IRegistrationRepository Registration { get; private set; }
         public IProjectLoggingRepository ProjectLogging { get; private set; }
+        public IAssociateRepository Associate { get; private set; }
     }
 }

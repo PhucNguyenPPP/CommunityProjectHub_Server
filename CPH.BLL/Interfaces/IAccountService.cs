@@ -33,5 +33,6 @@ namespace CPH.BLL.Interfaces
         Task<bool> VerifyingOtp(string email, string otp);
         Task<bool> ChangePassword(ForgotPasswordDTO model);
         string GeneratePasswordString();
+        bool CheckAssociateNameExist(string associateName);
     }
 }
