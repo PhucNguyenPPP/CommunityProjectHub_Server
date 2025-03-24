@@ -9,6 +9,6 @@ namespace CPH.DAL.Interfaces
 {
     public interface IAssociateRepository : IGenericRepository<Associate>
     {
-    {
+    //{
     }
 }
