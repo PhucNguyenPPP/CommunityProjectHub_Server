@@ -30,7 +30,10 @@ namespace CPH.Common.DTO.Project
         [Required(ErrorMessage = "Vui lòng nhập ngày bắt đầu ứng tuyển của dự án")]
         public DateTime ApplicationStartDate { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập ngày hết hạn ứng tuyển của dự án")]
+
         public DateTime ApplicationEndDate { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập thông tin đối tác của dự án")]
+        public Guid AssociateId { get; set; }
 
     }
 }
