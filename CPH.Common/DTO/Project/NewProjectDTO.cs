@@ -33,6 +33,8 @@ namespace CPH.Common.DTO.Project
         public Guid? ProjectManagerId { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập file học viên của dự án")]
         public IFormFile Trainees { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập thông tin đối tác của dự án")]
+        public Guid AssociateId { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập danh sách bài học của dự án")]
         public List<string> LessonList { get; set; }
     }
