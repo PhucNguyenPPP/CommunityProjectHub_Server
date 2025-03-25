@@ -64,6 +64,7 @@ namespace CPH.BLL.Services
             account.Salt = salt;
             account.PasswordHash = passwordHash;
             account.Status = true;
+            account.RoleId = (int)RoleEnum.Associate;
 
             await _unitOfWork.Account.AddAsync(account);
 

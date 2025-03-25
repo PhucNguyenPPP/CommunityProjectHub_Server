@@ -53,13 +53,13 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons))
                 .ForMember(dest => dest.Classes, opt => opt.MapFrom(src => src.Classes))
                 .ForMember(dest => dest.TotalNumberTrainee, opt => opt.MapFrom(src => src.Classes.Sum(c => c.Trainees.Count())))
-                .ForMember(dest => dest.TotalNumberLecturer, opt => opt.MapFrom(src => src.Classes.Count(c=> c.Lecturer != null)))
+                .ForMember(dest => dest.TotalNumberLecturer, opt => opt.MapFrom(src => src.Classes.Count(c => c.Lecturer != null)))
                 .ReverseMap();
             CreateMap<Account, AccountResponseDTO>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
                 .ReverseMap();
             CreateMap<ImportTraineeDTO, Account>().ReverseMap();
-              //  .ReverseMap();
+            //  .ReverseMap();
             CreateMap<UpdateProjectDTO, Project>().ReverseMap(); // Ignore Status, as it's usually handled separately.
             CreateMap<LessonClass, GetAllLessonClassByClassDTO>()
                  .ForMember(dest => dest.LessonNo, opt => opt.MapFrom(src => src.Lesson.LessonNo))
@@ -90,7 +90,7 @@ namespace CPH.Api.Profiles
             CreateMap<Registration, SendRegistrationDTO>()
                .ReverseMap();
 
-            
+
             CreateMap<Member, MemberProjectDTO>()
                 .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Account))
                 .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode))
@@ -103,7 +103,7 @@ namespace CPH.Api.Profiles
 
             CreateMap<Registration, SentRegistDTO>().
                 ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode)).
-                ForMember(dest => dest.ClassId, opt =>opt.MapFrom(src=>src.Class.ClassId)). 
+                ForMember(dest => dest.ClassId, opt => opt.MapFrom(src => src.Class.ClassId)).
                 ForMember(dest => dest.ProjectId, opt => opt.MapFrom(src => src.Class.ProjectId)).ReverseMap();
             CreateMap<Registration, RegistrationsOfProjectDTO>()
            .ForMember(dest => dest.ClassCode, opt => opt.MapFrom(src => src.Class.ClassCode)) // Access ClassCode from the related Class
@@ -129,7 +129,7 @@ namespace CPH.Api.Profiles
                .ForMember(dest => dest.LecturerPhone, opt => opt.MapFrom(src => src.Lecturer.Phone))
                .ForMember(dest => dest.LecturerEmail, opt => opt.MapFrom(src => src.Lecturer.Email))
                .ForMember(dest => dest.ProjectTitle, opt => opt.MapFrom(src => src.Project.Title))
-               .ForMember(dest => dest.ProjectStartDate , opt => opt.MapFrom(src => src.Project.StartDate))
+               .ForMember(dest => dest.ProjectStartDate, opt => opt.MapFrom(src => src.Project.StartDate))
                .ForMember(dest => dest.ProjectEndDate, opt => opt.MapFrom(src => src.Project.EndDate))
                .ForMember(dest => dest.ProjectAddress, opt => opt.MapFrom(src => src.Project.Address))
                .ForMember(dest => dest.ProjectNumberLesson, opt => opt.MapFrom(src => src.Project.NumberLesson))
@@ -191,6 +191,12 @@ namespace CPH.Api.Profiles
             CreateMap<Account, AssociateResponseDTO>()
                 .ForMember(dest => dest.AssociateName, opt => opt.MapFrom(src => src.Associate!.AssociateName))
                 .ReverseMap();
+
+            CreateMap<Account, AccountResponseDTO>()
+                .ForMember(dest => dest.AssociateName, 
+                opt => opt.MapFrom(src => src.Associate != null ? src.Associate.AssociateName : string.Empty)).ReverseMap();
+
+            CreateMap<SignUpAssociateRequestDTO, Account>().ReverseMap();
         }
     }
 }
