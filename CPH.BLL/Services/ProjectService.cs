@@ -398,10 +398,15 @@ namespace CPH.BLL.Services
                 IQueryable<Project> list = _unitOfWork.Project
                     .GetAllByCondition(c =>
                         (c.ProjectManagerId == userId ||
+                        c.AssociateId == userId ||
                         c.Classes.Any(cl => cl.LecturerId == userId) ||
-                        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId))))
+                        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId))||
+                        c.Classes.Any(c=> c.Trainees.Any(tra => tra.AccountId == userId))))
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
-                    .Include(c => c.ProjectManager);
+                    .Include(c => c.Classes).ThenInclude(c => c.Members)
+                    .Include(c => c.Classes).ThenInclude(c => c.Trainees)
+                    .Include(c => c.ProjectManager)
+                    .Include(c => c.Associate);
 
                 if (!list.Any())
                 {
