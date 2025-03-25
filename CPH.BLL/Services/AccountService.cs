@@ -71,7 +71,9 @@ namespace CPH.BLL.Services
         public async Task<ResponseDTO> GetAllAccounts(string? searchValue, int? pageNumber, int? rowsPerPage)
         {
             IQueryable<Account> list = _unitOfWork.Account.GetAllByCondition(c => c.RoleId != (int)RoleEnum.Admin)
-                .Include(c => c.Role);
+                .Include(c => c.Role)
+                .Include(c => c.Associate);
+
             if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
             {
                 var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
