@@ -14,6 +14,7 @@ using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -96,6 +97,7 @@ namespace CPH.BLL.Services
 
         private async Task<ResponseDTO> CheckDivision(DevideGroupOfClassDTO devideGroupOfClassDTO)
         {
+            
             var numbTrainOfClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(devideGroupOfClassDTO.ClassId)).Count();
             if (numbTrainOfClass <= 0)
             {
@@ -106,6 +108,10 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Số lượng nhóm không được lớn hơn số lượng học viên của lớp", 400, false);
             }
             var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            if(!c.LecturerId.HasValue)
+            {
+                return new ResponseDTO("Lớp cần được phân giảng viên trước khi chia nhóm", 400, false);
+            }
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(c.ProjectId));
             if (pro == null)
             {
