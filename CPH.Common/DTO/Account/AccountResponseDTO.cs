@@ -32,5 +32,6 @@ namespace CPH.Common.DTO.Account
 
         public int RoleId { get; set; }
         public string? RoleName { get; set; }
+        public string? AssociateName { get; set; }
     }
 }
