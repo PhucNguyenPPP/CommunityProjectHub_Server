@@ -392,19 +392,19 @@ namespace CPH.BLL.Services
         {
             try
             {
-                //IQueryable<Project> list = _unitOfWork.Project
-                //    .GetAllByCondition(c => c.Status == true &&
-                //        (c.ProjectManagerId == userId ||
-                //        c.Classes.Any(cl => cl.LecturerId == userId) ||
-                //        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId))))
-                //    .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
-                //    .Include(c => c.ProjectManager);
+                var account = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == userId).FirstOrDefault();
+                if(account == null)
+                {
+                    return new ResponseDTO("Người dùng không tồn tại", 400, false);
+                }
 
                 IQueryable<Project> list = _unitOfWork.Project
                     .GetAllByCondition(c =>
                         (c.ProjectManagerId == userId ||
+                        c.AssociateId == userId ||
                         c.Classes.Any(cl => cl.LecturerId == userId) ||
-                        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId))))
+                        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId)) ||
+                        c.Classes.Any(c => c.Trainees.Any(tra => tra.AccountId == userId))))
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                     .Include(c => c.ProjectManager);
 
