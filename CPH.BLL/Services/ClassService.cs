@@ -20,6 +20,7 @@ using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -851,7 +852,7 @@ namespace CPH.BLL.Services
                     return new ResponseDTO("Lỗi giảng viên của lớp học", 500, false);
                 }
                 classAvailableDTO.LecturerName = lecturer.FullName;
-                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId));
+                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId)).OrderBy(lsc=> lsc.StartTime);
                 if (lessonClass == null)
                 {
                     return new ResponseDTO("Thông tin buổi học của danh sách lớp học bị lỗi", 500,false);
