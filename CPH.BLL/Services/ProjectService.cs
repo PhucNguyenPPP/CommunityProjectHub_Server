@@ -963,14 +963,14 @@ namespace CPH.BLL.Services
                 }
             }
 
-            var classList = project.Classes.ToList();
-            foreach (var i in classList)
-            {
-                if (i.NumberGroup == null)
-                {
-                    return new ResponseDTO($"Lớp {i.ClassCode} chưa được tạo nhóm", 400, false);
-                }
-            }
+            //var classList = project.Classes.ToList();
+            //foreach (var i in classList)
+            //{
+            //    if (i.NumberGroup == null)
+            //    {
+            //        return new ResponseDTO($"Lớp {i.ClassCode} chưa được tạo nhóm", 400, false);
+            //    }
+            //}
 
             if (project.StartDate < DateTime.Now)
             {
