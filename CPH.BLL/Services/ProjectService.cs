@@ -235,6 +235,11 @@ namespace CPH.BLL.Services
                         errors.Add("Thông tin người quản lý dự án không hợp lệ");
                     }
                 }
+                var associate = await _unitOfWork.Associate.GetByCondition(a=>a.AccountId.Equals(projectDTO.AssociateId));
+                if (associate == null)
+                {
+                    errors.Add("Thông tin đối tác dự án không hợp lệ");
+                }
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
                 if (!response.IsSuccess)
                 {
@@ -492,6 +497,8 @@ namespace CPH.BLL.Services
             var project = _unitOfWork.Project
                 .GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(pm => pm.ProjectManager)
+                .Include(ass => ass.Associate)
+                    .ThenInclude(c => c.Associate)
                 .Include(cl => cl.Classes)
                     .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)
@@ -593,11 +600,13 @@ namespace CPH.BLL.Services
                 project.Title = projectDTO.Title;
                 project.Description = projectDTO.Description;
                 project.Address = projectDTO.Address;
+                project.AssociateId = projectDTO.AssociateId;
                 var cl = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectDTO.ProjectId)).Select(c => c.ClassId).Distinct().ToList();
                 if (cl == null)
                 {
                     return new ResponseDTO("Lớp của dự án bị lỗi", 500, false);
                 }
+
                 //if (project.NumberTraineeEachGroup != projectDTO.NumberTraineeEachGroup)
                 //{
                 //    for (var i = 0; i < cl.Count; i++)
@@ -699,6 +708,7 @@ namespace CPH.BLL.Services
                 {
                     return new ResponseDTO("Dự án hiện đang ở giai đoạn " + project.Status.ToString() + " nên không thể chỉnh sửa", 400, false);
                 }
+
                 List<string> errors = new List<string>();
                 if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
                 {
@@ -720,6 +730,11 @@ namespace CPH.BLL.Services
                 if (projectName != null)
                 {
                     errors.Add("Tên dự án đã tồn tại");
+                }
+                var associate = await _unitOfWork.Associate.GetByCondition(a => a.AccountId.Equals(projectDTO.AssociateId));
+                if (associate == null)
+                {
+                    errors.Add("Thông tin đối tác dự án không hợp lệ");
                 }
                 var c = _unitOfWork.Class.GetAllByCondition(t => t.ProjectId.Equals(projectDTO.ProjectId)).Select(t => t.ClassId).Distinct().ToList();
                 //for (int i = 0; i < c.Count; i++)

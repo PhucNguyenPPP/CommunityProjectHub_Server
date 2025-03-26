@@ -55,7 +55,7 @@ namespace CPH.Api.Profiles
                 .ForMember(dest => dest.TotalNumberTrainee, opt => opt.MapFrom(src => src.Classes.Sum(c => c.Trainees.Count())))
                 .ForMember(dest => dest.TotalNumberLecturer, opt => opt.MapFrom(src => src.Classes.Count(c => c.Lecturer != null)))
                 .ForMember(dest => dest.AssociateName,
-                opt => opt.MapFrom(src => (src.Associate != null && src.Associate.Associate != null) ? src.Associate.Associate.AssociateName : string.Empty)).ReverseMap()
+                opt => opt.MapFrom(src => (src.Associate.Associate != null) ? src.Associate.Associate.AssociateName : string.Empty))
                 .ReverseMap();
             CreateMap<Account, AccountResponseDTO>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))

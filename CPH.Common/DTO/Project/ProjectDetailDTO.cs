@@ -38,6 +38,10 @@ namespace CPH.Common.DTO.Project
 
         public string ProjectManagerName { get; set; }
 
+        public Guid AssociateId { get; set; }
+
+        public string? AssociateName { get; set; }
+
         public int TotalNumberLecturer { get; set; }
 
         public int TotalNumberTrainee { get; set; }
@@ -47,6 +51,5 @@ namespace CPH.Common.DTO.Project
         public List<GetAllClassDTO> Classes { get; set; }
         public List<Guid> LecturerIds { get; set; } = new List<Guid>();
         public List<Guid> MemberIds { get; set; } = new List<Guid>();
-        public string? AssociateName { get; set; }
     }
 }

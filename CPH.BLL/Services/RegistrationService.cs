@@ -116,7 +116,7 @@ namespace CPH.BLL.Services
         {
             List<string> listError = new List<string>();
 
-            var cl = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(registrationDTO.ClassId) && c.NumberGroup != null);
+            var cl = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(registrationDTO.ClassId));
             if (cl == null)
             {
                 listError.Add("Lớp học hiện không thể đăng ký tham gia");
@@ -235,7 +235,10 @@ namespace CPH.BLL.Services
                                 }
                                 else if (acc.RoleId.Equals((int)RoleEnum.Student))
                                 {
-
+                                    if (!cl.LecturerId.HasValue || cl.NumberGroup == null)
+                                    {
+                                        listError.Add("Sinh viên hỗ trợ chỉ có thể đăng ký lớp đã có giảng viên và được chia nhóm");
+                                    }
                                     var regisOfClass = _unitOfWork.Registration.GetAllByCondition(r => r.ClassId.Equals(registrationDTO.ClassId) && r.Status.Equals(RegistrationStatusConstant.Inspected));
                                     if (regisOfClass.Count() >= cl.NumberGroup)
                                     {
