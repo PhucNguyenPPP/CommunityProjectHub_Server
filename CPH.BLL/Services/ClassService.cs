@@ -456,6 +456,7 @@ namespace CPH.BLL.Services
                 classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
                    .Include(c => c.Project)
                    .Include(c => c.Lecturer)
+                   .Include(c => c.Trainees)
                    .ToList();
             }
             else
@@ -463,6 +464,7 @@ namespace CPH.BLL.Services
                 classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
                   .Include(c => c.Project)
                   .Include(c => c.Lecturer)
+                  .Include(c => c.Trainees)
                   .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
                   .ToList();
             }
@@ -663,7 +665,7 @@ namespace CPH.BLL.Services
             List<GetAllClassOfTrainee>? classTrainee = new List<GetAllClassOfTrainee>();
             if (searchValue.IsNullOrEmpty())
             {
-                classTrainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
+                classTrainee = (List<GetAllClassOfTrainee>)_unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
                    .Include(c => c.Class)
                    .ThenInclude(c => c.Project)
                    .Include(c => c.Class)

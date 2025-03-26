@@ -141,6 +141,7 @@ namespace CPH.Api.Profiles
                .ForMember(dest => dest.ProjectCreatedDate, opt => opt.MapFrom(src => src.Project.CreatedDate))
                .ForMember(dest => dest.ProjectStatus, opt => opt.MapFrom(src => src.Project.Status))
                .ForMember(dest => dest.ProjectManagerId, opt => opt.MapFrom(src => src.Project.ProjectManagerId))
+               .ForMember(dest => dest.TotalTrainee, opt => opt.MapFrom(src => src.Trainees.Count()))
                .ReverseMap();
 
             CreateMap<Class, GetAllClassOfTrainee>()
