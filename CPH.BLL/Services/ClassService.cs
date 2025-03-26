@@ -117,9 +117,14 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Lớp thuộc dự án bị lỗi", 400, false);
             }
-            if (!pro.Status.Equals(ProjectStatusConstant.Planning))
+            if (!pro.Status.Equals(ProjectStatusConstant.UpComing))
             {
-                return new ResponseDTO("Dự án đã ở trạng thâi " + pro.Status.ToString(), 400, false);
+                return new ResponseDTO("Dự án đang ở trạng thâi " + pro.Status.ToString()+ " nên không thể chia nhóm", 400, false);
+            }
+            var mem =  _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            if (mem.Count() > 0)
+            {
+                return new ResponseDTO("Không thể chia nhóm lại khi đã có sinh viên tham gia hỗ trợ lớp", 400, false);
             }
             return new ResponseDTO("Thông tin chia nhóm của lớp hợp lệ", 200, true, c);
         }
