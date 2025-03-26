@@ -327,10 +327,10 @@ namespace CPH.BLL.Services
             {
                 errs.Add("Lớp không tồn tại");
             }
-            if (clas != null && !clas.NumberGroup.HasValue)
-            {
-                errs.Add("Không thể phân công vào lớp chưa chia nhóm");
-            }
+            //if (clas != null && !clas.NumberGroup.HasValue)
+            //{
+            //    errs.Add("Không thể phân công vào lớp chưa chia nhóm");
+            //}
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(clas.ProjectId));
             if (pro.Status != ProjectStatusConstant.UpComing)
             {
