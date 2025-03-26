@@ -599,6 +599,7 @@ namespace CPH.BLL.Services
                 project.Title = projectDTO.Title;
                 project.Description = projectDTO.Description;
                 project.Address = projectDTO.Address;
+                project.AssociateId = projectDTO.AssociateId;
                 var cl = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectDTO.ProjectId)).Select(c => c.ClassId).Distinct().ToList();
                 if (cl == null)
                 {
