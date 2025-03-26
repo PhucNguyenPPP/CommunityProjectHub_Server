@@ -47,5 +47,6 @@ namespace CPH.Common.DTO.Project
         public List<GetAllClassDTO> Classes { get; set; }
         public List<Guid> LecturerIds { get; set; } = new List<Guid>();
         public List<Guid> MemberIds { get; set; } = new List<Guid>();
+        public string? AssociateName { get; set; }
     }
 }
