@@ -268,11 +268,6 @@ namespace CPH.BLL.Services
                     mapList[i].RoleId = (int)RoleEnum.Lecturer;
                 }
 
-                if (accounts[i].RoleName.ToLower().Equals("associate"))
-                {
-                    mapList[i].RoleId = (int)RoleEnum.Associate;
-                }
-
                 var accountEmailDto = new AccountEmailDTO
                 {
                     Email = mapList[i].Email,
@@ -439,8 +434,7 @@ namespace CPH.BLL.Services
                 }
                 else
                 {
-                    if (!account.RoleName.ToLower().Equals("student") && !account.RoleName.ToLower().Equals("trainee")
-                        && !account.RoleName.ToLower().Equals("associate") && !account.RoleName.ToLower().Equals("lecturer"))
+                    if (!account.RoleName.ToLower().Equals("student") && !account.RoleName.ToLower().Equals("trainee") && !account.RoleName.ToLower().Equals("lecturer"))
                     {
                         listResult.Add($"Vai trò của tài khoản số {accountNumber} không hợp lệ");
                     }

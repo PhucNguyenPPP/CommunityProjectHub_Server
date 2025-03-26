@@ -498,6 +498,7 @@ namespace CPH.BLL.Services
                 .GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(pm => pm.ProjectManager)
                 .Include(ass => ass.Associate)
+                    .ThenInclude(c => c.Associate)
                 .Include(cl => cl.Classes)
                     .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)

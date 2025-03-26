@@ -41,7 +41,8 @@ namespace CPH.BLL.Services
 
             List<Account> searchedList = _unitOfWork.Account.GetAllByCondition(c => (c.AccountCode.ToLower().Contains(searchValue!.ToLower())
                 || c.FullName.ToLower().Contains(searchValue.ToLower()) || c.Email.ToLower().Contains(searchValue.ToLower())
-                || c.Phone.ToLower().Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Associate)
+                || c.Phone.ToLower().Contains(searchValue.ToLower())
+                || c.Associate!.AssociateName.Contains(searchValue.ToLower())) && c.RoleId == (int)RoleEnum.Associate)
                 .Include(c => c.Associate)
                 .ToList();
 

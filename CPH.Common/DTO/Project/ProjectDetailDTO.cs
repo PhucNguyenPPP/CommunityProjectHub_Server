@@ -40,7 +40,7 @@ namespace CPH.Common.DTO.Project
 
         public Guid AssociateId { get; set; }
 
-        public string AssociateName { get; set; }
+        public string? AssociateName { get; set; }
 
         public int TotalNumberLecturer { get; set; }
 
