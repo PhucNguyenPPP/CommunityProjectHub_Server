@@ -305,7 +305,7 @@ namespace CPH.BLL.Services
             Registration re = (Registration)check.Result;
             var accountId = re.AccountId;
             var clasRegis = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId));
-            if (re != null)
+            if (re != null && clasRegis != null)
             {
                 if (answerRegistrationDTO.Type.Equals("Approve"))
                 {
@@ -337,34 +337,36 @@ namespace CPH.BLL.Services
                     else if (acc.RoleId.Equals((int)RoleEnum.Student))
                     {
                         var stu = _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(re.ClassId));
-
-                        if (stu.Count() >= clasRegis.NumberGroup)
+                        if (clasRegis.NumberGroup.HasValue)
                         {
-                            return new ResponseDTO("Lớp " + clasRegis.ClassCode + " đã đủ sinh viên hỗ trợ", 400, false);
-                        }
-                        else
-                        {
-                            Member mem = new Member()
+                            if (stu.Count() >= clasRegis.NumberGroup)
                             {
-                                ClassId = re.ClassId,
-                                AccountId = re.AccountId,
-                                GroupSupportNo = stu.Count() + 1,
-                                MemberId = Guid.NewGuid(),
-
-                            };
-                            await _unitOfWork.Member.AddAsync(mem);
-                            ProjectLogging logging = new ProjectLogging()
+                                return new ResponseDTO("Lớp " + clasRegis.ClassCode + " đã đủ sinh viên hỗ trợ", 400, false);
+                            }
+                            else
                             {
-                                ProjectNoteId = Guid.NewGuid(),
-                                ActionDate = DateTime.Now,
-                                ProjectId = clasRegis.ProjectId,
-                                ActionContent = $"{acc.FullName} đã tham gia hỗ trợ lớp {clasRegis.ClassCode}",
-                                AccountId = acc.AccountId,
+                                Member mem = new Member()
+                                {
+                                    ClassId = re.ClassId,
+                                    AccountId = re.AccountId,
+                                    GroupSupportNo = stu.Count() + 1,
+                                    MemberId = Guid.NewGuid(),
 
-                            };
-                            await _unitOfWork.ProjectLogging.AddAsync(logging);
+                                };
+                                await _unitOfWork.Member.AddAsync(mem);
+                                ProjectLogging logging = new ProjectLogging()
+                                {
+                                    ProjectNoteId = Guid.NewGuid(),
+                                    ActionDate = DateTime.Now,
+                                    ProjectId = clasRegis.ProjectId,
+                                    ActionContent = $"{acc.FullName} đã tham gia hỗ trợ lớp {clasRegis.ClassCode}",
+                                    AccountId = acc.AccountId,
+
+                                };
+                                await _unitOfWork.ProjectLogging.AddAsync(logging);
+                            }
+
                         }
-
                     }
                 }
                 else
@@ -414,10 +416,10 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Phần trả lời đơn đăng ký không hợp lệ", 400, false);
             }
-            var classOfRe = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId) && c.NumberGroup != null);
+            var classOfRe = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(re.ClassId));
             if (classOfRe == null)
             {
-                return new ResponseDTO("Hiện không thể trả lời đơn đăng ký vào lớp này", 400, false);
+                return new ResponseDTO("Lớp đăng ký vào đã bị lỗi", 400, false);
             }
             var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfRe.ProjectId));
             if (project == null)
