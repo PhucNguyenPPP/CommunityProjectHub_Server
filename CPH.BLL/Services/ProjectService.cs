@@ -497,6 +497,7 @@ namespace CPH.BLL.Services
             var project = _unitOfWork.Project
                 .GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(pm => pm.ProjectManager)
+                .Include(ass => ass.Associate)
                 .Include(cl => cl.Classes)
                     .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)
