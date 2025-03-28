@@ -47,7 +47,7 @@ namespace CPH.BLL.Services
             try
             {
                 var project = await _unitOfWork.Project
-                    .GetByCondition(c=>c.ProjectId.Equals(projectID));
+                    .GetByCondition(c => c.ProjectId.Equals(projectID));
                 /*c => c.Status != ProjectStatusConstant.Cancelled && c.Status!=ProjectStatusConstant.InProgress && c.Status!=ProjectStatusConstant.Completed && 
                                 var project = await _unitOfWork.Project
                                     .GetByCondition(c => c.ProjectId.Equals(projectID));*/
@@ -235,6 +235,11 @@ namespace CPH.BLL.Services
                         errors.Add("Thông tin người quản lý dự án không hợp lệ");
                     }
                 }
+                var associate = await _unitOfWork.Associate.GetByCondition(a=>a.AccountId.Equals(projectDTO.AssociateId));
+                if (associate == null)
+                {
+                    errors.Add("Thông tin đối tác dự án không hợp lệ");
+                }
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
                 if (!response.IsSuccess)
                 {
@@ -253,7 +258,18 @@ namespace CPH.BLL.Services
                     }
                     else
                     {*/
-                    errors.Add(response.Message.ToString());
+                    if(response.Result!=null)
+                    {
+                        List<string> strings= (List<string>) response.Result;
+                        foreach (var item in strings)
+                        {
+                           errors.Add(item.ToString());
+                        }
+                    }
+                    else
+                    {
+                        errors.Add(response.Message.ToString());
+                    }
                 }
                 var listTrainee = (List<ImportTraineeDTO>)response.Result;
                 for (int i = 0; i < projectDTO.LessonList.Count; i++)
@@ -376,19 +392,19 @@ namespace CPH.BLL.Services
         {
             try
             {
-                //IQueryable<Project> list = _unitOfWork.Project
-                //    .GetAllByCondition(c => c.Status == true &&
-                //        (c.ProjectManagerId == userId ||
-                //        c.Classes.Any(cl => cl.LecturerId == userId) ||
-                //        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId))))
-                //    .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
-                //    .Include(c => c.ProjectManager);
+                var account = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == userId).FirstOrDefault();
+                if(account == null)
+                {
+                    return new ResponseDTO("Người dùng không tồn tại", 400, false);
+                }
 
                 IQueryable<Project> list = _unitOfWork.Project
                     .GetAllByCondition(c =>
                         (c.ProjectManagerId == userId ||
+                        c.AssociateId == userId ||
                         c.Classes.Any(cl => cl.LecturerId == userId) ||
-                        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId))))
+                        c.Classes.Any(c => c.Members.Any(mem => mem.AccountId == userId)) ||
+                        c.Classes.Any(c => c.Trainees.Any(tra => tra.AccountId == userId))))
                     .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                     .Include(c => c.ProjectManager);
 
@@ -481,6 +497,8 @@ namespace CPH.BLL.Services
             var project = _unitOfWork.Project
                 .GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(pm => pm.ProjectManager)
+                .Include(ass => ass.Associate)
+                    .ThenInclude(c => c.Associate)
                 .Include(cl => cl.Classes)
                     .ThenInclude(tr => tr.Trainees)
                 .Include(cl => cl.Classes)
@@ -582,11 +600,13 @@ namespace CPH.BLL.Services
                 project.Title = projectDTO.Title;
                 project.Description = projectDTO.Description;
                 project.Address = projectDTO.Address;
+                project.AssociateId = projectDTO.AssociateId;
                 var cl = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectDTO.ProjectId)).Select(c => c.ClassId).Distinct().ToList();
                 if (cl == null)
                 {
                     return new ResponseDTO("Lớp của dự án bị lỗi", 500, false);
                 }
+
                 //if (project.NumberTraineeEachGroup != projectDTO.NumberTraineeEachGroup)
                 //{
                 //    for (var i = 0; i < cl.Count; i++)
@@ -664,7 +684,7 @@ namespace CPH.BLL.Services
 
                        }*/
                 _unitOfWork.Project.Update(project);
-                var updated = await _unitOfWork.SaveChangeAsync();               
+                var updated = await _unitOfWork.SaveChangeAsync();
                 if (updated == false)
                 {
                     return new ResponseDTO("Chỉnh sửa thất bại", 500, false);
@@ -686,8 +706,9 @@ namespace CPH.BLL.Services
                 var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(projectDTO.ProjectId));
                 if (!project.Status.Equals(ProjectStatusConstant.Planning))
                 {
-                    return new ResponseDTO("Dự án hiện đang ở giai đoạn "+ project.Status.ToString()+" nên không thể chỉnh sửa", 400, false);
+                    return new ResponseDTO("Dự án hiện đang ở giai đoạn " + project.Status.ToString() + " nên không thể chỉnh sửa", 400, false);
                 }
+
                 List<string> errors = new List<string>();
                 if (projectDTO.StartDate < projectDTO.ApplicationEndDate)
                 {
@@ -709,6 +730,11 @@ namespace CPH.BLL.Services
                 if (projectName != null)
                 {
                     errors.Add("Tên dự án đã tồn tại");
+                }
+                var associate = await _unitOfWork.Associate.GetByCondition(a => a.AccountId.Equals(projectDTO.AssociateId));
+                if (associate == null)
+                {
+                    errors.Add("Thông tin đối tác dự án không hợp lệ");
                 }
                 var c = _unitOfWork.Class.GetAllByCondition(t => t.ProjectId.Equals(projectDTO.ProjectId)).Select(t => t.ClassId).Distinct().ToList();
                 //for (int i = 0; i < c.Count; i++)
@@ -859,23 +885,38 @@ namespace CPH.BLL.Services
                 foreach (var item in projectsToUpdate)
                 {
                     item.Status = ProjectStatusConstant.InProgress;
-                    var cOfPro = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).Select(c => c.ClassId);
-                    var regis = _unitOfWork.Registration.GetAllByCondition(r => cOfPro.Contains(r.ClassId) && r.Status.Equals(RegistrationStatusConstant.Processing));
-                    foreach (var reg in regis)
+                    var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).ToListAsync();
+
+                    // Kiểm tra xem có lớp học nào không đáp ứng điều kiện hay không
+                    bool hasInvalidClass = classesOfProject.Any(c => !c.LecturerId.HasValue || _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(c.ClassId)).Count() < c.NumberGroup);
+
+                    if (!hasInvalidClass)
                     {
-                        reg.Status = RegistrationStatusConstant.Rejected;
+                        var classIdsOfProject = classesOfProject.Select(c => c.ClassId).ToList();
+                        // Tối ưu hóa truy vấn regis bằng cách thêm điều kiện lọc vào truy vấn ban đầu
+                        var registrations = await _unitOfWork.Registration.GetAllByCondition(r => classIdsOfProject.Contains(r.ClassId) && r.Status.Equals(RegistrationStatusConstant.Processing)).ToListAsync();
+
+                        foreach (var reg in registrations)
+                        {
+                            reg.Status = RegistrationStatusConstant.Rejected;
+                        }
                     }
-                }
-                _unitOfWork.Project.UpdateRange(projectsToUpdate);
-                bool savechange = await _unitOfWork.SaveChangeAsync();
-                if (!savechange)
-                {
-                    throw new Exception("Không thể update project status");
+                    else
+                    {
+                        item.Status = ProjectStatusConstant.Cancelled;
+                    }
+
+                    _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
+                    bool saveChanges = await _unitOfWork.SaveChangeAsync();
+
+                    if (!saveChanges)
+                    {
+                        throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
+                    }
+
                 }
             }
-
         }
-
         private async Task<List<Project>> GetProjectsWithStartDateNow()
         {
             var today = DateTime.Now; // Sử dụng UTC để tránh vấn đề múi giờ
@@ -922,16 +963,16 @@ namespace CPH.BLL.Services
                 }
             }
 
-            var classList = project.Classes.ToList();
-            foreach(var i in classList)
-            {
-                if(i.NumberGroup == null)
-                {
-                    return new ResponseDTO($"Lớp {i.ClassCode} chưa được tạo nhóm", 400, false);
-                }
-            }
+            //var classList = project.Classes.ToList();
+            //foreach (var i in classList)
+            //{
+            //    if (i.NumberGroup == null)
+            //    {
+            //        return new ResponseDTO($"Lớp {i.ClassCode} chưa được tạo nhóm", 400, false);
+            //    }
+            //}
 
-            if(project.StartDate < DateTime.Now)
+            if (project.StartDate < DateTime.Now)
             {
                 return new ResponseDTO("Đã quá ngày bắt đầu của dự án", 400, false);
             }
@@ -957,7 +998,7 @@ namespace CPH.BLL.Services
             var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId)
                 .Include(c => c.ProjectManager)
                 .FirstOrDefault();
-            if(project == null)
+            if (project == null)
             {
                 return new ResponseDTO("Dự án không tồn tại", 400, false);
             }
@@ -965,29 +1006,29 @@ namespace CPH.BLL.Services
             var projectManager = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == accountId)
                 .FirstOrDefault();
 
-            if(projectManager == null)
+            if (projectManager == null)
             {
                 return new ResponseDTO("Giảng viên không tồn tại", 400, false);
             }
 
-            if(projectManager.RoleId != (int)RoleEnum.Lecturer)
+            if (projectManager.RoleId != (int)RoleEnum.Lecturer)
             {
                 return new ResponseDTO("Chỉ giảng viên mới có thể được bổ nhiệm làm quản lý dự án", 400, false);
             }
 
-            if(project.Status == ProjectStatusConstant.Completed || project.Status == ProjectStatusConstant.Cancelled)
+            if (project.Status == ProjectStatusConstant.Completed || project.Status == ProjectStatusConstant.Cancelled)
             {
                 return new ResponseDTO("Dự án đã kết thúc", 400, false);
             }
 
-            if(project.ProjectManagerId == accountId)
+            if (project.ProjectManagerId == accountId)
             {
                 return new ResponseDTO("Giảng viên được chọn đang là quản lý của dự án", 400, false);
             }
 
             List<ProjectLogging> projectLoggings = new List<ProjectLogging>();
 
-            if(project.ProjectManagerId != null)
+            if (project.ProjectManagerId != null)
             {
                 var messageNotificationRemovePM = RemovePMFromProjectNotification.SendRemovePMFromProjectNotification(project.Title);
                 await _notificationService.CreateNotification((Guid)project.ProjectManagerId, messageNotificationRemovePM);
@@ -1029,5 +1070,104 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Bổ nhiệm quản lý dự án thất bại", 400, false);
         }
 
+        public async Task UpdateProjectsStatusToCompleted()
+        {
+            List<Project> projectsToUpdate = await GetProjectsWithEndDateNow();
+            if (projectsToUpdate.Count > 0)
+            {
+                foreach (var item in projectsToUpdate)
+                {
+                    item.Status = ProjectStatusConstant.InProgress;
+                    var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).ToListAsync();
+
+                    // Kiểm tra xem có lớp học nào không đáp ứng điều kiện hay không
+                    bool hasInvalidClass = classesOfProject.Any(c => c.ReportContent.IsNullOrEmpty());
+
+                    if (!hasInvalidClass)
+                    {
+
+                        _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
+                        bool saveChanges = await _unitOfWork.SaveChangeAsync();
+
+                        if (!saveChanges)
+                        {
+                            throw new Exception($"Không thể cập nhật trạng thái dự án {item.ProjectId}.");
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task<List<Project>> GetProjectsWithEndDateNow()
+        {
+            var today = DateTime.Now; // Sử dụng UTC để tránh vấn đề múi giờ
+            return await _unitOfWork.Project
+                .GetAllByCondition(p => p.EndDate <= today && p.Status.Equals(ProjectStatusConstant.InProgress))
+                .ToListAsync();
+        }
+
+        public MemoryStream ExportFinalReportOfProjectExcel(Guid projectId)
+        {
+            var classList = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId == projectId).ToList();
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                foreach (var classItem in classList)
+                {
+                    var worksheet = package.Workbook.Worksheets.Add($"{classItem.ClassCode}");
+
+                    worksheet.Cells[1, 1].Value = "STT";
+                    worksheet.Cells[1, 2].Value = "Mã học viên";
+                    worksheet.Cells[1, 3].Value = "Tên học viên";
+                    worksheet.Cells[1, 4].Value = "Nhóm";
+                    worksheet.Cells[1, 5].Value = "Điểm";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Font.Size = 12;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+
+                    var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classItem.ClassId)
+                        .Include(c => c.Account)
+                        .OrderBy(c => c.GroupNo)
+                        .ToList();
+                    int row = 2;
+                    int stt = 1;
+                    foreach (var trainee in traineeList)
+                    {
+                        worksheet.Cells[row, 1].Value = stt;
+                        worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
+                        worksheet.Cells[row, 3].Value = trainee.Account.FullName;
+                        worksheet.Cells[row, 4].Value = trainee.GroupNo;
+                        worksheet.Cells[row, 5].Value = trainee.Score;
+                        row++;
+                        stt++;
+                    }
+
+                    worksheet.Cells.AutoFitColumns();
+                }
+
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
+
+        public async Task<bool> CheckProjectIdExisted(Guid projectId)
+        {
+            var project = await _unitOfWork.Project.GetByCondition(c => c.ProjectId == projectId);
+            if (project == null)
+            {
+                return false;
+            }
+            return true;
+        }
     }
 }

@@ -71,8 +71,10 @@ namespace CPH.BLL.Services
         public async Task<ResponseDTO> GetAllAccounts(string? searchValue, int? pageNumber, int? rowsPerPage)
         {
             IQueryable<Account> list = _unitOfWork.Account.GetAllByCondition(c => c.RoleId != (int)RoleEnum.Admin)
-                .Include(c => c.Role);
-            if(searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
+                .Include(c => c.Role)
+                .Include(c => c.Associate);
+
+            if (searchValue.IsNullOrEmpty() && pageNumber == null && rowsPerPage == null)
             {
                 var mapList = _mapper.Map<List<AccountResponseDTO>>(list);
                 return new ResponseDTO("Lấy danh sách tài khoản thành công", 200, true, mapList);
@@ -81,11 +83,11 @@ namespace CPH.BLL.Services
             {
                 if (!searchValue.IsNullOrEmpty())
                 {
-                    list = list.Where(c => 
+                    list = list.Where(c =>
                         c.AccountName.ToLower().Contains(searchValue.ToLower()) ||
                         c.FullName.ToLower().Contains(searchValue.ToLower()) ||
                         c.AccountCode.ToLower().Contains(searchValue.ToLower()) ||
-                        c.Email.ToLower().Contains(searchValue.ToLower())||
+                        c.Email.ToLower().Contains(searchValue.ToLower()) ||
                         c.Phone.ToLower().Contains(searchValue.ToLower())
                     );
                 }
@@ -266,11 +268,6 @@ namespace CPH.BLL.Services
                     mapList[i].RoleId = (int)RoleEnum.Lecturer;
                 }
 
-                if (accounts[i].RoleName.ToLower().Equals("associate"))
-                {
-                    mapList[i].RoleId = (int)RoleEnum.Associate;
-                }
-
                 var accountEmailDto = new AccountEmailDTO
                 {
                     Email = mapList[i].Email,
@@ -437,8 +434,7 @@ namespace CPH.BLL.Services
                 }
                 else
                 {
-                    if (!account.RoleName.ToLower().Equals("student") && !account.RoleName.ToLower().Equals("trainee")
-                        && !account.RoleName.ToLower().Equals("associate") && !account.RoleName.ToLower().Equals("lecturer"))
+                    if (!account.RoleName.ToLower().Equals("student") && !account.RoleName.ToLower().Equals("trainee") && !account.RoleName.ToLower().Equals("lecturer"))
                     {
                         listResult.Add($"Vai trò của tài khoản số {accountNumber} không hợp lệ");
                     }
@@ -930,5 +926,13 @@ namespace CPH.BLL.Services
 
             return password.ToString();
         }
-    }  
+
+        public bool CheckAssociateNameExist(string associateName)
+        {
+            bool exists = _unitOfWork.Account.GetAll()
+                .Any(c => c.Associate != null 
+                && c.Associate.AssociateName.ToLower() == associateName.ToLower());
+            return exists;
+        }
+    }
 }

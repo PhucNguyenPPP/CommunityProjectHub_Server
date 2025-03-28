@@ -29,6 +29,10 @@ public partial class Project
 
     public Guid? ProjectManagerId { get; set; }
 
+    public Guid AssociateId { get; set; }
+
+    public virtual Account Associate { get; set; } = null!;
+
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();

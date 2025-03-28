@@ -4,19 +4,23 @@ using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
+using CPH.Common.DTO.LessonClass;
 using CPH.Common.DTO.Member;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Paging;
+using CPH.Common.DTO.Trainee;
 using CPH.Common.Enum;
 using CPH.Common.Notification;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -80,6 +84,7 @@ namespace CPH.BLL.Services
                 {
                     i = 1;
                     trainee.GroupNo = i;
+                    i++;
                 }
             }
             _unitOfWork.Trainee.UpdateRange(traineesOfClass.ToList());
@@ -93,6 +98,7 @@ namespace CPH.BLL.Services
 
         private async Task<ResponseDTO> CheckDivision(DevideGroupOfClassDTO devideGroupOfClassDTO)
         {
+            
             var numbTrainOfClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(devideGroupOfClassDTO.ClassId)).Count();
             if (numbTrainOfClass <= 0)
             {
@@ -103,14 +109,23 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Số lượng nhóm không được lớn hơn số lượng học viên của lớp", 400, false);
             }
             var c = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            if(!c.LecturerId.HasValue)
+            {
+                return new ResponseDTO("Lớp cần được phân giảng viên trước khi chia nhóm", 400, false);
+            }
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(c.ProjectId));
             if (pro == null)
             {
                 return new ResponseDTO("Lớp thuộc dự án bị lỗi", 400, false);
             }
-            if (!pro.Status.Equals(ProjectStatusConstant.Planning))
+            if (!pro.Status.Equals(ProjectStatusConstant.UpComing))
             {
-                return new ResponseDTO("Dự án đã ở trạng thâi " + pro.Status.ToString(), 400, false);
+                return new ResponseDTO("Dự án đang ở trạng thâi " + pro.Status.ToString()+ " nên không thể chia nhóm", 400, false);
+            }
+            var mem =  _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            if (mem.Count() > 0)
+            {
+                return new ResponseDTO("Không thể chia nhóm lại khi đã có sinh viên tham gia hỗ trợ lớp", 400, false);
             }
             return new ResponseDTO("Thông tin chia nhóm của lớp hợp lệ", 200, true, c);
         }
@@ -213,10 +228,19 @@ namespace CPH.BLL.Services
 
             var memberDto = _mapper.Map<List<GetMemberOfClassDTO>>(member);
 
+            var traineeList = _unitOfWork.Trainee
+                .GetAllByCondition(c => c.ClassId == classId)
+                .Select(c => c.Account)
+                .ToList();
+
+            var traineeListDto = _mapper.Map<List<GetTraineeOfClassDTO>>(traineeList);
+
+
             var dto = _mapper.Map<ClassDetailDTO>(clas);
             dto.LecturerSlotAvailable = lecturerSlotAvailable;
             dto.StudentSlotAvailable = studentSlotAvailable;
             dto.getMemberOfClassDTOs = memberDto;
+            dto.getTraineeOfClassDTOs = traineeListDto;
 
             return new ResponseDTO("Lấy thông tin chi tiết của lớp thành công", 200, true, dto);
 
@@ -309,12 +333,12 @@ namespace CPH.BLL.Services
             {
                 errs.Add("Lớp không tồn tại");
             }
-            if (clas != null && !clas.NumberGroup.HasValue)
-            {
-                errs.Add("Không thể phân công vào lớp chưa chia nhóm");
-            }
+            //if (clas != null && !clas.NumberGroup.HasValue)
+            //{
+            //    errs.Add("Không thể phân công vào lớp chưa chia nhóm");
+            //}
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(clas.ProjectId));
-            if (pro.Status != ProjectStatusConstant.UpComing && pro.Status != ProjectStatusConstant.InProgress)
+            if (pro.Status != ProjectStatusConstant.UpComing)
             {
                 errs.Add("Lớp thuộc dự án có trạng thái " + pro.Status.ToString() + " nên không thể phân công");
             }
@@ -333,7 +357,7 @@ namespace CPH.BLL.Services
                 {
                     errs.Add("Lớp không còn trống slot dành cho giảng viên");
                 }
-            //    var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) || p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId).ToList();
+                //    var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) || p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId).ToList();
                 var classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
                                r.Status.Equals(RegistrationStatusConstant.Processing)).Select(r => r.ClassId).ToList();
                 var cla = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId.Equals(updateClassDTO.AccountId)).Select(c => c.ClassId).ToList();
@@ -353,7 +377,7 @@ namespace CPH.BLL.Services
                         {
                             errs.Add("Bạn đã đăng ký hoặc được phân công vào lớp này trước đó");
                             break;
-                        }    
+                        }
                         var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
                         for (int j = 0; j < lscOfAccRegistered.Count(); j++)
                         {
@@ -386,7 +410,7 @@ namespace CPH.BLL.Services
                 var mem = _unitOfWork.Member.GetAllByCondition(m => m.AccountId.Equals(updateClassDTO.AccountId)).Select(m => m.ClassId).ToList();
                 classOfAcc.AddRange(mem);
                 var classAct = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId)).ToList();
-                var classActivate = classAct.Where(c=> classOfAcc.Contains(c.ClassId)).Select(c=> c.ClassId).ToList();
+                var classActivate = classAct.Where(c => classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
                 var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
                 if (classActivate != null)
                 {
@@ -395,7 +419,7 @@ namespace CPH.BLL.Services
                         if (classActivate[i].Equals(updateClassDTO.ClassId))
                         {
                             errs.Add("Bạn đã đăng ký hoặc được phân công vào lớp này trước đó");
-                        }    
+                        }
                         var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
                         for (int j = 0; j < lscOfAccRegistered.Count(); j++)
                         {
@@ -421,5 +445,424 @@ namespace CPH.BLL.Services
             }
             return new ResponseDTO("Thông tin cần cập nhật hợp lệ", 200, true);
         }
+
+        public async Task<ResponseDTO> GetAllClassOfLecturer(string? searchValue, Guid lecturerId)
+        {
+            var lecturer = await _unitOfWork.Account.GetByCondition(c => c.AccountId == lecturerId && c.RoleId == (int)RoleEnum.Lecturer);
+
+            if (lecturer == null)
+            {
+                return new ResponseDTO("Giảng viên không tồn tại", 400, false);
+            }
+
+
+            List<Class>? classLecturer = new List<Class>();
+            if (searchValue.IsNullOrEmpty())
+            {
+                classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
+                   .Include(c => c.Project)
+                   .Include(c => c.Lecturer)
+                   .Include(c => c.Trainees)
+                   .ToList();
+            }
+            else
+            {
+                classLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == lecturerId)
+                  .Include(c => c.Project)
+                  .Include(c => c.Lecturer)
+                  .Include(c => c.Trainees)
+                  .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
+                  .ToList();
+            }
+
+            var mappedList = _mapper.Map<List<GetAllClassOfLecturer>>(classLecturer);
+            return new ResponseDTO("Lấy danh sách lớp của giảng viên thành công", 200, true, mappedList);
+        }
+
+        public async Task<ResponseDTO> RemoveUpdateClass(RemoveUpdateClassDTO model)
+        {
+            var removedAccount = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == model.RemovedAccountId).FirstOrDefault();
+            if (removedAccount == null)
+            {
+                return new ResponseDTO("Tài khoản bị thay thế không tồn tại", 400, false);
+            }
+
+            var classObj = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == model.ClassId)
+                .Include(c => c.Project)
+                .Include(c => c.Members)
+                .Include(c => c.LessonClasses)
+                .FirstOrDefault();
+            if (classObj == null)
+            {
+                return new ResponseDTO("Lớp không tồn tại", 400, false);
+            }
+
+            var newAccount = _unitOfWork.Account.GetAllByCondition(c => c.AccountId == model.AccountId)
+                .Include(c => c.Role)
+                .FirstOrDefault();
+            if (newAccount == null)
+            {
+                return new ResponseDTO("Tài khoản được phân công không tồn tại", 400, false);
+            }
+
+            if (classObj.Project.Status != ProjectStatusConstant.InProgress)
+            {
+                return new ResponseDTO("Không thể xóa thành viên trong giai đoạn này của dự án", 400, false);
+            }
+
+            if (model.RoleId == (int)RoleEnum.Student)
+            {
+                var oldMember = _unitOfWork.Member
+                  .GetAllByCondition(c => c.AccountId == model.RemovedAccountId && c.ClassId == model.ClassId)
+                  .Include(c => c.Account)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Project)
+                  .FirstOrDefault();
+
+                if (oldMember == null)
+                {
+                    return new ResponseDTO("Sinh viên bị xóa không tồn tại trong lớp", 400, false);
+                }
+
+                var memberListInClass = classObj.Members.ToList();
+                if (memberListInClass.Any(c => c.AccountId == model.AccountId))
+                {
+                    return new ResponseDTO("Sinh viên đã được phân công trong lớp từ trước đó", 400, false);
+                }
+
+                var assignedClassListStudent = _unitOfWork.Member.GetAllByCondition(c => c.AccountId == model.AccountId)
+                    .Include(c => c.Class)
+                    .ThenInclude(c => c.LessonClasses)
+                    .Select(c => c.Class)
+                    .ToList();
+
+                var assignedLessonTimes = assignedClassListStudent
+                    .SelectMany(c => c.LessonClasses)
+                    .Select(lc => new { lc.StartTime, lc.EndTime })
+                    .ToList();
+
+                bool isTimeConflict = classObj.LessonClasses.Any(lc =>
+                    assignedLessonTimes.Any(al =>
+                        (lc.StartTime < al.EndTime && lc.EndTime > al.StartTime)
+                    )
+                );
+
+                if (isTimeConflict)
+                {
+                    return new ResponseDTO("Lịch bị trùng, không thể phân công sinh viên này vào lớp", 400, false);
+                }
+
+                var removedMessageNotification = RemoveMemberNotification.SendRemovedNotification(classObj.ClassCode, classObj.Project.Title);
+                await _notificationService.CreateNotification(model.RemovedAccountId, removedMessageNotification);
+
+                ProjectLogging removedLogging = new ProjectLogging()
+                {
+                    ProjectNoteId = Guid.NewGuid(),
+                    ActionDate = DateTime.Now,
+                    ProjectId = oldMember.Class.Project.ProjectId,
+                    ActionContent = $"{oldMember.Account.FullName} không còn là sinh viên hỗ trợ lớp {oldMember.Class.ClassCode} của dự án {oldMember!.Class.Project.Title}",
+                    AccountId = model.RemovedAccountId,
+                };
+
+                await _unitOfWork.ProjectLogging.AddAsync(removedLogging);
+                oldMember.AccountId = model.AccountId;
+                _unitOfWork.Member.Update(oldMember);
+
+                var addNewMessageNotification = UpdateClassNotification.SendUpdateClassNotification(newAccount.Role.RoleName, classObj.ClassCode, classObj.Project.Title);
+                await _notificationService.CreateNotification(model.AccountId, addNewMessageNotification);
+
+                ProjectLogging addNewLogging = new ProjectLogging()
+                {
+                    ProjectNoteId = Guid.NewGuid(),
+                    ActionDate = DateTime.Now,
+                    ProjectId = oldMember.Class.Project.ProjectId,
+                    ActionContent = $"{newAccount.FullName} đã tham gia hỗ trợ lớp {classObj.ClassCode}",
+                    AccountId = model.AccountId,
+                };
+                await _unitOfWork.ProjectLogging.AddAsync(addNewLogging);
+
+                var result = await _unitOfWork.SaveChangeAsync();
+                if (result)
+                {
+                    return new ResponseDTO("Phân công sinh viên khác thành công", 200, true);
+                }
+                return new ResponseDTO("Phân công sinh viên khác thất bại", 400, false);
+            }
+            else
+            {
+                if (classObj.LecturerId != model.RemovedAccountId)
+                {
+                    return new ResponseDTO("Giảng viên bị xóa không tồn tại trong lớp", 400, false);
+                }
+
+                if (classObj.LecturerId == model.AccountId)
+                {
+                    return new ResponseDTO("Giảng viên đã được phân công trong lớp từ trước đó", 400, false);
+                }
+
+                var assignedClassListLecturer = _unitOfWork.Class.GetAllByCondition(c => c.LecturerId == model.AccountId)
+                    .Include(c => c.LessonClasses)
+                    .ToList();
+
+                var assignedLessonTimes = assignedClassListLecturer
+                    .SelectMany(c => c.LessonClasses)
+                    .Select(lc => new { lc.StartTime, lc.EndTime })
+                    .ToList();
+
+                bool isTimeConflict = classObj.LessonClasses.Any(lc =>
+                    assignedLessonTimes.Any(al =>
+                        (lc.StartTime < al.EndTime && lc.EndTime > al.StartTime)
+                    )
+                );
+
+                if (isTimeConflict)
+                {
+                    return new ResponseDTO("Lịch bị trùng, không thể phân công giảng viên này vào lớp", 400, false);
+                }
+
+                var removedMessageNotification = RemoveMemberNotification.SendRemovedLecturerNotification(classObj.ClassCode, classObj.Project.Title);
+                await _notificationService.CreateNotification(model.RemovedAccountId, removedMessageNotification);
+
+                ProjectLogging removedLogging = new ProjectLogging()
+                {
+                    ProjectNoteId = Guid.NewGuid(),
+                    ActionDate = DateTime.Now,
+                    ProjectId = classObj.ProjectId,
+                    ActionContent = $"{removedAccount.FullName} không còn là giảng viên {classObj.ClassCode} của dự án {classObj.Project.Title}",
+                    AccountId = model.RemovedAccountId,
+                };
+
+                await _unitOfWork.ProjectLogging.AddAsync(removedLogging);
+                classObj.LecturerId = model.AccountId;
+                _unitOfWork.Class.Update(classObj);
+
+                var addNewMessageNotification = UpdateClassNotification.SendUpdateClassNotification(newAccount.Role.RoleName, classObj.ClassCode, classObj.Project.Title);
+                await _notificationService.CreateNotification(model.AccountId, addNewMessageNotification);
+
+                ProjectLogging addNewLogging = new ProjectLogging()
+                {
+                    ProjectNoteId = Guid.NewGuid(),
+                    ActionDate = DateTime.Now,
+                    ProjectId = classObj.ProjectId,
+                    ActionContent = $"{newAccount.FullName} đã trở thành giảng viên của lớp {classObj.ClassCode}",
+                    AccountId = model.AccountId,
+                };
+                await _unitOfWork.ProjectLogging.AddAsync(addNewLogging);
+
+                var result = await _unitOfWork.SaveChangeAsync();
+                if (result)
+                {
+                    return new ResponseDTO("Phân công giảng viên khác thành công", 200, true);
+                }
+                return new ResponseDTO("Phân công giảng viên khác thất bại", 400, false);
+            }
+        }
+
+        public async Task<ResponseDTO> GetAllClassOfTrainee(string? searchValue, Guid accountId)
+        {
+            var trainee = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+
+            if (trainee == null)
+            {
+                return new ResponseDTO("Học viên không tồn tại", 400, false);
+            }
+
+
+            List<GetAllClassOfTrainee>? classTrainee = new List<GetAllClassOfTrainee>();
+            if (searchValue.IsNullOrEmpty())
+            {
+                classTrainee = (List<GetAllClassOfTrainee>)_unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Project)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Lecturer)
+                    .Select(c => new GetAllClassOfTrainee
+                    {
+                        ClassId = c.Class.ClassId,
+                        ClassCode = c.Class.ClassCode,
+                        ReportContent = c.Class.ReportContent,
+                        ReportCreatedDate = c.Class.ReportCreatedDate,
+                        TraineeScore = c.Score,
+                        TraineeReportContent = c.ReportContent,
+                        TraineeReportCreatedDate = c.ReportCreatedDate,
+                        ProjectId = c.Class.Project.ProjectId,
+                        ProjectTitle = c.Class.Project.Title,
+                        ProjectStartDate = c.Class.Project.StartDate,
+                        ProjectEndDate = c.Class.Project.EndDate,
+                        ProjectAddress = c.Class.Project.Address,
+                        ProjectNumberLesson = c.Class.Project.NumberLesson,
+                        ProjectApplicationStartDate = c.Class.Project.ApplicationStartDate,
+                        ProjectApplicationEndDate = c.Class.Project.ApplicationEndDate,
+                        ProjectCreatedDate = c.Class.Project.CreatedDate,
+                        ProjectStatus = c.Class.Project.Status,
+                        ProjectManagerId = c.Class.Project.ProjectManagerId,
+                        LecturerId = c.Class.Lecturer.AccountId,
+                        LecturerName = c.Class.Lecturer.FullName,
+                        LecturerPhone = c.Class.Lecturer.Phone,
+                        LecturerEmail = c.Class.Lecturer.Email
+                    }).ToList();
+            }
+            else
+            {
+                classTrainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Project)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Lecturer)
+                    .Select(c => new GetAllClassOfTrainee
+                    {
+                        ClassId = c.Class.ClassId,
+                        ClassCode = c.Class.ClassCode,
+                        ReportContent = c.Class.ReportContent,
+                        ReportCreatedDate = c.Class.ReportCreatedDate,
+                        TraineeScore = c.Score,
+                        TraineeReportContent = c.ReportContent,
+                        TraineeReportCreatedDate = c.ReportCreatedDate,
+                        ProjectId = c.Class.Project.ProjectId,
+                        ProjectTitle = c.Class.Project.Title,
+                        ProjectStartDate = c.Class.Project.StartDate,
+                        ProjectEndDate = c.Class.Project.EndDate,
+                        ProjectAddress = c.Class.Project.Address,
+                        ProjectNumberLesson = c.Class.Project.NumberLesson,
+                        ProjectApplicationStartDate = c.Class.Project.ApplicationStartDate,
+                        ProjectApplicationEndDate = c.Class.Project.ApplicationEndDate,
+                        ProjectCreatedDate = c.Class.Project.CreatedDate,
+                        ProjectStatus = c.Class.Project.Status,
+                        ProjectManagerId = c.Class.Project.ProjectManagerId,
+                        LecturerId = c.Class.Lecturer.AccountId,
+                        LecturerName = c.Class.Lecturer.FullName,
+                        LecturerPhone = c.Class.Lecturer.Phone,
+                        LecturerEmail = c.Class.Lecturer.Email
+                    })
+                    .Where(c => c.ClassCode.Contains(searchValue!) || c.ProjectTitle.Contains(searchValue!))
+                    .ToList();
+            }
+            return new ResponseDTO("Lấy danh sách lớp của học viên thành công", 200, true, classTrainee);
+        }
+
+        public async Task<ResponseDTO> GetAllClassOfStudent(string? searchValue, Guid accountId)
+        {
+            var student = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+
+            if (student == null)
+            {
+                return new ResponseDTO("Sinh viên không tồn tại", 400, false);
+            }
+
+
+            List<Class>? classStudent = new List<Class>();
+            if (searchValue.IsNullOrEmpty())
+            {
+                classStudent = _unitOfWork.Member.GetAllByCondition(c => c.AccountId == accountId)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Project)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.Lecturer)
+                   .Select(c => c.Class)
+                   .ToList();
+            }
+            else
+            {
+                classStudent = _unitOfWork.Member.GetAllByCondition(c => c.AccountId == accountId)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Project)
+                  .Include(c => c.Class)
+                  .ThenInclude(c => c.Lecturer)
+                  .Select(c => c.Class)
+                  .Where(c => c.ClassCode.Contains(searchValue!) || c.Project.Title.Contains(searchValue!))
+                  .ToList();
+            }
+
+            var mappedList = _mapper.Map<List<GetAllClassOfStudent>>(classStudent);
+            return new ResponseDTO("Lấy danh sách lớp của sinh viên thành công", 200, true, mappedList);
+        }
+
+        public async Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
+        {
+            var account = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(accountId));
+            if (account == null)
+            {
+                return new ResponseDTO("Tài khoản của học viên không tồn tại", 400, false);
+            }
+            var classOfTrainee = await _unitOfWork.Class.GetByCondition(c => c.ClassId == currentClassId);
+            if (classOfTrainee == null)
+            {
+                return new ResponseDTO("Lớp của học viên không tồn tại", 400, false);
+            }
+            var trainee = await _unitOfWork.Trainee.GetByCondition(t=>t.AccountId.Equals(accountId) && t.ClassId.Equals(currentClassId));
+            if(trainee == null)
+            {
+                return new ResponseDTO("Thông tin học viên và lớp hiện tại không khớp nhau", 400, false);
+            }    
+            var project = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(classOfTrainee.ProjectId));
+            if (project == null || !project.Status.Equals(ProjectStatusConstant.UpComing))
+            {
+                return new ResponseDTO("Dự án này hiện không thể đổi lớp", 400, false);
+            }
+            var otherClassIds = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(classOfTrainee.ProjectId) && !c.ClassId.Equals(currentClassId)).Select(c => c.ClassId).ToList();
+            if (!otherClassIds.Any())
+            {
+                return new ResponseDTO("Không có lớp phù hợp để chuyển vào", 400, false);
+            }
+         //   var query = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId));
+           // Console.WriteLine(query.ToQueryString()); // Hiển thị câu truy vấn SQL cuối cùng            Console.WriteLine(query.ToQueryString()); // Hiển thị câu lệnh SQL được tạo
+            var traineesOfClassAvailable = _unitOfWork.Trainee.GetAllByCondition(t => otherClassIds.Contains(t.ClassId)).ToList();
+
+            if (!traineesOfClassAvailable.Any())
+            {
+                return new ResponseDTO("Các lớp có thể chuyển vào đã bị lỗi", 400, false);
+            }
+
+            var availableClasses = new List<Class>();
+            foreach (var classId in otherClassIds)
+            {
+                var currentClassToCheck = await _unitOfWork.Class.GetByCondition(c => c.ClassId.Equals(classId)); // Giả sử bạn có GetById
+                if (currentClassToCheck == null) continue; // Lớp có thể đã bị xóa.
+                var traineesInClass = traineesOfClassAvailable.Where(t => t.ClassId == classId).ToList();
+                if (!traineesInClass.Any())
+                {
+                    // Lớp không có học viên, bỏ qua
+                    continue;
+                }
+                var groupCounts = traineesInClass.Where(t => t.GroupNo.HasValue).GroupBy(t => t.GroupNo.Value).ToDictionary(g => g.Key, g => g.Count());
+
+                if (!groupCounts.Any())
+                {
+                    // Lớp không có nhóm, bỏ qua
+                    continue;
+                }
+                // Tìm kích thước nhóm tối đa
+                int maxGroupSize = groupCounts.Values.Max();
+                // Kiểm tra xem có nhóm nào còn chỗ trống không
+                if (groupCounts.Any(group => group.Value < maxGroupSize))
+                {
+                    availableClasses.Add(currentClassToCheck);
+                }
+            }
+            if (!availableClasses.Any())
+            {
+                return new ResponseDTO("Không có lớp nào có nhóm còn chỗ trống.", 400, false);
+            }
+            List<ClassAvailableDTO> classAvailableDTOs = _mapper.Map<List<ClassAvailableDTO>>(availableClasses);
+            foreach (var classAvailableDTO in classAvailableDTOs)
+            {
+                var lecturer = await _unitOfWork.Account.GetByCondition(a => a.AccountId.Equals(classAvailableDTO.LecturerId));
+                if (lecturer == null)
+                {
+                    return new ResponseDTO("Lỗi giảng viên của lớp học", 500, false);
+                }
+                classAvailableDTO.LecturerName = lecturer.FullName;
+                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId)).OrderBy(lsc=> lsc.StartTime);
+                if (lessonClass == null)
+                {
+                    return new ResponseDTO("Thông tin buổi học của danh sách lớp học bị lỗi", 500,false);
+                }    
+                classAvailableDTO.Lessons = _mapper.Map<List<LessonClassOfClassAvailableDTO>> (lessonClass);
+            }
+            return new ResponseDTO("Lấy danh sách lớp thành công", 200, true, classAvailableDTOs);
+
+        }
+
     }
+
 }

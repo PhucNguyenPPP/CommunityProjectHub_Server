@@ -82,6 +82,65 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("all-class-of-lecturer")]
+        public async Task<IActionResult> GetAllClassOfLecturer(string? searchValue, Guid lecturerId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllClassOfLecturer(searchValue, lecturerId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
+        [HttpPut("remove-update-class")]
+        public async Task<IActionResult> RemoveUpdateClass([FromBody] RemoveUpdateClassDTO model)
+        {
+
+            ResponseDTO responseDTO = await _classService.RemoveUpdateClass(model);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
+        [HttpGet("all-class-of-trainee")]
+        public async Task<IActionResult> GetAllClassOfTrainee(string? searchValue, Guid accountId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllClassOfTrainee(searchValue, accountId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
+        [HttpGet("all-class-of-student")]
+        public async Task<IActionResult> GetAllClassOfStudent(string? searchValue, Guid accountId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllClassOfStudent(searchValue, accountId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+        [HttpGet("all-available-class")]
+        public async Task<IActionResult> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
+        {
+
+            ResponseDTO responseDTO = await _classService.GetAllAvailableClassOfTrainee(accountId, currentClassId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
     }
 
 }

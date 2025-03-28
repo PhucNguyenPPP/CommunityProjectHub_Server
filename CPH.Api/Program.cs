@@ -30,6 +30,9 @@ builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddHostedService<ProjectStatusUpdater>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IProjectLoggingService, ProjectLoggingService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IAssociateService, AssociateService>();
 
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);

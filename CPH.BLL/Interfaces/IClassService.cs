@@ -15,5 +15,10 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetAllClassOfProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage);
         Task<ResponseDTO> GetClassDetail(Guid classId);
         Task<ResponseDTO> UpdateClass(UpdateClassDTO updateClassDTO);
+        Task<ResponseDTO> GetAllClassOfLecturer(string? searchValue, Guid lecturerId);
+        Task<ResponseDTO> RemoveUpdateClass(RemoveUpdateClassDTO model);
+        Task<ResponseDTO> GetAllClassOfTrainee(string? searchValue, Guid accountId);
+        Task<ResponseDTO> GetAllClassOfStudent(string? searchValue, Guid accountId);
+        Task<ResponseDTO> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId);
     }
 }

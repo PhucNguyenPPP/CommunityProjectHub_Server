@@ -38,6 +38,10 @@ namespace CPH.Common.DTO.Project
 
         public string ProjectManagerName { get; set; }
 
+        public Guid AssociateId { get; set; }
+
+        public string? AssociateName { get; set; }
+
         public int TotalNumberLecturer { get; set; }
 
         public int TotalNumberTrainee { get; set; }

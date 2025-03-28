@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CPH.Common.DTO.Member;
+using CPH.Common.DTO.Trainee;
 
 namespace CPH.Common.DTO.Class
 {
@@ -37,6 +38,8 @@ namespace CPH.Common.DTO.Class
 
         public int TotalTrainee { get; set; }
 
-        public List<GetMemberOfClassDTO> getMemberOfClassDTOs {  get; set; }    
+        public List<GetMemberOfClassDTO> getMemberOfClassDTOs {  get; set; }
+        public List<GetTraineeOfClassDTO> getTraineeOfClassDTOs { get; set; }
+
     }
 }

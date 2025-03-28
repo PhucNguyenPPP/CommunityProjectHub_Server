@@ -11,13 +11,17 @@ namespace CPH.Common.DTO.Trainee
     {
         public Guid TraineeId { get; set; }
 
-        public bool? Score { get; set; }
+        public decimal? Score { get; set; }
 
         public int GroupNo { get; set; }
 
         public string? FeedbackContent { get; set; }
 
         public DateTime? FeedbackCreatedDate { get; set; }
+
+        public string? ReportContent { get; set; }
+
+        public DateTime? ReportCreatedDate { get; set; }
 
         public Guid ClassId { get; set; }
 
