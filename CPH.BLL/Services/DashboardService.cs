@@ -213,6 +213,7 @@ namespace CPH.BLL.Services
                     {
                         ProjectName = project.Title,
                         Percentage = percentageProgress,
+                        ProjectStatus = project.Status,
                     });
                 }
                 return new ResponseDTO("Lấy tiến độ dự án thành công", 200, true, list);
@@ -241,6 +242,7 @@ namespace CPH.BLL.Services
                     {
                         ProjectName = project.Title,
                         Percentage = percentageProgress,
+                        ProjectStatus = project.Status,
                     });
                 }
                 return new ResponseDTO("Lấy tiến độ dự án thành công", 200, true, list);
@@ -269,6 +271,7 @@ namespace CPH.BLL.Services
                     {
                         ProjectName = project.Title,
                         Percentage = percentageProgress,
+                        ProjectStatus = project.Status,
                     });
                 }
                 return new ResponseDTO("Lấy tiến độ dự án thành công", 200, true, list);
