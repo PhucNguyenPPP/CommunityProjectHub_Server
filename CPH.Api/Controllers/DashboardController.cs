@@ -106,5 +106,26 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("user-amount")]
+        public IActionResult GetAllNumberOfUser()
+        {
+            ResponseDTO responseDTO = _dashboardService.GetAllNumberOfUser();
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("user-with-role-amount")]
+        public IActionResult GetAllNumberOfUserByRole()
+        {
+            ResponseDTO responseDTO = _dashboardService.GetAllNumberOfUserByRole();
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("progress-all-project")]
+        public async Task<IActionResult> GetProgressOfAllProject(Guid accountId)
+        {
+            ResponseDTO responseDTO = await _dashboardService.GetProgressOfAllProject(accountId);
+            return Ok(responseDTO);
+        }
     }
 }
