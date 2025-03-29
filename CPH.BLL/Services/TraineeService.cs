@@ -894,7 +894,7 @@ namespace CPH.BLL.Services
             if (!groupCounts.Any())
             {
                 // Lớp không có nhóm, không available
-                return new ResponseDTO("Lớp mới chưa chia nhóm.,", 400, false);
+                return new ResponseDTO("Lớp mới chưa chia nhóm", 400, false);
             }
 
             int maxGroupSize = groupCounts.Values.Max();
@@ -904,7 +904,7 @@ namespace CPH.BLL.Services
                 var smallestAvailableGroup = groupCounts.Where(group => group.Value < maxGroupSize)
                                             .OrderBy(group => group.Key)
                                             .FirstOrDefault();
-                traineeToUpdate.GroupNo = smallestAvailableGroup.Value;
+                traineeToUpdate.GroupNo = smallestAvailableGroup.Key;
                 traineeToUpdate.ClassId = moveTraineeClassDTO.NewClassId;
                 // Có nhóm còn chỗ trống, available
                 return new ResponseDTO("Lớp mới hợp lệ", 200, true, traineeToUpdate);

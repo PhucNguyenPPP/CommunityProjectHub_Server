@@ -20,6 +20,7 @@ using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -117,9 +118,14 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Lớp thuộc dự án bị lỗi", 400, false);
             }
-            if (!pro.Status.Equals(ProjectStatusConstant.Planning))
+            if (!pro.Status.Equals(ProjectStatusConstant.UpComing))
             {
-                return new ResponseDTO("Dự án đã ở trạng thâi " + pro.Status.ToString(), 400, false);
+                return new ResponseDTO("Dự án đang ở trạng thâi " + pro.Status.ToString()+ " nên không thể chia nhóm", 400, false);
+            }
+            var mem =  _unitOfWork.Member.GetAllByCondition(m => m.ClassId.Equals(devideGroupOfClassDTO.ClassId));
+            if (mem.Count() > 0)
+            {
+                return new ResponseDTO("Không thể chia nhóm lại khi đã có sinh viên tham gia hỗ trợ lớp", 400, false);
             }
             return new ResponseDTO("Thông tin chia nhóm của lớp hợp lệ", 200, true, c);
         }
@@ -327,10 +333,10 @@ namespace CPH.BLL.Services
             {
                 errs.Add("Lớp không tồn tại");
             }
-            if (clas != null && !clas.NumberGroup.HasValue)
-            {
-                errs.Add("Không thể phân công vào lớp chưa chia nhóm");
-            }
+            //if (clas != null && !clas.NumberGroup.HasValue)
+            //{
+            //    errs.Add("Không thể phân công vào lớp chưa chia nhóm");
+            //}
             var pro = await _unitOfWork.Project.GetByCondition(p => p.ProjectId.Equals(clas.ProjectId));
             if (pro.Status != ProjectStatusConstant.UpComing)
             {
@@ -846,7 +852,7 @@ namespace CPH.BLL.Services
                     return new ResponseDTO("Lỗi giảng viên của lớp học", 500, false);
                 }
                 classAvailableDTO.LecturerName = lecturer.FullName;
-                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId));
+                var lessonClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classAvailableDTO.ClassId)).OrderBy(lsc=> lsc.StartTime);
                 if (lessonClass == null)
                 {
                     return new ResponseDTO("Thông tin buổi học của danh sách lớp học bị lỗi", 500,false);
