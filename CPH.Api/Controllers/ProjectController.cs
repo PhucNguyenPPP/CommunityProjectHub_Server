@@ -101,7 +101,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
         [HttpPost("new-project")]
-        public async Task<IActionResult> CreateProject([FromForm]NewProjectDTO projectDTO)
+        public async Task<IActionResult> CreateProject([FromBody]NewProjectDTO projectDTO)
         {
    
             ResponseDTO responseDTO = await _projectService.CreateProject(projectDTO);
