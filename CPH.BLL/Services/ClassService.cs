@@ -406,21 +406,22 @@ namespace CPH.BLL.Services
                 }
                 var pros = _unitOfWork.Project.GetAllByCondition(p => p.Status.Equals(ProjectStatusConstant.UpComing) || p.Status.Equals(ProjectStatusConstant.InProgress)).Select(p => p.ProjectId);
                 List<Guid> classOfAcc = _unitOfWork.Registration.GetAllByCondition(r => r.AccountId.ToString().Equals(updateClassDTO.AccountId.ToString()) &&
-                               r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected)).Select(r => r.ClassId).ToList();
+                              ( r.Status.Equals(RegistrationStatusConstant.Processing) || r.Status.Equals(RegistrationStatusConstant.Inspected))).Select(r => r.ClassId).ToList(); //tất cả những regis của acc này
                 var mem = _unitOfWork.Member.GetAllByCondition(m => m.AccountId.Equals(updateClassDTO.AccountId)).Select(m => m.ClassId).ToList();
                 classOfAcc.AddRange(mem);
-                var classAct = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId)).ToList();
-                var classActivate = classAct.Where(c => classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).ToList();
+                var classAct = _unitOfWork.Class.GetAllByCondition(c => pros.Contains(c.ProjectId)).ToList(); //lớp đang activate
+                var classActivateOfAccount = classAct.Where(c => classOfAcc.Contains(c.ClassId)).Select(c => c.ClassId).Distinct().ToList();
                 var lscToRegister = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(updateClassDTO.ClassId)); //đang đky
-                if (classActivate != null)
+                if (classActivateOfAccount != null)
                 {
-                    for (int i = 0; i < classActivate.Count(); i++)
+                    for (int i = 0; i < classActivateOfAccount.Count(); i++)
                     {
-                        if (classActivate[i].Equals(updateClassDTO.ClassId))
+                        if (classActivateOfAccount[i].Equals(updateClassDTO.ClassId))
                         {
                             errs.Add("Bạn đã đăng ký hoặc được phân công vào lớp này trước đó");
+                            break;
                         }
-                        var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivate[i])).ToList(); //đã đky rồi
+                        var lscOfAccRegistered = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classActivateOfAccount[i])).ToList(); //đã đky rồi                    
                         for (int j = 0; j < lscOfAccRegistered.Count(); j++)
                         {
                             if (lscOfAccRegistered[j].StartTime != null && lscOfAccRegistered[j].EndTime != null)
