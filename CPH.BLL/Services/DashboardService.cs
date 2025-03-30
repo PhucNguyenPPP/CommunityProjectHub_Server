@@ -113,23 +113,25 @@ namespace CPH.BLL.Services
             {
                 var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectManagerId == accountId).ToList();
                 var list = CompleteList(project);
-                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, list);
+                return new ResponseDTO("Lấy tổng số dự án theo trạng thái thành công", 200, true, list);
             }
 
             if (account.RoleId == 4 || account.RoleId == 6 || account.RoleId == 7)
             {
                 var project = _unitOfWork.Project.GetAll().ToList();
                 var list = CompleteList(project);
-                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, list);
+                return new ResponseDTO("Lấy tổng số dự án theo trạng thái thành công", 200, true, list);
             }
 
 
             if (account.RoleId == 5)
             {
-                return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true, new List<NumberOfProjectWithStatusDTO>());
+                var project = _unitOfWork.Project.GetAllByCondition(c => c.AssociateId == accountId).ToList();
+                var list = CompleteList(project);
+                return new ResponseDTO("Lấy tổng số dự án theo trạng thái thành công", 200, true, list);
             }
 
-            return new ResponseDTO("Lấy tổng số dự án không thành công", 400, false);
+            return new ResponseDTO("Lấy tổng số dự án theo trạng thái không thành công", 400, false);
         }
 
         public ResponseDTO GetAllNumberOfUser()
