@@ -80,7 +80,8 @@ namespace CPH.BLL.Services
 
             if (account.RoleId == 5)
             {
-                return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
+                int projectAmount = _unitOfWork.Project.GetAllByCondition(c => c.AssociateId == accountId).Count();
+                return new ResponseDTO("Lấy tổng số dự án thành công", 200, true, projectAmount);
             }
 
             return new ResponseDTO("Lấy tổng số dự án không thành công", 400, false);
