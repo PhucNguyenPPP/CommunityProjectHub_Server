@@ -51,7 +51,8 @@ namespace CPH.BLL.Services
 
             if (account.RoleId == 5)
             {
-                return new ResponseDTO("Chưa làm nhưng mà thành công", 200, true);
+                int traineeAmmount = _unitOfWork.Trainee.GetAllByCondition(c=> c.Class.Project.AssociateId == accountId).Count();
+                return new ResponseDTO("Lấy tổng số học viên thành công", 200, true, traineeAmmount);
             }
 
             return new ResponseDTO("Lấy tổng số học viên không thành công", 400, false);
