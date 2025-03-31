@@ -179,7 +179,7 @@ namespace CPH.Api.Controllers
         [HttpGet("available-group-of-class")]
         public async Task<IActionResult> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId)
         {
-            ResponseDTO result = await _traineeService.GetAvailableGroupOfClass(currentClassId,accountId);
+            ResponseDTO result = await _traineeService.GetAvailableGroupOfClass(currentClassId, accountId);
             if (result.IsSuccess)
             {
                 return Ok(result);
@@ -190,6 +190,21 @@ namespace CPH.Api.Controllers
         public async Task<IActionResult> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO)
         {
             ResponseDTO result = await _traineeService.MoveTraineeToAnotherGroupInClass(traineeToAnotherGroupInClassDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+        [HttpPost("import-trainee")]
+        public async Task<IActionResult> ImportTrainee(IFormFile file, Guid projectId)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new ResponseDTO("File không hợp lệ", 400, false, null));
+            }
+
+            ResponseDTO result = await _traineeService.ImportTrainee(file, projectId);
             if (result.IsSuccess)
             {
                 return Ok(result);
