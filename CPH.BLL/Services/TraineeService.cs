@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
+using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
@@ -43,15 +44,17 @@ namespace CPH.BLL.Services
         private readonly IImageService _imageService;
         private readonly IAccountService _accountService;
         private readonly IEmailService _emailService;
+        private readonly IProjectService _projectService;
 
         public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, IAccountService accountService, IEmailService emailService,
-            IImageService imageService, IConfiguration config)
+            IImageService imageService, IConfiguration config, IProjectService projectService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
             _accountService = accountService;
             _emailService = emailService;
+            _projectService = projectService;
             _imageService = imageService;
             _config = config;
             _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
@@ -994,9 +997,108 @@ namespace CPH.BLL.Services
             }
             return new ResponseDTO("Chuyển đổi nhóm thất bại", 500, false);
         }
-    }
 
+        public async Task<ResponseDTO> ImportTrainee(IFormFile file, Guid projectId)
+        {
+            var checkProject = await _projectService.CheckProjectExisted(projectId);
+            if (!checkProject.IsSuccess)
+            {
+                return new ResponseDTO("Không tìm thấy dự án để import", 404, false);
+            }
+            if (checkProject.Result != null)
+            {
+                var project = (Project)checkProject.Result;
+                if (project.Status != ProjectStatusConstant.Planning)
+                {
+                    return new ResponseDTO("Trạng thái của dự án khác " + ProjectStatusConstant.Planning, 404, false);
+                }
+                var response = await _accountService.ImportTraineeFromExcel(file);
+                if (!response.IsSuccess)
+                {
+                    if (response.Result != null)
+                    {
+                        List<string> strings = (List<string>)response.Result;
+                        return new ResponseDTO("File Excel không hợp lệ", 400, false, strings);
+                    }
+                    return new ResponseDTO("File Excel không hợp lệ", 400, false);
+                }
+                List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)response.Result;
+                if (importTraineeDTOs == null)
+                {
+                    return new ResponseDTO("File Excel không có học viên",400,false);
+                }
+                List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
+                List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
+                var classOfProject = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectId)).ToList();
+                if (classOfProject.Count() > 0)
+                {
+                    foreach (var classOfProjectItem in classOfProject)
+                    {
+                        var lessonOfClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classOfProjectItem.ClassId)).ToList();
+                        if (lessonOfClass.Count()>0)
+                        {
+                            foreach (var item in lessonOfClass)
+                            {
+                                _unitOfWork.LessonClass.Delete(item);
+                            }
+                        }
+                        var traineeOfOldClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(classOfProjectItem.ClassId)).ToList();
+                        if (traineeOfOldClass.Count() > 0)
+                        {
+                            foreach (var item in traineeOfOldClass)
+                            {
+                                _unitOfWork.Trainee.Delete(item);
+                            }
+                        }
+                        _unitOfWork.Class.Delete(classOfProjectItem);
+                    }                   
+                }
+                var listClass = new List<Class>();
+                for (var i = 0; i < classCodes.Count; i++)
+                {
+                    var c = new DAL.Entities.Class();
+                    c.ClassId = Guid.NewGuid();
+                    c.ProjectId = projectId;
+                    c.ClassCode = classCodes[i];
+                    listClass.Add(c);
+                }
+                await _unitOfWork.Class.AddRangeAsync(listClass);
+                for (var i = 0; i < trainees.Count; i++)
+                {
+                    var c = listClass.Where(c => c.ClassCode.Equals(importTraineeDTOs[i].ClassCode)).FirstOrDefault();
+                    trainees[i].ClassId = c.ClassId;
+                    trainees[i].TraineeId = Guid.NewGuid();
+                }
+                List<LessonClass> lessonClasses = new List<LessonClass>();
+                var lessons = _unitOfWork.Lesson.GetAllByCondition(l=>l.ProjectId.Equals(projectId));  
+                foreach (var cl in listClass)
+                {
+                    foreach (var l in lessons)
+                    {
+                        LessonClass lessonClass = new LessonClass
+                        {
+                            LessonClassId = Guid.NewGuid(),
+                            LessonId = l.LessonId,
+                            ClassId = cl.ClassId,
+                        };
+                        lessonClasses.Add(lessonClass);
+                    }
+                }
+                await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses);
+                await _unitOfWork.Trainee.AddRangeAsync(trainees);
+                var r = await _unitOfWork.SaveChangeAsync();
+                if (!r)
+                {
+                    return new ResponseDTO("Import học viên thất bại", 500, false);
+                }
+                return new ResponseDTO("Import học viên thành công", 200, true);
+            }
+            return new ResponseDTO("Dự án lỗi", 500, false);
+        }
+
+    }
 }
+
 
 
 

@@ -98,8 +98,8 @@ namespace CPH.BLL.Services
                 }
                 await _unitOfWork.Lesson.AddRangeAsync(lessons);
               /*// List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)responseDTO.Result;
-               // List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
-               // List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
+                List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
+                List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
                 List<Guid> classId = new List<Guid>();
                 List<Class> list = new List<Class>();
                 for (var i = 0; i < classCodes.Count; i++)
