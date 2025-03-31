@@ -30,6 +30,7 @@ namespace CPH.DAL.UnitOfWork
             Registration = new RegistrationRepository(_context);
             ProjectLogging = new ProjectLoggingRepository(_context);
             Associate = new AssociateRepository(_context);
+            Attendance = new AttendanceRepository(_context);
         }
 
 
@@ -57,5 +58,6 @@ namespace CPH.DAL.UnitOfWork
         public IRegistrationRepository Registration { get; private set; }
         public IProjectLoggingRepository ProjectLogging { get; private set; }
         public IAssociateRepository Associate { get; private set; }
+        public IAttendanceRepository Attendance { get; private set; }
     }
 }
