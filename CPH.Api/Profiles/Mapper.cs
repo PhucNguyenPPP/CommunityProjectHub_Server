@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Associate;
+using CPH.Common.DTO.Attendance;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.Lecturer;
@@ -200,6 +201,9 @@ namespace CPH.Api.Profiles
                 opt => opt.MapFrom(src => src.Associate != null ? src.Associate.AssociateName : string.Empty)).ReverseMap();
 
             CreateMap<SignUpAssociateRequestDTO, Account>().ReverseMap();
+
+            CreateMap<Trainee, AttendanceTraineeResponseDTO>()
+                .ReverseMap();
         }
     }
 }
