@@ -97,7 +97,7 @@ namespace CPH.BLL.Services
                     lessons.Add(ls);
                 }
                 await _unitOfWork.Lesson.AddRangeAsync(lessons);
-                List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)responseDTO.Result;
+              /*// List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)responseDTO.Result;
                 List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
                 List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
                 List<Guid> classId = new List<Guid>();
@@ -129,12 +129,11 @@ namespace CPH.BLL.Services
                             LessonClassId = Guid.NewGuid(),
                             LessonId = l.LessonId,
                             ClassId = cl.ClassId,
-
                         };
                         lessonClasses.Add(lessonClass);
                     }
                 }
-                await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses);
+                await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses); */
                 /*
                 for (var i = 0; i < classId.Count; i++)
                 {
@@ -167,8 +166,8 @@ namespace CPH.BLL.Services
                 
 
                 }
-                */
-                await _unitOfWork.Trainee.AddRangeAsync(trainees);
+                
+                await _unitOfWork.Trainee.AddRangeAsync(trainees); */
                 if (projectDTO.ProjectManagerId != null)
                 {
                     var projectManager = await _unitOfWork.Account.GetByCondition(a => a.AccountId == projectDTO.ProjectManagerId && a.RoleId.Equals((int)RoleEnum.Lecturer));
@@ -240,6 +239,7 @@ namespace CPH.BLL.Services
                 {
                     errors.Add("Thông tin đối tác dự án không hợp lệ");
                 }
+                /*
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
                 if (!response.IsSuccess)
                 {
@@ -257,7 +257,7 @@ namespace CPH.BLL.Services
                         }
                     }
                     else
-                    {*/
+                    {
                     if(response.Result!=null)
                     {
                         List<string> strings= (List<string>) response.Result;
@@ -272,6 +272,7 @@ namespace CPH.BLL.Services
                     }
                 }
                 var listTrainee = (List<ImportTraineeDTO>)response.Result;
+            */
                 for (int i = 0; i < projectDTO.LessonList.Count; i++)
                 {
                     for (int j = 0; j < projectDTO.LessonList.Count; j++)
@@ -286,7 +287,7 @@ namespace CPH.BLL.Services
                 {
                     return new ResponseDTO("Thông tin dự án không hợp lệ", 400, false, errors);
                 }
-                return new ResponseDTO("Thông tin dự án hợp lệ", 200, true, listTrainee);
+                return new ResponseDTO("Thông tin dự án hợp lệ", 200, true);
 
             }
             catch (Exception ex)
