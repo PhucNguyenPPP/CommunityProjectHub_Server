@@ -12,5 +12,6 @@ namespace CPH.BLL.Interfaces
     {
         Task<ResponseDTO> ImportAttendanceFile(IFormFile file, Guid classId);
         ResponseDTO GetAttendanceClass(Guid classId);
+        MemoryStream ExportAttendanceTraineeExcel(Guid classId);
     }
 }
