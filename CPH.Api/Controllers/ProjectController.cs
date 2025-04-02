@@ -186,5 +186,16 @@ namespace CPH.Api.Controllers
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
+
+        [HttpPut("max-absent-percentage-and-failing-score")]
+        public async Task<IActionResult> UpdateMaxAbsentPercentageAndFailingScore(UpdateAbsentPercentageFailingScoreRequestDTO model)
+        {
+            var result = await _projectService.UpdateMaxAbsentPercentageAndFailingScore(model);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

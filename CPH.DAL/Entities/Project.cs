@@ -25,6 +25,10 @@ public partial class Project
 
     public DateTime CreatedDate { get; set; }
 
+    public int? MaxAbsentPercentage { get; set; }
+
+    public decimal? FailingScore { get; set; }
+
     public string Status { get; set; } = null!;
 
     public Guid? ProjectManagerId { get; set; }
