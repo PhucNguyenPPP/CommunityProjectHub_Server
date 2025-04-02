@@ -1,5 +1,6 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
+using CPH.Common.DTO.General;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,11 @@ namespace CPH.Api.Controllers
     public class AttendanceController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
-        public AttendanceController(IAttendanceService attendanceService)
+        private readonly IClassService _classService;
+        public AttendanceController(IAttendanceService attendanceService, IClassService classService)
         {
             _attendanceService = attendanceService;
+            _classService = classService;
         }
 
         [HttpPost("import-attendance-file")]
@@ -35,6 +38,21 @@ namespace CPH.Api.Controllers
                 return Ok(result);
             }
             return BadRequest(result);
+        }
+
+        [HttpPost("export-attendance")]
+        public async Task<IActionResult> ExportAttendanceFile(Guid classId)
+        {
+            var check = await _classService.CheckClassIdExist(classId);
+            if (!check)
+            {
+                return BadRequest(new ResponseDTO("Lớp không tồn tại", 400, false));
+            }
+
+            var stream = _attendanceService.ExportAttendanceTraineeExcel(classId);
+            string fileName = "AttendanceChecking.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }

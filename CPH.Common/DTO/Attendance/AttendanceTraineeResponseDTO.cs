@@ -13,6 +13,12 @@ namespace CPH.Common.DTO.Attendance
 
         public decimal? Score { get; set; }
 
+        public bool? Result { get; set; }
+
+        public int? TotalPresentSlot { get; set; }
+
+        public int? TotalSlot { get; set; }
+
         public int GroupNo { get; set; }
 
         public string? FeedbackContent { get; set; }

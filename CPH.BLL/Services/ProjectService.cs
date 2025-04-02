@@ -973,6 +973,16 @@ namespace CPH.BLL.Services
             //    }
             //}
 
+            if(project.MaxAbsentPercentage == null)
+            {
+                return new ResponseDTO("Dự án chưa được cập nhật phần trăm vắng mặt tối đa", 400, false);
+            }
+
+            if (project.FailingScore == null)
+            {
+                return new ResponseDTO("Dự án chưa được cập nhật điểm liệt", 400, false);
+            }
+
             if (project.StartDate < DateTime.Now)
             {
                 return new ResponseDTO("Đã quá ngày bắt đầu của dự án", 400, false);
@@ -1169,6 +1179,45 @@ namespace CPH.BLL.Services
                 return false;
             }
             return true;
+        }
+
+        public async Task<ResponseDTO> UpdateMaxAbsentPercentageAndFailingScore(UpdateAbsentPercentageFailingScoreRequestDTO model)
+        {
+            var project = await _unitOfWork.Project.GetByCondition(c => c.ProjectId == model.ProjectId);
+            if(project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            if(project.Status != ProjectStatusConstant.Planning)
+            {
+                return new ResponseDTO("Chỉ có thể chỉnh sửa khi dự án đang trong giai đoạn Lên kế hoạch", 400, false);
+            }
+
+            if(model.MaxAbsentPercentage > 100 || model.MaxAbsentPercentage < 0)
+            {
+                return new ResponseDTO("Phần trăm vắng mặt tối đa phải trong khoảng 0 - 100%", 400, false);
+            }
+
+            if (model.FailingScore >= 10)
+            {
+                return new ResponseDTO("Điểm liệt phải nhỏ hơn 10", 400, false);
+            }
+
+            if (model.FailingScore < 0)
+            {
+                return new ResponseDTO("Điểm liệt phải lớn hơn 0", 400, false);
+            }
+
+            project.MaxAbsentPercentage = model.MaxAbsentPercentage;
+            project.FailingScore = Math.Round(model.FailingScore, 1);
+            _unitOfWork.Project.Update(project);
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Lưu thông tin thành công", 200, true);
+            }
+            return new ResponseDTO("Lưu thông tin thất bại", 400, false);
         }
     }
 }
