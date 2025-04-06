@@ -989,10 +989,10 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Đã quá ngày bắt đầu của dự án", 400, false);
             }
 
-            if (project.ApplicationStartDate < DateTime.Now)
-            {
-                return new ResponseDTO("Đã quá ngày bắt đầu mở đăng ký của dự án", 400, false);
-            }
+            //if (project.ApplicationStartDate < DateTime.Now)
+            //{
+            //    return new ResponseDTO("Đã quá ngày bắt đầu mở đăng ký của dự án", 400, false);
+            //}
 
             project.Status = ProjectStatusConstant.UpComing;
             _unitOfWork.Project.Update(project);
