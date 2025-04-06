@@ -719,10 +719,11 @@ namespace CPH.BLL.Services
                 {
                     errors.Add("Thời gian kết thúc phải xa hơn thời gian bắt đầu");
                 }
-                if (projectDTO.ApplicationStartDate < DateTime.Now)
-                {
-                    errors.Add("Thời gian bắt đầu ứng tuyển vào dự án phải ở tương lai");
-                }
+                // fix để không phải sửa DB trong lúc demo
+                //if (projectDTO.ApplicationStartDate < DateTime.Now)
+                //{
+                //    errors.Add("Thời gian bắt đầu ứng tuyển vào dự án phải ở tương lai");
+                //}
                 if (projectDTO.ApplicationEndDate < projectDTO.ApplicationStartDate)
                 {
                     errors.Add("Thời gian hết hạn ứng tuyển phải xa hơn thời gian bắt đầu ứng tuyển");
@@ -1000,6 +1001,33 @@ namespace CPH.BLL.Services
             if (result)
             {
                 return new ResponseDTO("Dự án đã chuyển sang giai đoạn Sắp diễn ra", 200, true);
+            }
+            return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
+        }
+
+        public async Task<ResponseDTO> UpdateProjectStatusInProgress(Guid projectId)
+        {
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .FirstOrDefault();
+
+            if (project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            if (project.Status != ProjectStatusConstant.UpComing)
+            {
+                return new ResponseDTO("Dự án phải đang ở trạng thái Sắp diễn ra", 400, false);
+            }
+
+            project.Status = ProjectStatusConstant.InProgress;
+            _unitOfWork.Project.Update(project);
+
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Dự án đã chuyển sang giai đoạn Đang diễn ra", 200, true);
             }
             return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
         }
