@@ -698,21 +698,22 @@ namespace CPH.BLL.Services
                 .Select(c => c.EndTime)
                 .FirstOrDefault();
 
-            if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
-            {
-                string formattedFinishTime = finishTime.HasValue
-                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
-                : "Không xác định";
+            // fix để không phải sửa DB trong lúc demo
+            //if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //{
+            //    string formattedFinishTime = finishTime.HasValue
+            //    ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //    : "Không xác định";
 
-                string formattedStartTime = startTime.HasValue
-                    ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
-                    : "Không xác định";
+            //    string formattedStartTime = startTime.HasValue
+            //        ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
 
-                if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
-                {
-                    return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
-                }
-            }
+            //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //    {
+            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //    }
+            //}
 
             if (trainee.FeedbackContent != null)
             {

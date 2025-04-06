@@ -161,6 +161,17 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [HttpPut("to-in-progress-status")]
+        public async Task<IActionResult> UpdateProjectStatusInProgress(Guid projectId)
+        {
+            ResponseDTO responseDTO = await _projectService.UpdateProjectStatusInProgress(projectId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
         [HttpPut("assign-pm-to-project")]
         public async Task<IActionResult> AssignPMToProject(Guid projectId, Guid accountId)
         {
