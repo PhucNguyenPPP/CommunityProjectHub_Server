@@ -25,5 +25,6 @@ namespace CPH.DAL.UnitOfWork
         IRegistrationRepository Registration { get; }
         IProjectLoggingRepository ProjectLogging { get; }
         IAssociateRepository Associate { get; }
+        IAttendanceRepository Attendance { get; }
     }
 }
