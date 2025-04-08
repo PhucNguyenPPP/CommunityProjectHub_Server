@@ -192,6 +192,7 @@ namespace CPH.BLL.Services
                 .Include(c => c.Trainees)
                 .ThenInclude(c => c.Account)
                 .Include(c => c.Project)
+                .Include(c => c.LessonClasses)
                 .FirstOrDefault();
 
             if (classObj == null)
@@ -233,6 +234,8 @@ namespace CPH.BLL.Services
             }
 
             bool checkUpdate = false;
+            var totalLessonClass = classObj.LessonClasses.Count();
+            var project = classObj.Project;
             foreach (var i in model.ScoreTrainees)
             {
                 var trainee = traineeClassList.FirstOrDefault(c => c.TraineeId == i.TraineeId);
@@ -244,13 +247,27 @@ namespace CPH.BLL.Services
                 if (i.Score != null)
                 {
                     trainee!.Score = Math.Round((decimal)i.Score, 2);
+
+                    var traineeAttendance = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId).Count();
+                    if (traineeAttendance == totalLessonClass)
+                    {
+                        var absentSlot = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId && c.Status == false).Count();
+                        var absentPercentage = absentSlot * 100 / totalLessonClass;
+                        if (absentPercentage <= project.MaxAbsentPercentage && i.Score >= project.FailingScore)
+                        {
+                            trainee!.Result = true;
+                        }
+                        else
+                        {
+                            trainee!.Result = false;
+                        }
+                    }
                 }
                 else
                 {
                     trainee!.Score = null;
+                    trainee!.Result = null;
                 }
-
-                _unitOfWork.Trainee.Update(trainee);
             }
 
             if (checkUpdate)
@@ -276,7 +293,10 @@ namespace CPH.BLL.Services
 
             var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId)
                 .Include(c => c.Account)
-                .ThenInclude(c => c.Role);
+                .ThenInclude(c => c.Role)
+                .Include(c => c.Class)
+                .ThenInclude(c => c.LessonClasses)
+                .Include(c => c.Attendances);
 
             var listDTO = _mapper.Map<List<GetAllTraineeOfClassDTO>>(traineeList);
             return new ResponseDTO("Lấy danh sách điểm của học viên thành công", 200, true, listDTO);
@@ -344,18 +364,24 @@ namespace CPH.BLL.Services
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             var classObj = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
                 .Include(c => c.Trainees)
+                .Include(c => c.LessonClasses)
+                .Include(c => c.Project)
                 .FirstOrDefault();
+
             if (classObj == null)
             {
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
+
             var traineeOfClass = classObj.Trainees.ToList();
             if (traineeOfClass.Any(c => c.Score != null))
             {
                 return new ResponseDTO("Sinh viên của lớp đã được cập nhật điểm trước đó", 400, false);
             }
+
             var studentScores = new List<TraineeScoreExcelDTO>();
             var errors = new List<string>();
             using (var package = new ExcelPackage(stream))
@@ -375,17 +401,20 @@ namespace CPH.BLL.Services
                     });
                 }
             }
+
             for (int i = 0; i < studentScores.Count; i++)
             {
                 if (string.IsNullOrEmpty(studentScores[i].AccountCode))
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Mã học viên bị thiếu");
                 }
+
                 var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == studentScores[i].AccountCode);
                 if (!string.IsNullOrEmpty(studentScores[i].AccountCode) && account == null)
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} không tồn tại");
                 }
+
                 if (account != null)
                 {
                     var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account.AccountId && c.ClassId == classId);
@@ -399,22 +428,44 @@ namespace CPH.BLL.Services
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
                 }
+
                 if (decimal.TryParse(studentScores[i].Score, out score) && (score < 0 || score > 10))
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
                 }
             }
+
             if (errors.Count > 0)
             {
                 return new ResponseDTO("File excel không hợp lệ", 400, false, errors);
             }
+
+            var totalLessonClass = classObj.LessonClasses.Count();
+            var project = classObj.Project;
             foreach (var i in studentScores)
             {
                 var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == i.AccountCode);
                 var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account!.AccountId && c.ClassId == classId);
-                trainee!.Score = decimal.Parse(i.Score!);
+                var score = decimal.Parse(i.Score!);
+                trainee!.Score = score;
+
+                var traineeAttendance = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId).Count();
+                if(traineeAttendance == totalLessonClass)
+                {
+                    var absentSlot = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId && c.Status == false).Count();
+                    var absentPercentage = absentSlot * 100 / totalLessonClass;
+                    if(absentPercentage <= project.MaxAbsentPercentage && score >= project.FailingScore)
+                    {
+                        trainee!.Result = true;
+                    }
+                    else
+                    {
+                        trainee!.Result = false;
+                    }
+                }
                 _unitOfWork.Trainee.Update(trainee!);
             }
+
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
             {
@@ -647,21 +698,22 @@ namespace CPH.BLL.Services
                 .Select(c => c.EndTime)
                 .FirstOrDefault();
 
-            if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
-            {
-                string formattedFinishTime = finishTime.HasValue
-                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
-                : "Không xác định";
+            // fix để không phải sửa DB trong lúc demo
+            //if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //{
+            //    string formattedFinishTime = finishTime.HasValue
+            //    ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //    : "Không xác định";
 
-                string formattedStartTime = startTime.HasValue
-                    ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
-                    : "Không xác định";
+            //    string formattedStartTime = startTime.HasValue
+            //        ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
 
-                if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
-                {
-                    return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
-                }
-            }
+            //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //    {
+            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //    }
+            //}
 
             if (trainee.FeedbackContent != null)
             {

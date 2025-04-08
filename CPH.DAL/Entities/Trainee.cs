@@ -9,6 +9,8 @@ public partial class Trainee
 
     public decimal? Score { get; set; }
 
+    public bool? Result { get; set; }
+
     public int? GroupNo { get; set; }
 
     public string? FeedbackContent { get; set; }

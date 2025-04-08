@@ -677,6 +677,9 @@ namespace CPH.BLL.Services
                    .ThenInclude(c => c.Project)
                    .Include(c => c.Class)
                    .ThenInclude(c => c.Lecturer)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.LessonClasses)
+                   .Include(c => c.Attendances)
                     .Select(c => new GetAllClassOfTrainee
                     {
                         ClassId = c.Class.ClassId,
@@ -684,6 +687,9 @@ namespace CPH.BLL.Services
                         ReportContent = c.Class.ReportContent,
                         ReportCreatedDate = c.Class.ReportCreatedDate,
                         TraineeScore = c.Score,
+                        TraineeResult = c.Result,
+                        TraineeTotalPresentSlot = c.Attendances.Where(t => t.TraineeId == c.TraineeId && t.Status == true).Count(),
+                        TraineeTotalSlot = c.Class.LessonClasses.Count(),
                         TraineeReportContent = c.ReportContent,
                         TraineeReportCreatedDate = c.ReportCreatedDate,
                         ProjectId = c.Class.Project.ProjectId,
@@ -710,6 +716,9 @@ namespace CPH.BLL.Services
                    .ThenInclude(c => c.Project)
                    .Include(c => c.Class)
                    .ThenInclude(c => c.Lecturer)
+                   .Include(c => c.Class)
+                   .ThenInclude(c => c.LessonClasses)
+                   .Include(c => c.Attendances)
                     .Select(c => new GetAllClassOfTrainee
                     {
                         ClassId = c.Class.ClassId,
@@ -717,6 +726,9 @@ namespace CPH.BLL.Services
                         ReportContent = c.Class.ReportContent,
                         ReportCreatedDate = c.Class.ReportCreatedDate,
                         TraineeScore = c.Score,
+                        TraineeResult = c.Result,
+                        TraineeTotalPresentSlot = c.Attendances.Where(t => t.TraineeId == c.TraineeId && t.Status == true).Count(),
+                        TraineeTotalSlot = c.Class.LessonClasses.Count(),
                         TraineeReportContent = c.ReportContent,
                         TraineeReportCreatedDate = c.ReportCreatedDate,
                         ProjectId = c.Class.Project.ProjectId,

@@ -18,6 +18,12 @@ namespace CPH.Common.DTO.Class
 
         public decimal? TraineeScore { get; set; }
 
+        public bool? TraineeResult { get; set; }
+
+        public int TraineeTotalPresentSlot { get; set; }
+
+        public int TraineeTotalSlot { get; set; }
+
         public string? TraineeReportContent { get; set; }
 
         public DateTime? TraineeReportCreatedDate { get; set; }

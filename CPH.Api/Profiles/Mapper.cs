@@ -121,6 +121,8 @@ namespace CPH.Api.Profiles
            .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Account.Role.RoleName));
 
             CreateMap<Trainee, GetAllTraineeOfClassDTO>()
+                .ForMember(dest => dest.TotalSlot, opt => opt.MapFrom(src => src.Class.LessonClasses.Count()))
+                .ForMember(dest => dest.TotalPresentSlot, opt => opt.MapFrom(src => src.Attendances.Where(c => c.Status == true).Count()))
                 .ReverseMap();
 
             CreateMap<ProjectLogging, GetAllProjectLoggingDTO>()
@@ -203,6 +205,8 @@ namespace CPH.Api.Profiles
             CreateMap<SignUpAssociateRequestDTO, Account>().ReverseMap();
 
             CreateMap<Trainee, AttendanceTraineeResponseDTO>()
+                .ForMember(dest => dest.TotalSlot, opt => opt.MapFrom(src => src.Class.LessonClasses.Count()))
+                .ForMember(dest => dest.TotalPresentSlot, opt => opt.MapFrom(src => src.Attendances.Where(c => c.Status == true).Count()))
                 .ReverseMap();
         }
     }

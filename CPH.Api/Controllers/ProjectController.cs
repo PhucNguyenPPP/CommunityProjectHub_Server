@@ -161,6 +161,17 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [HttpPut("to-in-progress-status")]
+        public async Task<IActionResult> UpdateProjectStatusInProgress(Guid projectId)
+        {
+            ResponseDTO responseDTO = await _projectService.UpdateProjectStatusInProgress(projectId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
         [HttpPut("assign-pm-to-project")]
         public async Task<IActionResult> AssignPMToProject(Guid projectId, Guid accountId)
         {
@@ -185,6 +196,17 @@ namespace CPH.Api.Controllers
             string fileName = "FinalReport.xlsx";
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        [HttpPut("max-absent-percentage-and-failing-score")]
+        public async Task<IActionResult> UpdateMaxAbsentPercentageAndFailingScore(UpdateAbsentPercentageFailingScoreRequestDTO model)
+        {
+            var result = await _projectService.UpdateMaxAbsentPercentageAndFailingScore(model);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
         }
     }
 }
