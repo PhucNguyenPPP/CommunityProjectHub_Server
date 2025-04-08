@@ -1117,12 +1117,11 @@ namespace CPH.BLL.Services
                 foreach (var item in projectsToUpdate)
                 {
                     item.Status = ProjectStatusConstant.InProgress;
-                    var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).ToListAsync();
+                    var classesOfProject = await _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(item.ProjectId)).Select(C=>C.ClassId).ToListAsync();
 
                     // Kiểm tra xem có lớp học nào không đáp ứng điều kiện hay không
-                    bool hasInvalidClass = classesOfProject.Any(c => c.ReportContent.IsNullOrEmpty());
-
-                    if (!hasInvalidClass)
+                    var trainee = _unitOfWork.Trainee.GetAllByCondition(t => classesOfProject.Contains(t.ClassId) && !t.Score.HasValue);
+                    if (trainee.Count()>0)
                     {
 
                         _unitOfWork.Project.UpdateRange(new List<Project> { item }); // Cập nhật từng dự án riêng biệt
