@@ -118,6 +118,7 @@ namespace CPH.BLL.Services
                     trainees[i].ClassId = c.ClassId;
                     trainees[i].TraineeId = Guid.NewGuid();
                 }
+
                 await _unitOfWork.Class.AddRangeAsync(list);
                 List<LessonClass> lessonClasses = new List<LessonClass>();
                 foreach (var cl in list)
