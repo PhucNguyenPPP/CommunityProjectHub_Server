@@ -28,6 +28,7 @@ namespace CPH.DAL.UnitOfWork
         IAttendanceRepository Attendance { get; }
         IQuestionRepository Question { get; }
         IAnswerRepository Answer { get; }
+        IFormRepository Form { get; }
 
     }
 }
