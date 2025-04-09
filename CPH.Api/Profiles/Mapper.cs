@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Answer;
 using CPH.Common.DTO.Associate;
 using CPH.Common.DTO.Attendance;
 using CPH.Common.DTO.Auth;
@@ -13,6 +14,7 @@ using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Notification;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.ProjectLogging;
+using CPH.Common.DTO.Question;
 using CPH.Common.DTO.Registration;
 using CPH.Common.DTO.Trainee;
 using CPH.DAL.Entities;
@@ -207,6 +209,13 @@ namespace CPH.Api.Profiles
             CreateMap<Trainee, AttendanceTraineeResponseDTO>()
                 .ForMember(dest => dest.TotalSlot, opt => opt.MapFrom(src => src.Class.LessonClasses.Count()))
                 .ForMember(dest => dest.TotalPresentSlot, opt => opt.MapFrom(src => src.Attendances.Where(c => c.Status == true).Count()))
+                .ReverseMap();
+
+            CreateMap<Answer, GetAllAnswerDTO>()
+                .ReverseMap();
+
+            CreateMap<Question, GetAllQuestionDTO>()
+                .ForMember(dest => dest.AnwserList, opt => opt.MapFrom(src => src.Answers))
                 .ReverseMap();
         }
     }
