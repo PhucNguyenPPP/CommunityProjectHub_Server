@@ -32,6 +32,7 @@ namespace CPH.DAL.UnitOfWork
             Attendance = new AttendanceRepository(_context);
             Question = new QuestionRepository(_context);
             Answer = new AnswerRepository(_context);
+            Form = new FormRepository(_context);
         }
 
 
@@ -62,5 +63,6 @@ namespace CPH.DAL.UnitOfWork
         public IAttendanceRepository Attendance { get; private set; }
         public IQuestionRepository Question { get; private set; }
         public IAnswerRepository Answer { get; private set; }
+        public IFormRepository Form { get; private set; }
     }
 }
