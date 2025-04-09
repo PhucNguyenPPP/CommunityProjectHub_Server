@@ -9,8 +9,12 @@ using CPH.Common.DTO.Project;
 using CPH.Common.Enum;
 using CPH.DAL.Entities;
 using CPH.DAL.UnitOfWork;
+using Firebase.Storage;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using System;
@@ -30,12 +34,31 @@ namespace CPH.BLL.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _config;
+        private readonly string _firebaseBucket;
+        private readonly IImageService _imageService;
+        private readonly FirebaseApp _firebaseApp;
 
-        public AccountService(IUnitOfWork unitOfWork, IMapper mapper, IEmailService emailService)
+        public AccountService(IUnitOfWork unitOfWork, IMapper mapper, IEmailService emailService, IConfiguration config, IImageService imageService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _emailService = emailService;
+            _config = config;
+            _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
+            _imageService = imageService;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                _firebaseApp = FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("firebase.json"),
+                    ProjectId = _config.GetSection("FirebaseConfig")["project_id"],
+                });
+            }
+            else
+            {
+                _firebaseApp = FirebaseApp.DefaultInstance;
+            }
         }
 
         public bool CheckEmailExist(string email)
@@ -933,6 +956,80 @@ namespace CPH.BLL.Services
                 .Any(c => c.Associate != null 
                 && c.Associate.AssociateName.ToLower() == associateName.ToLower());
             return exists;
+        }
+
+        public async Task<string> StoreFileAndGetLink(IFormFile file, string folderName)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                var firebaseStorage = new FirebaseStorage(
+                    _firebaseBucket,
+                    new FirebaseStorageOptions
+                    {
+                        AuthTokenAsyncFactory = () => Task.FromResult(string.Empty),
+                        ThrowOnCancel = true
+                    });
+
+                var storageUrl = await firebaseStorage
+                    .Child(folderName)
+                    .Child(fileName)
+                    .PutAsync(memoryStream);
+
+                return storageUrl;
+            }
+        }
+
+        public async Task<ResponseDTO> UpdateAvatar(IFormFile avatar, Guid accountId)
+        {
+            var account = await _unitOfWork.Account.GetByCondition(c=> c.AccountId == accountId);
+            if(account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            if (avatar == null || avatar.Length == 0)
+            {
+                return new ResponseDTO("File không hợp lệ!", 400, false);
+            }
+
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp" };
+            if (!allowedContentTypes.Contains(avatar.ContentType.ToLower()))
+            {
+                return new ResponseDTO("Chỉ được phép tải lên tệp hình ảnh (jpg, jpeg, png, gif, webp)", 400, false);
+            }
+
+            string filePath = account.AvatarLink;
+
+            var url = await StoreFileAndGetLink(avatar, "cph_learning_avatar");
+            if (url.IsNullOrEmpty())
+            {
+                return new ResponseDTO("Lưu tài liệu không thành công", 400, false);
+            }
+
+            account.AvatarLink = url;
+            _unitOfWork.Account.Update(account);
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                await _imageService.DeleteFileFromFirebase(filePath);
+            }
+
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Cập nhật ảnh đại diện thành công", 200, true);
+            }
+            return new ResponseDTO("Cập nhật ảnh đại diện không thành công", 400, false);
         }
     }
 }
