@@ -715,9 +715,9 @@ namespace CPH.BLL.Services
             //    }
             //}
 
-            if (trainee.FeedbackContent != null)
+            if (trainee.ReportContent != null)
             {
-                await _imageService.DeleteFileFromFirebase(trainee.FeedbackContent);
+                await _imageService.DeleteFileFromFirebase(trainee.ReportContent);
             }
 
             if (file == null || file.Length == 0)
