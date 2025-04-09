@@ -30,4 +30,6 @@ public partial class Trainee
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
     public virtual Class Class { get; set; } = null!;
+
+    public virtual ICollection<TraineeAnswer> TraineeAnswers { get; set; } = new List<TraineeAnswer>();
 }
