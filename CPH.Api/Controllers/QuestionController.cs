@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
+using CPH.Common.DTO.Answer;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Material;
 using Microsoft.AspNetCore.Http;
@@ -52,6 +53,24 @@ namespace CPH.Api.Controllers
         public async Task<IActionResult> DeleteQuestion([Required] Guid questionId)
         {
             ResponseDTO responseDTO = await _questionService.DeleteQuestion(questionId);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpPut("question-of-project")]
+        public async Task<IActionResult> UpdateQuestion(Guid questionId, string questionContent, List<UpdateAnswerDTO> answers)
+        {
+            ResponseDTO responseDTO = await _questionService.UpdateQuestion(questionId, questionContent, answers);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)

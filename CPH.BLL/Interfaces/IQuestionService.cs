@@ -14,5 +14,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> GetAllQuestion();
         Task<ResponseDTO> CreateQuestion(string questionContent, List<string> answers);
         Task<ResponseDTO> DeleteQuestion(Guid questionId);
+        Task<ResponseDTO> UpdateQuestion(Guid questionId, string questionContent, List<UpdateAnswerDTO> answers);
     }
 }
