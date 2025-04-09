@@ -12,5 +12,6 @@ namespace CPH.Common.DTO.Material
         public IFormFile File { get; set; } = null!;
         public Guid ProjectId { get; set; }
         public string Title { get; set; } = null!;
+        public Guid UpdatedBy { get; set; }
     }
 }
