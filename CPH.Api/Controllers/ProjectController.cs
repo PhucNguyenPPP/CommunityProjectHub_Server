@@ -172,6 +172,17 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [HttpPut("to-end-status")]
+        public async Task<IActionResult> UpdateProjectStatusEnd(Guid projectId)
+        {
+            ResponseDTO responseDTO = await _projectService.UpdateProjectStatusEnd(projectId);
+            if (responseDTO.IsSuccess)
+            {
+                return Ok(responseDTO);
+            }
+            return BadRequest(responseDTO);
+        }
+
         [HttpPut("assign-pm-to-project")]
         public async Task<IActionResult> AssignPMToProject(Guid projectId, Guid accountId)
         {
