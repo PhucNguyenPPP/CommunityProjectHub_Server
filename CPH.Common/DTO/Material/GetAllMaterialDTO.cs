@@ -15,6 +15,8 @@ namespace CPH.Common.DTO.Material
         public string MaterialUrl { get; set; } = null!;
 
         public DateTime UploadedAt { get; set; }
+        public Guid UploadedAccountId { get; set; }
+        public Guid UploadedFullName { get; set; }
 
         public Guid ProjectId { get; set; }
     }
