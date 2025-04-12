@@ -10,6 +10,7 @@ using Firebase.Storage;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -138,7 +139,9 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Dự án không tồn tại", 400, false);
             }
 
-            var list = _unitOfWork.Material.GetAllByCondition(c => c.ProjectId == projectId);
+            var list = _unitOfWork.Material.GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(c => c.UpdatedByNavigation)
+                .ToList();
 
             if (!list.Any())
             {
@@ -149,7 +152,7 @@ namespace CPH.BLL.Services
             {
                 list = list.Where(c =>
                    c.Title.ToLower().Contains(searchValue.ToLower())
-                );
+                ).ToList();
             }
 
             if (!list.Any())

@@ -1033,6 +1033,33 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
         }
 
+        public async Task<ResponseDTO> UpdateProjectStatusEnd(Guid projectId)
+        {
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.ProjectId == projectId)
+                .FirstOrDefault();
+
+            if (project == null)
+            {
+                return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            if (project.Status != ProjectStatusConstant.InProgress)
+            {
+                return new ResponseDTO("Dự án phải đang ở trạng thái Đang diễn ra", 400, false);
+            }
+
+            project.Status = ProjectStatusConstant.Completed;
+            _unitOfWork.Project.Update(project);
+
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Dự án đã chuyển sang giai đoạn Kết thúc", 200, true);
+            }
+            return new ResponseDTO("Cập nhật dự án thất bại", 500, false);
+        }
+
         public async Task<ResponseDTO> AssignPMToProject(Guid projectId, Guid accountId)
         {
             var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId)
