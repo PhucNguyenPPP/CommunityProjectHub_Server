@@ -123,7 +123,7 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Xóa câu hỏi không thành công", 400, false);
         }
 
-        public async Task<ResponseDTO> UpdateQuestion(Guid questionId, string questionContent, List<UpdateAnswerDTO> answers)
+        public async Task<ResponseDTO> UpdateQuestion(Guid questionId, string questionContent, List<string> answers)
         {
             var question = await _unitOfWork.Question.GetByCondition(c => c.QuestionId == questionId);
             if(question == null)
@@ -131,49 +131,57 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Câu hỏi không tồn tại", 400, false);
             }
 
+            if (questionContent.IsNullOrEmpty())
+            {
+                return new ResponseDTO("Vui lòng nhập nội dung câu hỏi", 400, false);
+            }
+
+            if (answers.IsNullOrEmpty())
+            {
+                return new ResponseDTO("Vui lòng nhập nội dung câu trả lời", 400, false);
+            }
             question.QuestionContent = questionContent;
             _unitOfWork.Question.Update(question);
 
-            var answerList = _unitOfWork.Answer.GetAllByCondition(c => c.QuestionId == questionId);
-            if(answerList == null)
+            var answerList = _unitOfWork.Answer.GetAllByCondition(c => c.QuestionId == questionId).ToList();
+
+            var traineeAnswer = _unitOfWork.TraineeAnswer.GetAllByCondition(c=> answerList.Contains(c.Answer)).FirstOrDefault();
+
+            if (traineeAnswer != null)
             {
-                var result1 = await _unitOfWork.SaveChangeAsync();
-                if (result1)
-                {
-                    return new ResponseDTO("Cập nhật câu hỏi thành công", 201, true);
-                }
-                return new ResponseDTO("Cập nhật câu hỏi không thành công", 400, false);
+                _unitOfWork.TraineeAnswer.Delete(traineeAnswer);
             }
-            else
+
+            for(int i = 0; i< answerList.Count(); i++)
             {
-                if (answerList.Count() != answers.Count())
-                {
-                    return new ResponseDTO($"Vui lòng nhập đủ số lượng câu trả lời: {answerList.Count()}", 400, false);
-                }
-                foreach (var oldAnswer in answerList)
-                {
-                    var updatedAnswer = answers.FirstOrDefault(a => a.AnswerId == oldAnswer.AnswerId);
-                    if (updatedAnswer != null)
-                    {
-                        if (updatedAnswer.AnswerContent.IsNullOrEmpty())
-                        {
-                            return new ResponseDTO("Không được để trống nội dung câu trả lời", 400, false);
-                        }
-                        oldAnswer.AnswerContent = updatedAnswer.AnswerContent;
-                        _unitOfWork.Answer.Update(oldAnswer);
-                    }
-                    else
-                    {
-                        return new ResponseDTO($"Không tìm thấy câu trả lời với ID: {oldAnswer.AnswerId}", 400, false);
-                    }
-                }
+                _unitOfWork.Answer.Delete(answerList[i]);
             }
+
+            foreach (var answerContent in answers)
+            {
+                if (answerContent.IsNullOrEmpty())
+                {
+                    return new ResponseDTO("Một trong các câu trả lời bị bỏ trống.", 400, false);
+                }
+
+                var answer = new Answer
+                {
+                    AnswerId = Guid.NewGuid(),
+                    AnswerContent = answerContent.Trim(),
+                    QuestionId = questionId
+                };
+
+                await _unitOfWork.Answer.AddAsync(answer);
+            }
+
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
             {
                 return new ResponseDTO("Cập nhật câu hỏi thành công", 201, true);
             }
-            return new ResponseDTO("Cập nhật câu hỏi không thành công", 400, false);
+            return new ResponseDTO("Cập nhật câu không thành công", 400, false);
+
+
         }
     }
 }

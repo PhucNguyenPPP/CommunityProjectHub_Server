@@ -68,7 +68,7 @@ namespace CPH.Api.Controllers
         }
 
         [HttpPut("question-of-project")]
-        public async Task<IActionResult> UpdateQuestion([Required] Guid questionId, [Required] string questionContent, List<UpdateAnswerDTO> answers)
+        public async Task<IActionResult> UpdateQuestion([Required] Guid questionId, [Required] string questionContent, List<string> answers)
         {
             ResponseDTO responseDTO = await _questionService.UpdateQuestion(questionId, questionContent, answers);
             if (responseDTO.IsSuccess == false)
