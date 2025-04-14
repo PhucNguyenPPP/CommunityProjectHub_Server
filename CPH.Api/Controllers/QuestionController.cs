@@ -21,9 +21,9 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("all-question-of-project")]
-        public async Task<IActionResult> GetAllQuestion()
+        public async Task<IActionResult> GetAllQuestion(string? searchValue)
         {
-            ResponseDTO responseDTO = await _questionService.GetAllQuestion();
+            ResponseDTO responseDTO = await _questionService.GetAllQuestion(searchValue);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)

@@ -26,11 +26,20 @@ namespace CPH.BLL.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ResponseDTO> GetAllQuestion()
+        public async Task<ResponseDTO> GetAllQuestion(string? searchValue)
         {
-            var question = _unitOfWork.Question.GetAll().Include(c=> c.Answers);
+            var list = _unitOfWork.Question.GetAll().Include(c => c.Answers).ToList();
 
-            var questionDTO = _mapper.Map<List<GetAllQuestionDTO>>(question);
+            if (!searchValue.IsNullOrEmpty())
+            {
+                list = list.Where(c => c.QuestionContent.Contains(searchValue)).ToList();
+                if (!list.Any())
+                {
+                    return new ResponseDTO("Tìm kiếm thấy nội dung hợp lệ", 400, false);
+                }
+            }
+
+            var questionDTO = _mapper.Map<List<GetAllQuestionDTO>>(list);
 
             return new ResponseDTO("Lấy thông tin dự án thành công", 200, true, questionDTO);
 
