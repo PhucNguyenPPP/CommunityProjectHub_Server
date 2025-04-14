@@ -22,14 +22,31 @@ namespace CPH.BLL.Services
             _mapper = mapper;
         }
 
-        public async Task<ResponseDTO> CreateFeedback(Guid traineeId ,List<Guid> answerId, string ? feedbackContent)
+        public async Task<ResponseDTO> CreateFeedback(Guid accountId, Guid projectId, List<Guid> answerId, string ? feedbackContent)
         {
+            var account = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+            if(account == null)
+            {
+                return new ResponseDTO("Không tìm thấy tài khoản trùng khớp", 400, false);
+            }
+
+            var project = await _unitOfWork.Project.GetByCondition(c => c.ProjectId == projectId);
+            if(project == null)
+            {
+                return new ResponseDTO("Không tìm thấy dự án trùng khớp", 400, false);
+            }
+
             var questionList = _unitOfWork.Question.GetAll().ToList();
             if (answerId.Count != questionList.Count)
             {
                 return new ResponseDTO("Bạn phải trả lời tất cả các câu hỏi.",400, false);
             }
 
+            var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == accountId && c.Class.ProjectId == projectId);
+            if(trainee == null)
+            {
+                return new ResponseDTO("Không tìm thấy học viên trùng khớp", 400, false);
+            }
             var selectedQuestionIds = new List<Guid>();
 
             foreach (var id in answerId)
@@ -50,13 +67,12 @@ namespace CPH.BLL.Services
                 {
                     TraineeAnswerId = Guid.NewGuid(),
                     AnswerId = answer.AnswerId,
-                    TraineeId = traineeId
+                    TraineeId = trainee.TraineeId
                 };
                 await _unitOfWork.TraineeAnswer.AddAsync(traineeAnswer);
             }
             if (!feedbackContent.IsNullOrEmpty())
             {
-                var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.TraineeId == traineeId);
                 trainee.FeedbackContent = feedbackContent;
                 _unitOfWork.Trainee.Update(trainee);
             }

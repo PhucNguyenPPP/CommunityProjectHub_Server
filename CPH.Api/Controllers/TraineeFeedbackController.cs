@@ -15,9 +15,9 @@ namespace CPH.Api.Controllers
             _feedbackService = feedbackService;
         }
         [HttpPost("new-feedback")]
-        public async Task<IActionResult> CreateFeedback(Guid traineeId, List<Guid> answerId, string? feedbackContent)
+        public async Task<IActionResult> CreateFeedback(Guid accountId, Guid projectId, List<Guid> answerId, string? feedbackContent)
         {
-            var result = await _feedbackService.CreateFeedback(traineeId, answerId, feedbackContent);
+            var result = await _feedbackService.CreateFeedback(accountId, projectId, answerId, feedbackContent);
             if (result.IsSuccess)
             {
                 return Ok(result);
