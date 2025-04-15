@@ -11,9 +11,9 @@ namespace CPH.BLL.Interfaces
 {
     public interface IQuestionService
     {
-        Task<ResponseDTO> GetAllQuestion();
+        Task<ResponseDTO> GetAllQuestion(string ? searchValue);
         Task<ResponseDTO> CreateQuestion(string questionContent, List<string> answers);
         Task<ResponseDTO> DeleteQuestion(Guid questionId);
-        Task<ResponseDTO> UpdateQuestion(Guid questionId, string questionContent, List<UpdateAnswerDTO> answers);
+        Task<ResponseDTO> UpdateQuestion(Guid questionId, string questionContent, List<string> answers);
     }
 }

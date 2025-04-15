@@ -33,6 +33,7 @@ namespace CPH.DAL.UnitOfWork
             Question = new QuestionRepository(_context);
             Answer = new AnswerRepository(_context);
             Form = new FormRepository(_context);
+            TraineeAnswer = new TraineeAnswerRepository(_context);
         }
 
 
@@ -64,5 +65,6 @@ namespace CPH.DAL.UnitOfWork
         public IQuestionRepository Question { get; private set; }
         public IAnswerRepository Answer { get; private set; }
         public IFormRepository Form { get; private set; }
+        public ITraineeAnswerRepository TraineeAnswer { get; private set; }
     }
 }
