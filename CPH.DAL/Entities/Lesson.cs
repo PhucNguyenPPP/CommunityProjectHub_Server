@@ -11,6 +11,10 @@ public partial class Lesson
 
     public string LessonContent { get; set; } = null!;
 
+    public int MinTime { get; set; }
+
+    public int MaxTime { get; set; }
+
     public Guid ProjectId { get; set; }
 
     public virtual ICollection<LessonClass> LessonClasses { get; set; } = new List<LessonClass>();
