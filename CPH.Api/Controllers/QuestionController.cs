@@ -21,9 +21,9 @@ namespace CPH.Api.Controllers
         }
 
         [HttpGet("all-question-of-project")]
-        public async Task<IActionResult> GetAllQuestion()
+        public async Task<IActionResult> GetAllQuestion(string? searchValue)
         {
-            ResponseDTO responseDTO = await _questionService.GetAllQuestion();
+            ResponseDTO responseDTO = await _questionService.GetAllQuestion(searchValue);
             if (responseDTO.IsSuccess == false)
             {
                 if (responseDTO.StatusCode == 400)
@@ -68,7 +68,7 @@ namespace CPH.Api.Controllers
         }
 
         [HttpPut("question-of-project")]
-        public async Task<IActionResult> UpdateQuestion([Required] Guid questionId, [Required] string questionContent, List<UpdateAnswerDTO> answers)
+        public async Task<IActionResult> UpdateQuestion([Required] Guid questionId, [Required] string questionContent, List<string> answers)
         {
             ResponseDTO responseDTO = await _questionService.UpdateQuestion(questionId, questionContent, answers);
             if (responseDTO.IsSuccess == false)
