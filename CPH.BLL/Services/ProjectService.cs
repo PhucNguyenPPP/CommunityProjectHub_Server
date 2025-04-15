@@ -242,7 +242,7 @@ namespace CPH.BLL.Services
                 }
                 if(projectDTO.MinLessonTime>projectDTO.MaxLessonTime)
                 {
-                    errors.Add("Thời lượng tối thiểu tối đa không hợp lệ");
+                    errors.Add("Thời lượng tối thiểu, tối đa không hợp lệ");
                 }    
                 /*
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
@@ -642,6 +642,8 @@ namespace CPH.BLL.Services
                 project.EndDate = projectDTO.EndDate;
                 project.ApplicationStartDate = projectDTO.ApplicationStartDate;
                 project.ApplicationEndDate = projectDTO.ApplicationEndDate;
+                project.MinLessonTime = projectDTO.MinLessonTime;
+                project.MaxLessonTime = projectDTO.MaxLessonTime;
                 /*       for (var i = 0; i < projectDTO.LessonList.Count; i++)
                        {
                            Lesson lessonToUpdate = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && !l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
@@ -742,6 +744,10 @@ namespace CPH.BLL.Services
                 if (associate == null)
                 {
                     errors.Add("Thông tin đối tác dự án không hợp lệ");
+                }
+                if (projectDTO.MinLessonTime > projectDTO.MaxLessonTime)
+                {
+                    errors.Add("Thời lượng tối thiểu, tối đa không hợp lệ");
                 }
                 var c = _unitOfWork.Class.GetAllByCondition(t => t.ProjectId.Equals(projectDTO.ProjectId)).Select(t => t.ClassId).Distinct().ToList();
                 //for (int i = 0; i < c.Count; i++)
