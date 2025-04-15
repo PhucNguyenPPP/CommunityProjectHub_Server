@@ -372,6 +372,7 @@ namespace CPH.BLL.Services
                 else
                 {
                     re.Status = RegistrationStatusConstant.Rejected;
+                    re.DeniedReason = answerRegistrationDTO.DeniedReason;   
                 }
                 _unitOfWork.Registration.Update(re);
 
@@ -430,7 +431,10 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Dự án đã quá hạn trả lời", 400, false);
             }
-
+            if (answerRegistrationDTO.Type == "Deny" && answerRegistrationDTO.DeniedReason.IsNullOrEmpty())
+            {
+                return new ResponseDTO("Vui lòng điền lý do từ chối đơn đăng ký", 400, false);
+            }    
             return new ResponseDTO("Thông tin trả lời đơn đăng ký hợp lệ", 200, true, re);
         }
 
