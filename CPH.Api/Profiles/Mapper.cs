@@ -221,6 +221,9 @@ namespace CPH.Api.Profiles
             CreateMap<Question, GetAllQuestionDTO>()
                 .ForMember(dest => dest.AnwserList, opt => opt.MapFrom(src => src.Answers))
                 .ReverseMap();
+
+            CreateMap<Project, GetProjectByTraineeDTO>()
+                .ReverseMap();
         }
     }
 }

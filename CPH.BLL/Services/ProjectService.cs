@@ -1273,5 +1273,38 @@ namespace CPH.BLL.Services
             }
             return new ResponseDTO("Lưu thông tin thất bại", 400, false);
         }
+
+        public async Task<ResponseDTO> GetAllUnFeedbackProject(Guid accountId, string? searchValue)
+        {
+            var account = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+            if (account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            var trainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId);
+            if (!trainee.Any())
+            {
+                return new ResponseDTO("Học viên chưa tham gia dự áo nào", 400, false);
+            }
+
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.Classes
+                    .Any(c => c.Trainees
+                        .Any(tr => tr.AccountId == accountId && 
+                            (tr.TraineeAnswers == null || !tr.TraineeAnswers.Any())
+                        )
+                    )
+                )
+                .ToList();
+
+            if (!searchValue.IsNullOrEmpty())
+            {
+                project = project.Where(c => c.Title.ToLower().Contains(searchValue.ToLower())).ToList();
+            }
+
+            var listDTO = _mapper.Map<List<GetProjectByTraineeDTO>>(project);
+            return new ResponseDTO("Lấy thông tin dự án cộng đồng thành công", 200, true, listDTO);
+        }
     }
 }
