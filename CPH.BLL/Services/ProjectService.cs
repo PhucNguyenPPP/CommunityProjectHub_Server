@@ -240,6 +240,10 @@ namespace CPH.BLL.Services
                 {
                     errors.Add("Thông tin đối tác dự án không hợp lệ");
                 }
+                if(projectDTO.MinLessonTime>projectDTO.MaxLessonTime)
+                {
+                    errors.Add("Thời lượng tối thiểu tối đa không hợp lệ");
+                }    
                 /*
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
                 if (!response.IsSuccess)
