@@ -13,5 +13,6 @@ namespace CPH.Common.DTO.Registration
         public Guid RegistrationId { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập kết quả của đơn đăng ký")]
         public string Type { get; set; } = null!;
+        public string? DeniedReason { get; set; } = null!;
     }
 }

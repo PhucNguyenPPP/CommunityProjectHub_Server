@@ -34,6 +34,12 @@ namespace CPH.Common.DTO.Project
         public DateTime ApplicationEndDate { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập thông tin đối tác của dự án")]
         public Guid AssociateId { get; set; }
+        [Required(ErrorMessage = "Vui lòng thời lượng tối thiểu của 1 bài học")]
+        [Range(1, int.MaxValue, ErrorMessage = "Thời lượng tối thiểu của 1 bài học phải ít nhất là 1")]
+        public int MinLessonTime { get; set; }
+        [Required(ErrorMessage = "Vui lòng thời lượng tối đa của 1 bài học")]
+        [Range(1, int.MaxValue, ErrorMessage = "Thời lượng tối đa của 1 bài học phải ít nhất là 1")]
+        public int MaxLessonTime { get; set; }
 
     }
 }
