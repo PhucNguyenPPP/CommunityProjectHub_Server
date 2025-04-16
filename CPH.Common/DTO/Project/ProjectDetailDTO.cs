@@ -36,6 +36,10 @@ namespace CPH.Common.DTO.Project
 
         public decimal? FailingScore { get; set; }
 
+        public int MinLessonTime { get; set; }
+
+        public int MaxLessonTime { get; set; }
+
         public string Status { get; set; }
 
         public Guid ProjectManagerId { get; set; }
