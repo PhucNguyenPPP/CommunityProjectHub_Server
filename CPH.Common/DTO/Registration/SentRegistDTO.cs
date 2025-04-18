@@ -23,6 +23,7 @@ namespace CPH.Common.DTO.Registration
         public Guid ProjectId { get; set; }
 
         public string Title { get; set; } = null!;
+        public string? DeniedReason { get; set; } = null!;
 
     }
 }
