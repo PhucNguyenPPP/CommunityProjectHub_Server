@@ -9,6 +9,7 @@ using AutoMapper.Execution;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.Paging;
@@ -1296,26 +1297,52 @@ namespace CPH.BLL.Services
             var trainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId);
             if (!trainee.Any())
             {
-                return new ResponseDTO("Học viên chưa tham gia dự áo nào", 400, false);
+                return new ResponseDTO("Học viên chưa tham gia dự án nào", 400, false);
             }
 
             var project = _unitOfWork.Project
                 .GetAllByCondition(c => c.Classes
                     .Any(c => c.Trainees
-                        .Any(tr => tr.AccountId == accountId && 
+                        .Any(tr => tr.AccountId == accountId &&
                             (tr.TraineeAnswers == null || !tr.TraineeAnswers.Any())
                         )
                     )
                 )
+                .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                 .ToList();
 
-            if (!searchValue.IsNullOrEmpty())
+            var traineeClasses = _unitOfWork.Class
+                .GetAllByCondition(c => c.Trainees
+                    .Any(t => t.AccountId == accountId && !t.TraineeAnswers.Any()))
+                .ToList();
+
+            var resultList = new List<GetProjectByTraineeDTO>();
+
+            for (int i = 0; i < project.Count(); i++)
             {
-                project = project.Where(c => c.Title.ToLower().Contains(searchValue.ToLower())).ToList();
+                var projectItem = project[i];
+
+                var projectClass = traineeClasses.Where(c=> c.ProjectId == project[i].ProjectId).FirstOrDefault();
+
+                var projectDto = _mapper.Map<GetProjectByTraineeDTO>(projectItem);
+
+                if (projectClass != null)
+                {
+                    var classDto = _mapper.Map<TraineeClassDTO>(projectClass);
+                    projectDto.TraineeClass = classDto;
+                }
+
+                resultList.Add(projectDto);
             }
 
-            var listDTO = _mapper.Map<List<GetProjectByTraineeDTO>>(project);
-            return new ResponseDTO("Lấy thông tin dự án cộng đồng thành công", 200, true, listDTO);
+            if (!string.IsNullOrEmpty(searchValue))
+            {
+                resultList = resultList
+                    .Where(c => c.Title.ToLower().Contains(searchValue.ToLower()))
+                    .ToList();
+            }
+
+            return new ResponseDTO("Lấy thông tin dự án cộng đồng thành công", 200, true, resultList);
         }
     }
 }

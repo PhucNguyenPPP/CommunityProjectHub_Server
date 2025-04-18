@@ -223,6 +223,11 @@ namespace CPH.Api.Profiles
                 .ReverseMap();
 
             CreateMap<Project, GetProjectByTraineeDTO>()
+                .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
+                .ForMember(dest => dest.ProjectId, opt => opt.MapFrom(src => src.ProjectId));
+
+            CreateMap<Class, TraineeClassDTO>()
+                .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
                 .ReverseMap();
         }
     }
