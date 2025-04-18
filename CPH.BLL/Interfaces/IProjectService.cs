@@ -29,5 +29,6 @@ namespace CPH.BLL.Interfaces
         Task<bool> CheckProjectIdExisted(Guid projectId);
         MemoryStream ExportFinalReportOfProjectExcel(Guid projectId);
         Task<ResponseDTO> UpdateMaxAbsentPercentageAndFailingScore(UpdateAbsentPercentageFailingScoreRequestDTO model);
+        Task<ResponseDTO> GetAllUnFeedbackProject(Guid accountId, string? searchValue);
     }
 }
