@@ -1199,8 +1199,10 @@ namespace CPH.BLL.Services
                     worksheet.Cells[1, 3].Value = "Tên học viên";
                     worksheet.Cells[1, 4].Value = "Nhóm";
                     worksheet.Cells[1, 5].Value = "Điểm";
+                    worksheet.Cells[1, 6].Value = "Điểm danh";
+                    worksheet.Cells[1, 7].Value = "Kết quả";
 
-                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                    using (var range = worksheet.Cells[1, 1, 1, 7])
                     {
                         range.Style.Font.Bold = true;
                         range.Style.Font.Size = 12;
@@ -1210,8 +1212,13 @@ namespace CPH.BLL.Services
 
                     var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classItem.ClassId)
                         .Include(c => c.Account)
+                        .Include(c => c.Attendances)
                         .OrderBy(c => c.GroupNo)
                         .ToList();
+                    var totalSlot = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classItem.ClassId)
+                        .Include(c => c.LessonClasses)
+                        .SelectMany(c => c.LessonClasses).Count();
+ 
                     int row = 2;
                     int stt = 1;
                     foreach (var trainee in traineeList)
@@ -1221,6 +1228,16 @@ namespace CPH.BLL.Services
                         worksheet.Cells[row, 3].Value = trainee.Account.FullName;
                         worksheet.Cells[row, 4].Value = trainee.GroupNo;
                         worksheet.Cells[row, 5].Value = trainee.Score;
+
+                        var totalPresentSlot = trainee.Attendances.Where(c => c.Status == true).Count();
+                        worksheet.Cells[row, 6].Value = $"{totalPresentSlot}/{totalSlot}";
+                        if (trainee.Result != null)
+                        {
+                            worksheet.Cells[row, 7].Value = (bool)trainee.Result ? "Đạt" : "Không đạt";
+                        } else
+                        {
+                            worksheet.Cells[row, 7].Value = string.Empty;
+                        }
                         row++;
                         stt++;
                     }
