@@ -171,7 +171,7 @@ namespace CPH.BLL.Services
                 var dto = _mapper.Map<GetAllClassOfProjectDTO>(Class);
                 dto.LecturerSlotAvailable = lecturerSlotAvailable;
                 dto.StudentSlotAvailable = studentSlotAvailable;
-
+                dto.StudentIds = Class.Members != null ? Class.Members.Select(c => c.AccountId).ToList() : [];
                 return dto;
             }).ToList();
 

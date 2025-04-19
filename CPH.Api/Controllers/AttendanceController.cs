@@ -54,5 +54,20 @@ namespace CPH.Api.Controllers
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
+
+        [HttpPost("export-attendance-template")]
+        public async Task<IActionResult> ExportAttendanceTemplateFile(Guid classId)
+        {
+            var check = await _classService.CheckClassIdExist(classId);
+            if (!check)
+            {
+                return BadRequest(new ResponseDTO("Lớp không tồn tại", 400, false));
+            }
+
+            var stream = _attendanceService.ExportAttendanceTraineeTemplateExcel(classId);
+            string fileName = "AttendanceChecking.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 }

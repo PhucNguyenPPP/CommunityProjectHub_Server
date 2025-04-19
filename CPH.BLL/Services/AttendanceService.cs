@@ -109,10 +109,10 @@ namespace CPH.BLL.Services
                 }
 
                 if (attendanceTrainee[i].AttendanceStatus.IsNullOrEmpty()
-                    || (attendanceTrainee[i].AttendanceStatus != AttendanceStatusConstant.Absent
-                    && attendanceTrainee[i].AttendanceStatus != AttendanceStatusConstant.Present))
+                    || (attendanceTrainee[i].AttendanceStatus != "1"
+                    && attendanceTrainee[i].AttendanceStatus != "0"))
                 {
-                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã {attendanceTrainee[i].AccountCode} có điểm danh không hợp lệ ({AttendanceStatusConstant.Absent}/{AttendanceStatusConstant.Present})");
+                    errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã {attendanceTrainee[i].AccountCode} có điểm danh không hợp lệ (0: {AttendanceStatusConstant.Absent}/1:{AttendanceStatusConstant.Present})");
                     continue;
                 }
             }
@@ -132,7 +132,7 @@ namespace CPH.BLL.Services
                 Attendance attendance = new Attendance
                 {
                     AttendanceId = Guid.NewGuid(),
-                    Status = i.AttendanceStatus == "Có mặt" ? true : false,
+                    Status = i.AttendanceStatus == "1" ? true : false,
                     TraineeId = trainee!.TraineeId,
                     LessonClassId = lessonClassList[lessonClassIndex].LessonClassId,
                 };
@@ -286,6 +286,70 @@ namespace CPH.BLL.Services
                 return AttendanceStatusConstant.Present;
             }
             return AttendanceStatusConstant.Absent;
+        }
+
+        public MemoryStream ExportAttendanceTraineeTemplateExcel(Guid classId)
+        {
+            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId)
+                .Include(c => c.Account)
+                .OrderBy(c => c.GroupNo)
+                .ToList();
+
+            var classObj = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
+                .Include(c => c.LessonClasses)
+                .ThenInclude(c => c.Lesson)
+                .FirstOrDefault();
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using (var package = new ExcelPackage())
+            {
+                foreach (var lessonClass in classObj!.LessonClasses)
+                {
+                    var worksheet = package.Workbook.Worksheets.Add($"Buổi {lessonClass.Lesson.LessonNo} - {lessonClass.StartTime?.ToString("dd/MM/yyyy")}");
+
+                    // Tạo header
+                    worksheet.Cells[1, 1].Value = "STT";
+                    worksheet.Cells[1, 2].Value = "Mã học viên";
+                    worksheet.Cells[1, 3].Value = "Tên học viên";
+                    worksheet.Cells[1, 4].Value = "Nhóm";
+                    worksheet.Cells[1, 5].Value = "Điểm danh";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Font.Size = 12;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+
+                    var attendanceList = _unitOfWork.Attendance
+                        .GetAllByCondition(a => a.LessonClassId == lessonClass.LessonClassId)
+                        .ToList();
+
+                    int row = 2;
+                    int stt = 1;
+                    foreach (var trainee in traineeList)
+                    {
+                        worksheet.Cells[row, 1].Value = stt;
+                        worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
+                        worksheet.Cells[row, 3].Value = trainee.Account.FullName;
+                        worksheet.Cells[row, 4].Value = trainee.GroupNo;
+
+                        var attendance = attendanceList.FirstOrDefault(a => a.TraineeId == trainee.TraineeId);
+                        worksheet.Cells[row, 5].Value = string.Empty;
+
+                        row++;
+                        stt++;
+                    }
+
+                    worksheet.Cells.AutoFitColumns();
+                }
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+                return stream;
+            }
         }
     }
 }
