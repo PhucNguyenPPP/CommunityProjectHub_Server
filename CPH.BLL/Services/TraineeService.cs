@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
@@ -683,37 +684,58 @@ namespace CPH.BLL.Services
                 return new ResponseDTO($"Dự án đang ở trạng thái {status}không thể cập nhật báo cáo", 400, false);
             }
 
-            var lesson = _unitOfWork.Lesson
-                .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-                .OrderByDescending(c => c.LessonNo).ToList();
+            //fix để không phải sửa DB trong lúc demo
+            //var lesson = _unitOfWork.Lesson
+            //    .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
+            //    .OrderByDescending(c => c.LessonNo).ToList();
 
-
-            var finishTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
-                .Select(c => c.StartTime)
-                .FirstOrDefault();
-
-            var startTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
-                .Select(c => c.EndTime)
-                .FirstOrDefault();
-
-            // fix để không phải sửa DB trong lúc demo
-            //if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //if(lesson.Count() > 1)
             //{
-            //    string formattedFinishTime = finishTime.HasValue
-            //    ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
-            //    : "Không xác định";
+            //    var finishTime = _unitOfWork.LessonClass
+            //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+            //    .Select(c => c.StartTime)
+            //    .FirstOrDefault();
 
-            //    string formattedStartTime = startTime.HasValue
-            //        ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
-            //        : "Không xác định";
+            //    var startTime = _unitOfWork.LessonClass
+            //        .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
+            //        .Select(c => c.EndTime)
+            //        .FirstOrDefault();
 
+                
             //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
             //    {
-            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //        string formattedFinishTime = finishTime.HasValue
+            //        ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
+
+            //        string formattedStartTime = startTime.HasValue
+            //            ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //            : "Không xác định";
+
+            //        if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //        {
+            //            return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //        }
             //    }
             //}
+            //else
+            //{
+            //    var finishTime = _unitOfWork.LessonClass
+            //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+            //    .Select(c => c.EndTime)
+            //    .FirstOrDefault();
+
+            //    string formattedFinishTime = finishTime.HasValue
+            //        ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
+
+            //    if (DateTime.Now < finishTime)
+            //    {
+            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {formattedFinishTime}", 400, false);
+            //    }
+            //}
+
+
 
             if (trainee.ReportContent != null)
             {
