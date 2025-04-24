@@ -215,6 +215,7 @@ namespace CPH.BLL.Services
                     double percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
                     list.Add(new ProjectProgressDTO
                     {
+                        ProjectId = project.ProjectId,
                         ProjectName = project.Title,
                         Percentage = percentageProgress,
                         ProjectStatus = project.Status,
@@ -244,6 +245,7 @@ namespace CPH.BLL.Services
                     double percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
                     list.Add(new ProjectProgressDTO
                     {
+                        ProjectId = project.ProjectId,
                         ProjectName = project.Title,
                         Percentage = percentageProgress,
                         ProjectStatus = project.Status,
@@ -273,6 +275,7 @@ namespace CPH.BLL.Services
                     double percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
                     list.Add(new ProjectProgressDTO
                     {
+                        ProjectId = project.ProjectId,
                         ProjectName = project.Title,
                         Percentage = percentageProgress,
                         ProjectStatus = project.Status,

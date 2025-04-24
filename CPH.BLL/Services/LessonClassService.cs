@@ -128,6 +128,8 @@ namespace CPH.BLL.Services
             List<Guid> classIds = new List<Guid>();
             List<DateTime> startTime = new List<DateTime>();
             List<DateTime> endTime = new List<DateTime>();
+            int minTimeLesson = project.MinLessonTime;
+            int maxTimeLesson = project.MaxLessonTime;
 
             for (int i = 0; i < lessonClasses.Count(); i++)
             {
@@ -145,17 +147,24 @@ namespace CPH.BLL.Services
 
                 if (lessonClasses[i].LessonClassDTO.StartTime < startProject || lessonClasses[i].LessonClassDTO.StartTime > endProject)
                 {
-                    return new ResponseDTO("Thời gian bắt đầu của buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
+                    return new ResponseDTO($"Bài giảng thứ {i + 1}: Thời gian bắt đầu của buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
                 }
 
                 if (lessonClasses[i].LessonClassDTO.EndTime < startProject || lessonClasses[i].LessonClassDTO.EndTime > endProject)
                 {
-                    return new ResponseDTO("Thời gian kết thúc buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
+                    return new ResponseDTO($"Bài giảng thứ {i + 1}: Thời gian kết thúc buổi học phải nằm trong thời gian diễn ra dự án", 400, false);
                 }
 
                 if (lessonClasses[i].LessonClassDTO.StartTime >= lessonClasses[i].LessonClassDTO.EndTime)
                 {
-                    return new ResponseDTO("Thời gian bắt đầu phải sớm hơn thời gian kết thúc!", 400, false);
+                    return new ResponseDTO($"Bài giảng thứ {i + 1}: Thời gian bắt đầu phải sớm hơn thời gian kết thúc!", 400, false);
+                }
+
+                TimeSpan duration = lessonClasses[i].LessonClassDTO.EndTime - lessonClasses[i].LessonClassDTO.StartTime;
+                int totalMinutes = (int)duration.TotalMinutes;
+                if (totalMinutes < minTimeLesson || totalMinutes > maxTimeLesson)
+                {
+                    return new ResponseDTO($"Bài giảng thứ {i + 1}: Thời lượng buổi học phải nằm trong khoảng từ {minTimeLesson} đến {maxTimeLesson} phút. Hiện tại: {totalMinutes} phút.", 400, false);
                 }
 
                 if (i > 0)

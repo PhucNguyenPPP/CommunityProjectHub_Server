@@ -29,6 +29,7 @@ namespace CPH.DAL.UnitOfWork
         IQuestionRepository Question { get; }
         IAnswerRepository Answer { get; }
         IFormRepository Form { get; }
+        ITraineeAnswerRepository TraineeAnswer { get; }
 
     }
 }

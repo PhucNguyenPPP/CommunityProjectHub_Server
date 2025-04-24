@@ -9,6 +9,7 @@ using AutoMapper.Execution;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.Paging;
@@ -118,6 +119,7 @@ namespace CPH.BLL.Services
                     trainees[i].ClassId = c.ClassId;
                     trainees[i].TraineeId = Guid.NewGuid();
                 }
+
                 await _unitOfWork.Class.AddRangeAsync(list);
                 List<LessonClass> lessonClasses = new List<LessonClass>();
                 foreach (var cl in list)
@@ -239,6 +241,10 @@ namespace CPH.BLL.Services
                 {
                     errors.Add("Thông tin đối tác dự án không hợp lệ");
                 }
+                if(projectDTO.MinLessonTime>projectDTO.MaxLessonTime)
+                {
+                    errors.Add("Thời lượng tối thiểu, tối đa không hợp lệ");
+                }    
                 /*
                 var response = await _accountService.ImportTraineeFromExcel(projectDTO.Trainees);
                 if (!response.IsSuccess)
@@ -637,6 +643,8 @@ namespace CPH.BLL.Services
                 project.EndDate = projectDTO.EndDate;
                 project.ApplicationStartDate = projectDTO.ApplicationStartDate;
                 project.ApplicationEndDate = projectDTO.ApplicationEndDate;
+                project.MinLessonTime = projectDTO.MinLessonTime;
+                project.MaxLessonTime = projectDTO.MaxLessonTime;
                 /*       for (var i = 0; i < projectDTO.LessonList.Count; i++)
                        {
                            Lesson lessonToUpdate = await _unitOfWork.Lesson.GetByCondition(l => l.LessonNo.Equals(i + 1) && !l.LessonContent.Equals(projectDTO.LessonList[i]) && l.ProjectId.Equals(project.ProjectId));
@@ -737,6 +745,10 @@ namespace CPH.BLL.Services
                 if (associate == null)
                 {
                     errors.Add("Thông tin đối tác dự án không hợp lệ");
+                }
+                if (projectDTO.MinLessonTime > projectDTO.MaxLessonTime)
+                {
+                    errors.Add("Thời lượng tối thiểu, tối đa không hợp lệ");
                 }
                 var c = _unitOfWork.Class.GetAllByCondition(t => t.ProjectId.Equals(projectDTO.ProjectId)).Select(t => t.ClassId).Distinct().ToList();
                 //for (int i = 0; i < c.Count; i++)
@@ -1187,8 +1199,10 @@ namespace CPH.BLL.Services
                     worksheet.Cells[1, 3].Value = "Tên học viên";
                     worksheet.Cells[1, 4].Value = "Nhóm";
                     worksheet.Cells[1, 5].Value = "Điểm";
+                    worksheet.Cells[1, 6].Value = "Điểm danh";
+                    worksheet.Cells[1, 7].Value = "Kết quả";
 
-                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                    using (var range = worksheet.Cells[1, 1, 1, 7])
                     {
                         range.Style.Font.Bold = true;
                         range.Style.Font.Size = 12;
@@ -1198,8 +1212,13 @@ namespace CPH.BLL.Services
 
                     var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classItem.ClassId)
                         .Include(c => c.Account)
+                        .Include(c => c.Attendances)
                         .OrderBy(c => c.GroupNo)
                         .ToList();
+                    var totalSlot = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classItem.ClassId)
+                        .Include(c => c.LessonClasses)
+                        .SelectMany(c => c.LessonClasses).Count();
+ 
                     int row = 2;
                     int stt = 1;
                     foreach (var trainee in traineeList)
@@ -1209,6 +1228,16 @@ namespace CPH.BLL.Services
                         worksheet.Cells[row, 3].Value = trainee.Account.FullName;
                         worksheet.Cells[row, 4].Value = trainee.GroupNo;
                         worksheet.Cells[row, 5].Value = trainee.Score;
+
+                        var totalPresentSlot = trainee.Attendances.Where(c => c.Status == true).Count();
+                        worksheet.Cells[row, 6].Value = $"{totalPresentSlot}/{totalSlot}";
+                        if (trainee.Result != null)
+                        {
+                            worksheet.Cells[row, 7].Value = (bool)trainee.Result ? "Đạt" : "Không đạt";
+                        } else
+                        {
+                            worksheet.Cells[row, 7].Value = string.Empty;
+                        }
                         row++;
                         stt++;
                     }
@@ -1272,6 +1301,65 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Lưu thông tin thành công", 200, true);
             }
             return new ResponseDTO("Lưu thông tin thất bại", 400, false);
+        }
+
+        public async Task<ResponseDTO> GetAllUnFeedbackProject(Guid accountId, string? searchValue)
+        {
+            var account = await _unitOfWork.Account.GetByCondition(c => c.AccountId == accountId);
+            if (account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            var trainee = _unitOfWork.Trainee.GetAllByCondition(c => c.AccountId == accountId);
+            if (!trainee.Any())
+            {
+                return new ResponseDTO("Học viên chưa tham gia dự án nào", 400, false);
+            }
+
+            var project = _unitOfWork.Project
+                .GetAllByCondition(c => c.Classes
+                    .Any(c => c.Trainees
+                        .Any(tr => tr.AccountId == accountId &&
+                            (tr.TraineeAnswers == null || !tr.TraineeAnswers.Any())
+                        )
+                    )
+                )
+                .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
+                .ToList();
+
+            var traineeClasses = _unitOfWork.Class
+                .GetAllByCondition(c => c.Trainees
+                    .Any(t => t.AccountId == accountId && !t.TraineeAnswers.Any()))
+                .ToList();
+
+            var resultList = new List<GetProjectByTraineeDTO>();
+
+            for (int i = 0; i < project.Count(); i++)
+            {
+                var projectItem = project[i];
+
+                var projectClass = traineeClasses.Where(c=> c.ProjectId == project[i].ProjectId).FirstOrDefault();
+
+                var projectDto = _mapper.Map<GetProjectByTraineeDTO>(projectItem);
+
+                if (projectClass != null)
+                {
+                    var classDto = _mapper.Map<TraineeClassDTO>(projectClass);
+                    projectDto.TraineeClass = classDto;
+                }
+
+                resultList.Add(projectDto);
+            }
+
+            if (!string.IsNullOrEmpty(searchValue))
+            {
+                resultList = resultList
+                    .Where(c => c.Title.ToLower().Contains(searchValue.ToLower()))
+                    .ToList();
+            }
+
+            return new ResponseDTO("Lấy thông tin dự án cộng đồng thành công", 200, true, resultList);
         }
     }
 }

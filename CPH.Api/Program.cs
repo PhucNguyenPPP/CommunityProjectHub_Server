@@ -36,6 +36,7 @@ builder.Services.AddScoped<IAssociateService, AssociateService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IAnswerService, AnswerService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddApplicationServices(builder.Configuration);

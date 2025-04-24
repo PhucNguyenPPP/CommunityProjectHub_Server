@@ -219,5 +219,23 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpGet("all-unfeedback-project")]
+        public async Task<IActionResult> GetAllUnFeedbackProject(Guid accountId, string? searchValue)
+        {
+            ResponseDTO responseDTO = await _projectService.GetAllUnFeedbackProject(accountId, searchValue);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }

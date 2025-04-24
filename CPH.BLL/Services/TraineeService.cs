@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
@@ -683,37 +684,58 @@ namespace CPH.BLL.Services
                 return new ResponseDTO($"Dự án đang ở trạng thái {status}không thể cập nhật báo cáo", 400, false);
             }
 
-            var lesson = _unitOfWork.Lesson
-                .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-                .OrderByDescending(c => c.LessonNo).ToList();
+            //fix để không phải sửa DB trong lúc demo
+            //var lesson = _unitOfWork.Lesson
+            //    .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
+            //    .OrderByDescending(c => c.LessonNo).ToList();
 
-
-            var finishTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
-                .Select(c => c.StartTime)
-                .FirstOrDefault();
-
-            var startTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
-                .Select(c => c.EndTime)
-                .FirstOrDefault();
-
-            // fix để không phải sửa DB trong lúc demo
-            //if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //if(lesson.Count() > 1)
             //{
-            //    string formattedFinishTime = finishTime.HasValue
-            //    ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
-            //    : "Không xác định";
+            //    var finishTime = _unitOfWork.LessonClass
+            //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+            //    .Select(c => c.StartTime)
+            //    .FirstOrDefault();
 
-            //    string formattedStartTime = startTime.HasValue
-            //        ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
-            //        : "Không xác định";
+            //    var startTime = _unitOfWork.LessonClass
+            //        .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
+            //        .Select(c => c.EndTime)
+            //        .FirstOrDefault();
 
+                
             //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
             //    {
-            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //        string formattedFinishTime = finishTime.HasValue
+            //        ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
+
+            //        string formattedStartTime = startTime.HasValue
+            //            ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //            : "Không xác định";
+
+            //        if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //        {
+            //            return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //        }
             //    }
             //}
+            //else
+            //{
+            //    var finishTime = _unitOfWork.LessonClass
+            //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+            //    .Select(c => c.EndTime)
+            //    .FirstOrDefault();
+
+            //    string formattedFinishTime = finishTime.HasValue
+            //        ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
+
+            //    if (DateTime.Now < finishTime)
+            //    {
+            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {formattedFinishTime}", 400, false);
+            //    }
+            //}
+
+
 
             if (trainee.ReportContent != null)
             {
@@ -1146,6 +1168,52 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Import học viên thành công", 200, true);
             }
             return new ResponseDTO("Dự án lỗi", 500, false);
+        }
+
+        public MemoryStream ExportTraineeListTemplateExcel(Guid classId)
+        {
+            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId).Include(c => c.Account).OrderBy(c => c.GroupNo);
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("DanhSachDiem");
+
+                worksheet.Cells[1, 1].Value = "STT";
+                worksheet.Cells[1, 2].Value = "Mã học viên";
+                worksheet.Cells[1, 3].Value = "Tên học viên";
+                worksheet.Cells[1, 4].Value = "Nhóm";
+                worksheet.Cells[1, 5].Value = "Điểm";
+
+                using (var range = worksheet.Cells[1, 1, 1, 5])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Font.Size = 12;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
+
+                int row = 2;
+                int stt = 1;
+                foreach (var trainee in traineeList)
+                {
+                    worksheet.Cells[row, 1].Value = stt;
+                    worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
+                    worksheet.Cells[row, 3].Value = trainee.Account.FullName;
+                    worksheet.Cells[row, 4].Value = trainee.GroupNo;
+                    worksheet.Cells[row, 5].Value = string.Empty;
+                    row++;
+                    stt++;
+                }
+
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
         }
 
     }

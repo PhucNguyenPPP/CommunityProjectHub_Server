@@ -211,5 +211,20 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [HttpPost("export-trainee-template")]
+        public async Task<IActionResult> ExportTraineeTemplate(Guid classId)
+        {
+            var check = await _classService.CheckClassIdExist(classId);
+            if (!check)
+            {
+                return BadRequest(new ResponseDTO("Lớp không tồn tại", 400, false));
+            }
+
+            var stream = _traineeService.ExportTraineeListTemplateExcel(classId);
+            string fileName = "DanhSachHocVienTemplate.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 }
