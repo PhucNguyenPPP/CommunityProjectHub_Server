@@ -29,5 +29,6 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO);
         Task<ResponseDTO> ImportTrainee(IFormFile file, Guid projectId);
         MemoryStream ExportTraineeListTemplateExcel(Guid classId);
+        MemoryStream ExportTraineeClassListTemplateExcel();
     }
 }
