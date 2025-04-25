@@ -1216,6 +1216,44 @@ namespace CPH.BLL.Services
             }
         }
 
+        public MemoryStream ExportTraineeClassListTemplateExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+
+                for (int i = 0; i <= 1; i++)
+                {
+                    var worksheet = package.Workbook.Worksheets.Add($"Class{i+1}");
+                    worksheet.Cells[1, 1].Value = "STT";
+                    worksheet.Cells[1, 2].Value = "Mã Số Tài Khoản";
+                    worksheet.Cells[1, 3].Value = "Tên tài khoản";
+                    worksheet.Cells[1, 4].Value = "Họ và Tên";
+                    worksheet.Cells[1, 5].Value = "Số điện thoại";
+                    worksheet.Cells[1, 6].Value = "Email";
+                    worksheet.Cells[1, 7].Value = "Địa chỉ";
+                    worksheet.Cells[1, 8].Value = "Ngày sinh";
+                    worksheet.Cells[1, 9].Value = "Giới tính";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 9])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Font.Size = 12;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+                    worksheet.Cells.AutoFitColumns();
+                }
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
+
     }
 }
 

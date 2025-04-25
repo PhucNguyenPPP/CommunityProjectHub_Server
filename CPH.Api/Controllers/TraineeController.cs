@@ -226,5 +226,14 @@ namespace CPH.Api.Controllers
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
+
+        [HttpPost("export-trainee-class-template")]
+        public async Task<IActionResult> ExportTraineeClassTemplate()
+        {
+            var stream = _traineeService.ExportTraineeClassListTemplateExcel();
+            string fileName = "DanhSachLopCuaHocVienTemplate.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 }
