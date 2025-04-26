@@ -9,10 +9,6 @@ public partial class Class
 
     public string ClassCode { get; set; } = null!;
 
-    public string? ReportContent { get; set; }
-
-    public DateTime? ReportCreatedDate { get; set; }
-
     public int? NumberGroup { get; set; }
 
     public Guid ProjectId { get; set; }
