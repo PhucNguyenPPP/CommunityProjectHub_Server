@@ -4,6 +4,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Material;
 using CPH.DAL.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,7 @@ namespace CPH.Api.Controllers
             _materialService = materialService;
         }
 
+        [Authorize(Roles = "Department Head")]
         [HttpPost("new-material")]
         public async Task<IActionResult> CreateMaterial([FromForm] MaterialCreateRequestDTO model)
         {
@@ -31,6 +33,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation")]
         [HttpGet("all-material-of-project")]
         public async Task<IActionResult> GetAllMaterialProject([FromQuery] Guid projectId,
                                             [FromQuery] string? searchValue,
@@ -52,6 +55,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Department Head")]
         [HttpDelete("material-of-project")]
         public async Task<IActionResult> DeleteMaterial([FromQuery] Guid materialId)
         {
@@ -70,6 +74,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Department Head")]
         [HttpPut("material-of-project")]
         public async Task<IActionResult> UpdateMaterial([FromForm] MaterialUpdateDTO material)
         {

@@ -4,6 +4,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.Answer;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Material;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,7 @@ namespace CPH.Api.Controllers
             _questionService = questionService;
         }
 
+        [Authorize(Roles = "Business Relation")]
         [HttpGet("all-question-of-project")]
         public async Task<IActionResult> GetAllQuestion(string? searchValue)
         {
@@ -38,6 +40,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Business Relation")]
         [HttpPost("new-question")]
         public async Task<IActionResult> CreateQuestion([Required]string questionContent, [Required] List<string> answers)
         {
@@ -49,6 +52,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Business Relation")]
         [HttpDelete("question-of-project")]
         public async Task<IActionResult> DeleteQuestion([Required] Guid questionId)
         {
@@ -67,6 +71,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Business Relation")]
         [HttpPut("question-of-project")]
         public async Task<IActionResult> UpdateQuestion([Required] Guid questionId, [Required] string questionContent, List<string> answers)
         {

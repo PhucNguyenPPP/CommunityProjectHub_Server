@@ -2,6 +2,7 @@
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace CPH.Api.Controllers
             _answerService = answer;
         }
 
+        [Authorize(Roles = "Business Relation")]
         [HttpDelete("Answer")]
         public async Task<IActionResult> DeleteAnswer([Required] Guid answerId)
         {

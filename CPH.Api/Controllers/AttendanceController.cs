@@ -1,6 +1,7 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ namespace CPH.Api.Controllers
             _classService = classService;
         }
 
+        [Authorize(Roles = "Associate")]
         [HttpPost("import-attendance-file")]
         public async Task<IActionResult> ImportAttendanceExcelFile(IFormFile file, Guid classId)
         {
@@ -29,6 +31,11 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        /// <summary>
+        /// k xai api nay
+        /// </summary>
+        /// <param name="classId"></param>
+        /// <returns></returns>
         [HttpGet("class-attendance")]
         public IActionResult GetAttendanceOfClass(Guid classId)
         {
@@ -40,6 +47,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Associate")]
         [HttpPost("export-attendance")]
         public async Task<IActionResult> ExportAttendanceFile(Guid classId)
         {
@@ -55,6 +63,7 @@ namespace CPH.Api.Controllers
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
+        [Authorize(Roles = "Associate")]
         [HttpPost("export-attendance-template")]
         public async Task<IActionResult> ExportAttendanceTemplateFile(Guid classId)
         {

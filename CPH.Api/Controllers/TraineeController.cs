@@ -5,6 +5,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Trainee;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,6 +23,7 @@ namespace CPH.Api.Controllers
             _classService = classService;
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation")]
         [HttpGet("all-trainee")]
         public async Task<IActionResult> GetAllTraineeOfClass([FromQuery][Required] Guid classId,
                                                         [FromQuery] string? searchValue,
@@ -45,6 +47,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer")]
         [HttpPut("update-trainee-score")]
         public async Task<IActionResult> UpdateTraineeScore(ScoreTraineeRequestDTO model)
         {
@@ -56,6 +59,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation")]
         [HttpGet("score-trainee-list")]
         public async Task<IActionResult> GetScoreTraineeList(Guid classId)
         {
@@ -67,6 +71,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpDelete("trainee")]
         public async Task<IActionResult> RemoverTrainee([Required] Guid classId, [Required] Guid accountId, string? reason)
         {
@@ -78,6 +83,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer")]
         [HttpPost("import-trainee-score")]
         public async Task<IActionResult> ImportTraineeScoreByExcel(IFormFile file, Guid classId)
         {
@@ -89,6 +95,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation")]
         [HttpPost("export-trainee")]
         public async Task<IActionResult> ExportTrainee(Guid classId)
         {
@@ -103,6 +110,8 @@ namespace CPH.Api.Controllers
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
+
+        [Authorize(Roles = "Lecturer")]
         [HttpPost("trainee")]
         public async Task<IActionResult> AddTraineeHadAccount([FromBody] AddTraineeHadAccountDTO addTraineeHadAccountDTO)
         {
@@ -114,6 +123,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Trainee")]
         [HttpPut("trainee-report")]
         public async Task<IActionResult> UpdateReport([Required] Guid accountId, [Required] Guid classId, [Required] IFormFile file)
         {
@@ -125,6 +135,8 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [Authorize(Roles = "Lecturer")]
         [HttpPost("new-account-of-trainee")]
         public async Task<IActionResult> SignUp([FromForm] SignUpRequestOfTraineeDTO model)
         {
@@ -151,6 +163,7 @@ namespace CPH.Api.Controllers
             }
         }
 
+        [Authorize(Roles = "Lecturer")]
         [HttpGet("search-trainee-add-to-class")]
         public IActionResult SearchTraineeForAssigningToClass(string? searchValue)
         {
@@ -165,7 +178,7 @@ namespace CPH.Api.Controllers
             }
         }
 
-
+        [Authorize(Roles = "Trainee")]
         [HttpPut("trainee-moving-class")]
         public async Task<IActionResult> MovingTraineeToAnotherClass(MoveTraineeClassDTO moveTraineeClassDTO)
         {
@@ -176,6 +189,8 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [Authorize(Roles = "Trainee")]
         [HttpGet("available-group-of-class")]
         public async Task<IActionResult> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId)
         {
@@ -186,6 +201,8 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [Authorize(Roles = "Trainee")]
         [HttpPut("trainee-moving-group")]
         public async Task<IActionResult> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO)
         {
@@ -196,6 +213,8 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [Authorize(Roles = "Associate")]
         [HttpPost("import-trainee")]
         public async Task<IActionResult> ImportTrainee(IFormFile file, Guid projectId)
         {
@@ -212,6 +231,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer")]
         [HttpPost("export-trainee-template")]
         public async Task<IActionResult> ExportTraineeTemplate(Guid classId)
         {
@@ -227,6 +247,7 @@ namespace CPH.Api.Controllers
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
+        [Authorize(Roles = "Associate")]
         [HttpPost("export-trainee-class-template")]
         public async Task<IActionResult> ExportTraineeClassTemplate()
         {
