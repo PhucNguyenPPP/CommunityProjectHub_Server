@@ -3,6 +3,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.Associate;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,7 @@ namespace CPH.Api.Controllers
             _associateService = associateService;
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpGet("search-associate-to-add-project")]
         public IActionResult SearchAssociateToAddToProject(string? searchValue)
         {
@@ -33,6 +35,7 @@ namespace CPH.Api.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("new-associate")]
         public async Task<IActionResult> SignUpAssociate([FromForm] SignUpAssociateRequestDTO model)
         {

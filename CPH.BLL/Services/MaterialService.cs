@@ -10,6 +10,7 @@ using Firebase.Storage;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -63,6 +64,12 @@ namespace CPH.BLL.Services
                 return check;
             }
 
+            var user = await _unitOfWork.Account.GetByCondition(c => c.AccountId == model.UpdatedBy);
+            if (user == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
             if (model.File == null || model.File.Length == 0)
             {
                 return new ResponseDTO("File không hợp lệ!", 400, false);
@@ -81,7 +88,7 @@ namespace CPH.BLL.Services
                 ProjectId = model.ProjectId,
                 Title = model.Title,
                 UploadedAt = DateTime.Now,
-
+                UpdatedBy = model.UpdatedBy
             };
 
             await _unitOfWork.Material.AddAsync(newMaterial);
@@ -127,12 +134,14 @@ namespace CPH.BLL.Services
         public async Task<ResponseDTO> GetAllMaterialProject(Guid projectId, string? searchValue, int? pageNumber, int? rowsPerPage)
         {
             var project = _unitOfWork.Project.GetAllByCondition(c => c.ProjectId == projectId).FirstOrDefault();
-            if(project == null)
+            if (project == null)
             {
                 return new ResponseDTO("Dự án không tồn tại", 400, false);
             }
 
-            var list = _unitOfWork.Material.GetAllByCondition(c => c.ProjectId == projectId);
+            var list = _unitOfWork.Material.GetAllByCondition(c => c.ProjectId == projectId)
+                .Include(c => c.UpdatedByNavigation)
+                .ToList();
 
             if (!list.Any())
             {
@@ -143,7 +152,7 @@ namespace CPH.BLL.Services
             {
                 list = list.Where(c =>
                    c.Title.ToLower().Contains(searchValue.ToLower())
-                );
+                ).ToList();
             }
 
             if (!list.Any())
@@ -182,12 +191,12 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Lấy tài nguyên của dự án thành công", 200, true, listDTO);
         }
 
-        public async Task<ResponseDTO>DeleteMaterial(Guid materialId)
+        public async Task<ResponseDTO> DeleteMaterial(Guid materialId)
         {
             var material = _unitOfWork.Material
                 .GetAllByCondition(c => c.MaterialId == materialId)
                 .FirstOrDefault();
-            if(material == null)
+            if (material == null)
             {
                 return new ResponseDTO("Tài nguyên không tồn tại", 400, false);
             }
@@ -205,21 +214,27 @@ namespace CPH.BLL.Services
             return new ResponseDTO("Xóa tài nguyên thành công", 200, true);
         }
 
-        public async Task<ResponseDTO> UpdateMaterial (MaterialUpdateDTO model)
+        public async Task<ResponseDTO> UpdateMaterial(MaterialUpdateDTO model)
         {
             var project = _unitOfWork.Project
-                .GetAllByCondition(c=> c.ProjectId == model.ProjectId)
+                .GetAllByCondition(c => c.ProjectId == model.ProjectId)
                 .FirstOrDefault();
 
-            if(project == null)
+            if (project == null)
             {
                 return new ResponseDTO("Dự án không tồn tại", 400, false);
+            }
+
+            var account = await _unitOfWork.Account.GetByCondition(c => c.AccountId == model.UpdatedBy);
+            if (account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
             }
 
             var material = _unitOfWork.Material
                 .GetAllByCondition(c => c.MaterialId == model.MaterialId && c.ProjectId == model.ProjectId)
                 .FirstOrDefault();
-            if(material == null)
+            if (material == null)
             {
                 return new ResponseDTO("Tài nguyên không tồn tại", 400, false);
             }
@@ -240,6 +255,7 @@ namespace CPH.BLL.Services
             material.Title = model.Title;
             material.MaterialUrl = url;
             material.UploadedAt = DateTime.Now;
+            material.UpdatedBy = model.UpdatedBy;
 
             _unitOfWork.Material.Update(material);
             await _unitOfWork.SaveChangeAsync();

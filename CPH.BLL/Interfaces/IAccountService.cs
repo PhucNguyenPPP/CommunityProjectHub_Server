@@ -34,5 +34,7 @@ namespace CPH.BLL.Interfaces
         Task<bool> ChangePassword(ForgotPasswordDTO model);
         string GeneratePasswordString();
         bool CheckAssociateNameExist(string associateName);
+        Task<string> StoreFileAndGetLink(IFormFile file, string folderName);
+        Task<ResponseDTO> UpdateAvatar(IFormFile avatar, Guid accountId);
     }
 }

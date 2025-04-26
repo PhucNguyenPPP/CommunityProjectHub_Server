@@ -27,5 +27,8 @@ namespace CPH.BLL.Interfaces
         Task<ResponseDTO> MoveTraineeClass(MoveTraineeClassDTO moveTraineeClassDTO);
         Task<ResponseDTO> GetAvailableGroupOfClass(Guid currentClassId, Guid accountId);
         Task<ResponseDTO> MoveTraineeToAnotherGroupInClass(MovingTraineeToAnotherGroupInClass traineeToAnotherGroupInClassDTO);
+        Task<ResponseDTO> ImportTrainee(IFormFile file, Guid projectId);
+        MemoryStream ExportTraineeListTemplateExcel(Guid classId);
+        MemoryStream ExportTraineeClassListTemplateExcel();
     }
 }

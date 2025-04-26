@@ -1,6 +1,7 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,7 @@ namespace CPH.Api.Controllers
             _scheduleService = scheduleService;
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee")]
         [HttpGet("schedule")]
         public async Task<IActionResult> GetSchedule(Guid accountId)
         {

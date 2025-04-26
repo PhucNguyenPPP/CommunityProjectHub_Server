@@ -3,6 +3,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Project;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ namespace CPH.Api.Controllers
             _classService = classService;
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation")]
         [HttpGet("all-class-of-project")]
         public async Task<IActionResult> GetAllClassOfProject([FromQuery] Guid projectId,
                                             [FromQuery] string? searchValue,
@@ -39,6 +41,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation")]
         [HttpGet("class-detail")]
         public async Task<IActionResult> GetClassDetail([FromQuery] Guid classId)
         {
@@ -56,6 +59,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Lecturer")]
         [HttpPut("group-of-class")]
         public async Task<IActionResult> DivideGroupOfClass([FromBody] DevideGroupOfClassDTO divideGroupOfClassDTO)
         {
@@ -69,6 +74,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("updated-class")]
         public async Task<IActionResult> UpdateClass([FromBody] UpdateClassDTO updateClassDTO)
         {
@@ -83,6 +90,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer")]
         [HttpGet("all-class-of-lecturer")]
         public async Task<IActionResult> GetAllClassOfLecturer(string? searchValue, Guid lecturerId)
         {
@@ -95,6 +103,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("remove-update-class")]
         public async Task<IActionResult> RemoveUpdateClass([FromBody] RemoveUpdateClassDTO model)
         {
@@ -107,6 +116,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Trainee")]
         [HttpGet("all-class-of-trainee")]
         public async Task<IActionResult> GetAllClassOfTrainee(string? searchValue, Guid accountId)
         {
@@ -119,6 +129,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Student")]
         [HttpGet("all-class-of-student")]
         public async Task<IActionResult> GetAllClassOfStudent(string? searchValue, Guid accountId)
         {
@@ -130,6 +141,8 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(responseDTO);
         }
+
+        [Authorize(Roles = "Trainee")]
         [HttpGet("all-available-class")]
         public async Task<IActionResult> GetAllAvailableClassOfTrainee(Guid accountId, Guid currentClassId)
         {

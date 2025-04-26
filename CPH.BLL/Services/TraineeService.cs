@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
+using CPH.Common.DTO.Account;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.General;
@@ -43,15 +45,17 @@ namespace CPH.BLL.Services
         private readonly IImageService _imageService;
         private readonly IAccountService _accountService;
         private readonly IEmailService _emailService;
+        private readonly IProjectService _projectService;
 
         public TraineeService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, IAccountService accountService, IEmailService emailService,
-            IImageService imageService, IConfiguration config)
+            IImageService imageService, IConfiguration config, IProjectService projectService)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
             _accountService = accountService;
             _emailService = emailService;
+            _projectService = projectService;
             _imageService = imageService;
             _config = config;
             _firebaseBucket = _config.GetSection("FirebaseConfig")["storage_bucket"];
@@ -189,6 +193,7 @@ namespace CPH.BLL.Services
                 .Include(c => c.Trainees)
                 .ThenInclude(c => c.Account)
                 .Include(c => c.Project)
+                .Include(c => c.LessonClasses)
                 .FirstOrDefault();
 
             if (classObj == null)
@@ -230,6 +235,8 @@ namespace CPH.BLL.Services
             }
 
             bool checkUpdate = false;
+            var totalLessonClass = classObj.LessonClasses.Count();
+            var project = classObj.Project;
             foreach (var i in model.ScoreTrainees)
             {
                 var trainee = traineeClassList.FirstOrDefault(c => c.TraineeId == i.TraineeId);
@@ -241,13 +248,27 @@ namespace CPH.BLL.Services
                 if (i.Score != null)
                 {
                     trainee!.Score = Math.Round((decimal)i.Score, 2);
+
+                    var traineeAttendance = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId).Count();
+                    if (traineeAttendance == totalLessonClass)
+                    {
+                        var absentSlot = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId && c.Status == false).Count();
+                        var absentPercentage = absentSlot * 100 / totalLessonClass;
+                        if (absentPercentage <= project.MaxAbsentPercentage && i.Score >= project.FailingScore)
+                        {
+                            trainee!.Result = true;
+                        }
+                        else
+                        {
+                            trainee!.Result = false;
+                        }
+                    }
                 }
                 else
                 {
                     trainee!.Score = null;
+                    trainee!.Result = null;
                 }
-
-                _unitOfWork.Trainee.Update(trainee);
             }
 
             if (checkUpdate)
@@ -273,7 +294,10 @@ namespace CPH.BLL.Services
 
             var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId)
                 .Include(c => c.Account)
-                .ThenInclude(c => c.Role);
+                .ThenInclude(c => c.Role)
+                .Include(c => c.Class)
+                .ThenInclude(c => c.LessonClasses)
+                .Include(c => c.Attendances);
 
             var listDTO = _mapper.Map<List<GetAllTraineeOfClassDTO>>(traineeList);
             return new ResponseDTO("Lấy danh sách điểm của học viên thành công", 200, true, listDTO);
@@ -341,18 +365,24 @@ namespace CPH.BLL.Services
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             var classObj = _unitOfWork.Class.GetAllByCondition(c => c.ClassId == classId)
                 .Include(c => c.Trainees)
+                .Include(c => c.LessonClasses)
+                .Include(c => c.Project)
                 .FirstOrDefault();
+
             if (classObj == null)
             {
                 return new ResponseDTO("Lớp không tồn tại", 400, false);
             }
+
             var traineeOfClass = classObj.Trainees.ToList();
             if (traineeOfClass.Any(c => c.Score != null))
             {
                 return new ResponseDTO("Sinh viên của lớp đã được cập nhật điểm trước đó", 400, false);
             }
+
             var studentScores = new List<TraineeScoreExcelDTO>();
             var errors = new List<string>();
             using (var package = new ExcelPackage(stream))
@@ -372,17 +402,20 @@ namespace CPH.BLL.Services
                     });
                 }
             }
+
             for (int i = 0; i < studentScores.Count; i++)
             {
                 if (string.IsNullOrEmpty(studentScores[i].AccountCode))
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Mã học viên bị thiếu");
                 }
+
                 var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == studentScores[i].AccountCode);
                 if (!string.IsNullOrEmpty(studentScores[i].AccountCode) && account == null)
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} không tồn tại");
                 }
+
                 if (account != null)
                 {
                     var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account.AccountId && c.ClassId == classId);
@@ -396,22 +429,44 @@ namespace CPH.BLL.Services
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
                 }
+
                 if (decimal.TryParse(studentScores[i].Score, out score) && (score < 0 || score > 10))
                 {
                     errors.Add($"Bỏ qua dòng {i + 2}: Học viên có mã học viên {studentScores[i].AccountCode} có điểm không hợp lệ");
                 }
             }
+
             if (errors.Count > 0)
             {
                 return new ResponseDTO("File excel không hợp lệ", 400, false, errors);
             }
+
+            var totalLessonClass = classObj.LessonClasses.Count();
+            var project = classObj.Project;
             foreach (var i in studentScores)
             {
                 var account = await _unitOfWork.Account.GetByCondition(c => c.AccountCode == i.AccountCode);
                 var trainee = await _unitOfWork.Trainee.GetByCondition(c => c.AccountId == account!.AccountId && c.ClassId == classId);
-                trainee!.Score = decimal.Parse(i.Score!);
+                var score = decimal.Parse(i.Score!);
+                trainee!.Score = score;
+
+                var traineeAttendance = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId).Count();
+                if(traineeAttendance == totalLessonClass)
+                {
+                    var absentSlot = _unitOfWork.Attendance.GetAllByCondition(c => c.TraineeId == trainee!.TraineeId && c.Status == false).Count();
+                    var absentPercentage = absentSlot * 100 / totalLessonClass;
+                    if(absentPercentage <= project.MaxAbsentPercentage && score >= project.FailingScore)
+                    {
+                        trainee!.Result = true;
+                    }
+                    else
+                    {
+                        trainee!.Result = false;
+                    }
+                }
                 _unitOfWork.Trainee.Update(trainee!);
             }
+
             var result = await _unitOfWork.SaveChangeAsync();
             if (result)
             {
@@ -629,40 +684,62 @@ namespace CPH.BLL.Services
                 return new ResponseDTO($"Dự án đang ở trạng thái {status}không thể cập nhật báo cáo", 400, false);
             }
 
-            var lesson = _unitOfWork.Lesson
-                .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-                .OrderByDescending(c => c.LessonNo).ToList();
+            //fix để không phải sửa DB trong lúc demo
+            //var lesson = _unitOfWork.Lesson
+            //    .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
+            //    .OrderByDescending(c => c.LessonNo).ToList();
+
+            //if(lesson.Count() > 1)
+            //{
+            //    var finishTime = _unitOfWork.LessonClass
+            //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+            //    .Select(c => c.StartTime)
+            //    .FirstOrDefault();
+
+            //    var startTime = _unitOfWork.LessonClass
+            //        .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
+            //        .Select(c => c.EndTime)
+            //        .FirstOrDefault();
+
+                
+            //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //    {
+            //        string formattedFinishTime = finishTime.HasValue
+            //        ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
+
+            //        string formattedStartTime = startTime.HasValue
+            //            ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //            : "Không xác định";
+
+            //        if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            //        {
+            //            return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    var finishTime = _unitOfWork.LessonClass
+            //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+            //    .Select(c => c.EndTime)
+            //    .FirstOrDefault();
+
+            //    string formattedFinishTime = finishTime.HasValue
+            //        ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+            //        : "Không xác định";
+
+            //    if (DateTime.Now < finishTime)
+            //    {
+            //        return new ResponseDTO($"Báo cáo chỉ được cập nhật sau {formattedFinishTime}", 400, false);
+            //    }
+            //}
 
 
-            var finishTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
-                .Select(c => c.StartTime)
-                .FirstOrDefault();
 
-            var startTime = _unitOfWork.LessonClass
-                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[1].LessonId)
-                .Select(c => c.EndTime)
-                .FirstOrDefault();
-
-            if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
+            if (trainee.ReportContent != null)
             {
-                string formattedFinishTime = finishTime.HasValue
-                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
-                : "Không xác định";
-
-                string formattedStartTime = startTime.HasValue
-                    ? startTime.Value.ToString("HH:mm dd-MM-yyyy")
-                    : "Không xác định";
-
-                if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
-                {
-                    return new ResponseDTO($"Báo cáo chỉ được cập nhật từ {formattedStartTime} đến {formattedFinishTime}", 400, false);
-                }
-            }
-
-            if (trainee.FeedbackContent != null)
-            {
-                await _imageService.DeleteFileFromFirebase(trainee.FeedbackContent);
+                await _imageService.DeleteFileFromFirebase(trainee.ReportContent);
             }
 
             if (file == null || file.Length == 0)
@@ -994,9 +1071,192 @@ namespace CPH.BLL.Services
             }
             return new ResponseDTO("Chuyển đổi nhóm thất bại", 500, false);
         }
-    }
 
+        public async Task<ResponseDTO> ImportTrainee(IFormFile file, Guid projectId)
+        {
+            var checkProject = await _projectService.CheckProjectExisted(projectId);
+            if (!checkProject.IsSuccess)
+            {
+                return new ResponseDTO("Không tìm thấy dự án để import", 404, false);
+            }
+            if (checkProject.Result != null)
+            {
+                var project = (Project)checkProject.Result;
+                if (project.Status != ProjectStatusConstant.Planning)
+                {
+                    return new ResponseDTO("Trạng thái của dự án khác " + ProjectStatusConstant.Planning, 404, false);
+                }
+                var response = await _accountService.ImportTraineeFromExcel(file);
+                if (!response.IsSuccess)
+                {
+                    if (response.Result != null)
+                    {
+                        List<string> strings = (List<string>)response.Result;
+                        return new ResponseDTO("File Excel không hợp lệ", 400, false, strings);
+                    }
+                    return new ResponseDTO("File Excel không hợp lệ", 400, false);
+                }
+                List<ImportTraineeDTO> importTraineeDTOs = (List<ImportTraineeDTO>)response.Result;
+                if (importTraineeDTOs == null)
+                {
+                    return new ResponseDTO("File Excel không có học viên",400,false);
+                }
+                List<string> classCodes = importTraineeDTOs.Select(c => c.ClassCode).Distinct().ToList();
+                List<Trainee> trainees = _mapper.Map<List<Trainee>>(importTraineeDTOs);
+                var classOfProject = _unitOfWork.Class.GetAllByCondition(c => c.ProjectId.Equals(projectId)).ToList();
+                if (classOfProject.Count() > 0)
+                {
+                    foreach (var classOfProjectItem in classOfProject)
+                    {
+                        var lessonOfClass = _unitOfWork.LessonClass.GetAllByCondition(lsc => lsc.ClassId.Equals(classOfProjectItem.ClassId)).ToList();
+                        if (lessonOfClass.Count()>0)
+                        {
+                            foreach (var item in lessonOfClass)
+                            {
+                                _unitOfWork.LessonClass.Delete(item);
+                            }
+                        }
+                        var traineeOfOldClass = _unitOfWork.Trainee.GetAllByCondition(t => t.ClassId.Equals(classOfProjectItem.ClassId)).ToList();
+                        if (traineeOfOldClass.Count() > 0)
+                        {
+                            foreach (var item in traineeOfOldClass)
+                            {
+                                _unitOfWork.Trainee.Delete(item);
+                            }
+                        }
+                        _unitOfWork.Class.Delete(classOfProjectItem);
+                    }                   
+                }
+                var listClass = new List<Class>();
+                for (var i = 0; i < classCodes.Count; i++)
+                {
+                    var c = new DAL.Entities.Class();
+                    c.ClassId = Guid.NewGuid();
+                    c.ProjectId = projectId;
+                    c.ClassCode = classCodes[i];
+                    listClass.Add(c);
+                }
+                await _unitOfWork.Class.AddRangeAsync(listClass);
+                for (var i = 0; i < trainees.Count; i++)
+                {
+                    var c = listClass.Where(c => c.ClassCode.Equals(importTraineeDTOs[i].ClassCode)).FirstOrDefault();
+                    trainees[i].ClassId = c.ClassId;
+                    trainees[i].TraineeId = Guid.NewGuid();
+                }
+                List<LessonClass> lessonClasses = new List<LessonClass>();
+                var lessons = _unitOfWork.Lesson.GetAllByCondition(l=>l.ProjectId.Equals(projectId));  
+                foreach (var cl in listClass)
+                {
+                    foreach (var l in lessons)
+                    {
+                        LessonClass lessonClass = new LessonClass
+                        {
+                            LessonClassId = Guid.NewGuid(),
+                            LessonId = l.LessonId,
+                            ClassId = cl.ClassId,
+                        };
+                        lessonClasses.Add(lessonClass);
+                    }
+                }
+                await _unitOfWork.LessonClass.AddRangeAsync(lessonClasses);
+                await _unitOfWork.Trainee.AddRangeAsync(trainees);
+                var r = await _unitOfWork.SaveChangeAsync();
+                if (!r)
+                {
+                    return new ResponseDTO("Import học viên thất bại", 500, false);
+                }
+                return new ResponseDTO("Import học viên thành công", 200, true);
+            }
+            return new ResponseDTO("Dự án lỗi", 500, false);
+        }
+
+        public MemoryStream ExportTraineeListTemplateExcel(Guid classId)
+        {
+            var traineeList = _unitOfWork.Trainee.GetAllByCondition(c => c.ClassId == classId).Include(c => c.Account).OrderBy(c => c.GroupNo);
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("DanhSachDiem");
+
+                worksheet.Cells[1, 1].Value = "STT";
+                worksheet.Cells[1, 2].Value = "Mã học viên";
+                worksheet.Cells[1, 3].Value = "Tên học viên";
+                worksheet.Cells[1, 4].Value = "Nhóm";
+                worksheet.Cells[1, 5].Value = "Điểm";
+
+                using (var range = worksheet.Cells[1, 1, 1, 5])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Font.Size = 12;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
+
+                int row = 2;
+                int stt = 1;
+                foreach (var trainee in traineeList)
+                {
+                    worksheet.Cells[row, 1].Value = stt;
+                    worksheet.Cells[row, 2].Value = trainee.Account.AccountCode;
+                    worksheet.Cells[row, 3].Value = trainee.Account.FullName;
+                    worksheet.Cells[row, 4].Value = trainee.GroupNo;
+                    worksheet.Cells[row, 5].Value = string.Empty;
+                    row++;
+                    stt++;
+                }
+
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
+
+        public MemoryStream ExportTraineeClassListTemplateExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+
+                for (int i = 0; i <= 1; i++)
+                {
+                    var worksheet = package.Workbook.Worksheets.Add($"Class{i+1}");
+                    worksheet.Cells[1, 1].Value = "STT";
+                    worksheet.Cells[1, 2].Value = "Mã Số Tài Khoản";
+                    worksheet.Cells[1, 3].Value = "Tên tài khoản";
+                    worksheet.Cells[1, 4].Value = "Họ và Tên";
+                    worksheet.Cells[1, 5].Value = "Số điện thoại";
+                    worksheet.Cells[1, 6].Value = "Email";
+                    worksheet.Cells[1, 7].Value = "Địa chỉ";
+                    worksheet.Cells[1, 8].Value = "Ngày sinh";
+                    worksheet.Cells[1, 9].Value = "Giới tính";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 9])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Font.Size = 12;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+                    worksheet.Cells.AutoFitColumns();
+                }
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
+
+    }
 }
+
 
 
 

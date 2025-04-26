@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Answer;
 using CPH.Common.DTO.Associate;
+using CPH.Common.DTO.Attendance;
 using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Class;
 using CPH.Common.DTO.Lecturer;
@@ -12,6 +14,7 @@ using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Notification;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.ProjectLogging;
+using CPH.Common.DTO.Question;
 using CPH.Common.DTO.Registration;
 using CPH.Common.DTO.Trainee;
 using CPH.DAL.Entities;
@@ -26,6 +29,7 @@ namespace CPH.Api.Profiles
             CreateMap<SignUpRequestDTO2, Account>().ReverseMap();
             CreateMap<Account, LocalAccountDTO>()
                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
+               .ForMember(dest => dest.AssociateName, opt => opt.MapFrom(src => src.Associate != null ? src.Associate.AssociateName : string.Empty))
                .ReverseMap();
             CreateMap<ImportAccountDTO, Account>().ReverseMap();
             CreateMap<ImportTraineeDTO, Trainee>().ReverseMap();
@@ -76,7 +80,10 @@ namespace CPH.Api.Profiles
                 .ReverseMap();
 
             CreateMap<Account, LecturerResponseDTO>().ReverseMap();
-            CreateMap<Material, GetAllMaterialDTO>().ReverseMap();
+            CreateMap<Material, GetAllMaterialDTO>()
+                .ForMember(dest => dest.UploadedAccountId, opt => opt.MapFrom(src => src.UpdatedByNavigation.AccountId))
+                .ForMember(dest => dest.UploadedFullName, opt => opt.MapFrom(src => src.UpdatedByNavigation.FullName))
+                .ReverseMap();
 
             CreateMap<Account, GetMemberOfClassDTO>()
                 .ReverseMap();
@@ -120,6 +127,8 @@ namespace CPH.Api.Profiles
            .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Account.Role.RoleName));
 
             CreateMap<Trainee, GetAllTraineeOfClassDTO>()
+                .ForMember(dest => dest.TotalSlot, opt => opt.MapFrom(src => src.Class.LessonClasses.Count()))
+                .ForMember(dest => dest.TotalPresentSlot, opt => opt.MapFrom(src => src.Attendances.Where(c => c.Status == true).Count()))
                 .ReverseMap();
 
             CreateMap<ProjectLogging, GetAllProjectLoggingDTO>()
@@ -200,6 +209,26 @@ namespace CPH.Api.Profiles
                 opt => opt.MapFrom(src => src.Associate != null ? src.Associate.AssociateName : string.Empty)).ReverseMap();
 
             CreateMap<SignUpAssociateRequestDTO, Account>().ReverseMap();
+
+            CreateMap<Trainee, AttendanceTraineeResponseDTO>()
+                .ForMember(dest => dest.TotalSlot, opt => opt.MapFrom(src => src.Class.LessonClasses.Count()))
+                .ForMember(dest => dest.TotalPresentSlot, opt => opt.MapFrom(src => src.Attendances.Where(c => c.Status == true).Count()))
+                .ReverseMap();
+
+            CreateMap<Answer, GetAllAnswerDTO>()
+                .ReverseMap();
+
+            CreateMap<Question, GetAllQuestionDTO>()
+                .ForMember(dest => dest.AnwserList, opt => opt.MapFrom(src => src.Answers))
+                .ReverseMap();
+
+            CreateMap<Project, GetProjectByTraineeDTO>()
+                .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
+                .ForMember(dest => dest.ProjectId, opt => opt.MapFrom(src => src.ProjectId));
+
+            CreateMap<Class, TraineeClassDTO>()
+                .ForMember(dest => dest.LecturerName, opt => opt.MapFrom(src => src.Lecturer.FullName))
+                .ReverseMap();
         }
     }
 }

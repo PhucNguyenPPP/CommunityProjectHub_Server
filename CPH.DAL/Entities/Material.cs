@@ -15,5 +15,9 @@ public partial class Material
 
     public Guid ProjectId { get; set; }
 
+    public Guid UpdatedBy { get; set; }
+
     public virtual Project Project { get; set; } = null!;
+
+    public virtual Account UpdatedByNavigation { get; set; } = null!;
 }

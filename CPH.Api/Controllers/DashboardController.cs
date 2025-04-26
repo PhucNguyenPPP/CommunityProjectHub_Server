@@ -1,6 +1,7 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.Common.DTO.General;
 using CPH.DAL.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -70,7 +71,6 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
-
         [HttpGet("project-amount")]
         public async Task<IActionResult> GetAllNumberOfProject(Guid accountId)
         {
@@ -104,6 +104,27 @@ namespace CPH.Api.Controllers
                     return BadRequest(responseDTO);
                 }
             }
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("user-amount")]
+        public IActionResult GetAllNumberOfUser()
+        {
+            ResponseDTO responseDTO = _dashboardService.GetAllNumberOfUser();
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("user-with-role-amount")]
+        public IActionResult GetAllNumberOfUserByRole()
+        {
+            ResponseDTO responseDTO = _dashboardService.GetAllNumberOfUserByRole();
+            return Ok(responseDTO);
+        }
+
+        [HttpGet("progress-all-project")]
+        public async Task<IActionResult> GetProgressOfAllProject(Guid accountId)
+        {
+            ResponseDTO responseDTO = await _dashboardService.GetProgressOfAllProject(accountId);
             return Ok(responseDTO);
         }
     }

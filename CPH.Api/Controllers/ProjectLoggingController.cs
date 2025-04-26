@@ -2,6 +2,7 @@
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace CPH.Api.Controllers
             _projectLoggingService = projectLoggingService;
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation")]
         [HttpGet("all-project-logging")]
         public async Task<IActionResult> GetAllProjectLogging([FromQuery][Required] Guid projectId,
                                                                 [FromQuery] string? searchValue,

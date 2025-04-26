@@ -2,6 +2,7 @@
 using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace CPH.Api.Controllers
             _memberService = member;
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpGet("all-member-of-project")]
         public async Task<IActionResult> GetAllMemberProject([FromQuery][Required] Guid projectId,
                                                                 [FromQuery] string? searchValue,
@@ -38,6 +40,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpDelete("member")]
         public async Task<IActionResult> RemoveMemberFromProject(Guid memberId)
         {
@@ -49,6 +52,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpGet("search-student-assigning-to-class")]
         public IActionResult SearchStudentForAssigningToClass(string? searchValue)
         {

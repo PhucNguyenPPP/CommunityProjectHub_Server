@@ -31,5 +31,6 @@ namespace CPH.Common.DTO.Class
         public int? StudentSlotAvailable { get; set; }
 
         public int TotalTrainee {  get; set; }
+        public List<Guid> StudentIds { get; set; } = new List<Guid>();
     }
 }

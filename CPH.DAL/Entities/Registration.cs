@@ -13,6 +13,8 @@ public partial class Registration
 
     public string Description { get; set; } = null!;
 
+    public string? DeniedReason { get; set; }
+
     public Guid ClassId { get; set; }
 
     public Guid AccountId { get; set; }

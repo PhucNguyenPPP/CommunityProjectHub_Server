@@ -32,6 +32,14 @@ namespace CPH.Common.DTO.Project
 
         public DateTime CreatedDate { get; set; }
 
+        public int? MaxAbsentPercentage { get; set; }
+
+        public decimal? FailingScore { get; set; }
+
+        public int MinLessonTime { get; set; }
+
+        public int MaxLessonTime { get; set; }
+
         public string Status { get; set; }
 
         public Guid ProjectManagerId { get; set; }

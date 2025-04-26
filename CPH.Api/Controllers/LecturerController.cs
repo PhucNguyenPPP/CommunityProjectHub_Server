@@ -1,6 +1,7 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace CPH.Api.Controllers
             _lecturerService = lecturerService;
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpGet("search-lecturer")]
         public IActionResult SearchLecturer(string? searchValue)
         {
@@ -31,6 +33,7 @@ namespace CPH.Api.Controllers
             }
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpGet("all-lecturer-of-project")]
         public async Task<IActionResult> GetAllLecturerProject([FromQuery] Guid projectId,
                                                                 [FromQuery] string? searchValue,
@@ -52,6 +55,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpDelete("lecturer")]
         public async Task<IActionResult> RemoveLectureFromProject(Guid lecturerId, Guid classId)
         {
@@ -63,6 +67,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpGet("search-lecturer-assigning-pm")]
         public IActionResult SearchLecturerForAssigningPM(string? searchValue, Guid projectId)
         {

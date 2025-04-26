@@ -1,5 +1,4 @@
 ﻿using CPH.DAL.Context;
-using CPH.DAL.Entities;
 using CPH.DAL.Interfaces;
 using CPH.DAL.Repositories;
 using System;
@@ -30,6 +29,11 @@ namespace CPH.DAL.UnitOfWork
             Registration = new RegistrationRepository(_context);
             ProjectLogging = new ProjectLoggingRepository(_context);
             Associate = new AssociateRepository(_context);
+            Attendance = new AttendanceRepository(_context);
+            Question = new QuestionRepository(_context);
+            Answer = new AnswerRepository(_context);
+            Form = new FormRepository(_context);
+            TraineeAnswer = new TraineeAnswerRepository(_context);
         }
 
 
@@ -57,5 +61,10 @@ namespace CPH.DAL.UnitOfWork
         public IRegistrationRepository Registration { get; private set; }
         public IProjectLoggingRepository ProjectLogging { get; private set; }
         public IAssociateRepository Associate { get; private set; }
+        public IAttendanceRepository Attendance { get; private set; }
+        public IQuestionRepository Question { get; private set; }
+        public IAnswerRepository Answer { get; private set; }
+        public IFormRepository Form { get; private set; }
+        public ITraineeAnswerRepository TraineeAnswer { get; private set; }
     }
 }

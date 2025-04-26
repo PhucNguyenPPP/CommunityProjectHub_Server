@@ -31,10 +31,20 @@ namespace CPH.Common.DTO.Project
         [Required(ErrorMessage = "Vui lòng nhập ngày hết hạn ứng tuyển của dự án")]
         public DateTime ApplicationEndDate { get; set; }
         public Guid? ProjectManagerId { get; set; }
+        /*
         [Required(ErrorMessage = "Vui lòng nhập file học viên của dự án")]
+        
         public IFormFile Trainees { get; set; }
+        */
         [Required(ErrorMessage = "Vui lòng nhập thông tin đối tác của dự án")]
+        
         public Guid AssociateId { get; set; }
+      [Required(ErrorMessage = "Vui lòng thời lượng tối thiểu của 1 bài học")]
+        [Range(1, int.MaxValue, ErrorMessage = "Thời lượng tối thiểu của 1 bài học phải ít nhất là 1")]
+        public int MinLessonTime { get; set; }
+        [Required(ErrorMessage = "Vui lòng thời lượng tối đa của 1 bài học")]
+        [Range(1, int.MaxValue, ErrorMessage = "Thời lượng tối đa của 1 bài học phải ít nhất là 1")]
+        public int MaxLessonTime { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập danh sách bài học của dự án")]
         public List<string> LessonList { get; set; }
     }

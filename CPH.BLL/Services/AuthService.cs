@@ -392,7 +392,10 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Token không hợp lệ", 400, false);
             }
             var user = await _unitOfWork.Account.GetAllByCondition(c => c.AccountId.ToString() == accountId
-            && c.Status == true).Include(c => c.Role).FirstOrDefaultAsync();
+            && c.Status == true)
+                .Include(c => c.Role)
+                .Include(c => c.Associate)
+                .FirstOrDefaultAsync();
             if (user == null)
             {
                 return new ResponseDTO("Không tìm thấy tài khoản", 400, false);

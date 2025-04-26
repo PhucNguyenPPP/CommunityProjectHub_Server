@@ -41,6 +41,8 @@ public partial class Account
 
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
+    public virtual ICollection<Material> Materials { get; set; } = new List<Material>();
+
     public virtual ICollection<Member> Members { get; set; } = new List<Member>();
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();

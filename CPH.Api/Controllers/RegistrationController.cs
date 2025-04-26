@@ -2,6 +2,7 @@
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Project;
 using CPH.Common.DTO.Registration;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -18,6 +19,8 @@ namespace CPH.Api.Controllers
         {
             _registrationService = registrationService;
         }
+
+        [Authorize(Roles = "Student,Lecturer")]
         [HttpPost("new-registration")]
         public async Task<IActionResult> SendRegistration([FromBody] SendRegistrationDTO registrationDTO)
         {
@@ -31,6 +34,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Student,Lecturer")]
         [HttpPut("canceled-registration")]
         public async Task<IActionResult> CancelRegistration([FromBody] Guid cancelRegistrationId)
         {
@@ -44,6 +49,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Lecturer")]
         [HttpPut("registration")]
         public async Task<IActionResult> AnswerRegistration([FromBody] AnswerRegistrationDTO answerRegistrationDTO)
         {
@@ -57,6 +64,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Student,Lecturer")]
         [HttpGet("registrations")]
         public async Task<IActionResult> GetAllSentRegistrations([FromQuery] Guid accountId,
                                                             [FromQuery] string search = null,
@@ -70,6 +79,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Lecturer")]
         [HttpGet("registrations-of-project")]
         public async Task<IActionResult> GetRegistrationsOfProject([FromQuery] Guid projectId,
                                                             [FromQuery] string search = null,

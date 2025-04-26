@@ -3,6 +3,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Message;
 using CPH.Common.DTO.Notification;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -19,6 +20,7 @@ namespace CPH.Api.Controllers
             _notificationService = notificationService;
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotification(Guid accountId)
         {
@@ -34,6 +36,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
         [HttpPut("notifications")]
         public async Task<IActionResult> UpdateNotification(UpdateNotificationRequestDTO model)
         {
