@@ -1,5 +1,6 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.Common.DTO.Material;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +15,8 @@ namespace CPH.Api.Controllers
         {
             _feedbackService = feedbackService;
         }
+
+        [Authorize(Roles = "Trainee")]
         [HttpPost("new-feedback")]
         public async Task<IActionResult> CreateFeedback(Guid accountId, Guid projectId, List<Guid> answerId, string? feedbackContent)
         {

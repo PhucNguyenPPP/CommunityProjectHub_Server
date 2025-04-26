@@ -4,7 +4,9 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.Account;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Material;
+using CPH.Common.Enum;
 using CPH.DAL.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -23,6 +25,7 @@ namespace CPH.Api.Controllers
             _accountService = accountService;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("all-accounts")]
         public async Task<IActionResult> GetAllAccounts([FromQuery] string? searchValue,
                                             [FromQuery] int? pageNumber,
@@ -32,6 +35,7 @@ namespace CPH.Api.Controllers
             return Ok(list);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("import-account")]
         public async Task<IActionResult> ImportAccount(IFormFile file)
         {
@@ -91,6 +95,7 @@ namespace CPH.Api.Controllers
             return BadRequest(new ResponseDTO("Thay đổi mật khẩu không thành công", 400, false));
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
         [HttpPut("avatar")]
         public async Task<IActionResult> UpdateAvatar([Required]IFormFile avatar, [Required] Guid accountId)
         {
