@@ -21,7 +21,7 @@ namespace CPH.Api.Controllers
             _questionService = questionService;
         }
 
-        [Authorize(Roles = "Business Relation")]
+        [Authorize(Roles = "Trainee,Business Relation")]
         [HttpGet("all-question-of-project")]
         public async Task<IActionResult> GetAllQuestion(string? searchValue)
         {
