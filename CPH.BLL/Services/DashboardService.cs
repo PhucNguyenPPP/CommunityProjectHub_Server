@@ -204,7 +204,7 @@ namespace CPH.BLL.Services
                 List<ProjectProgressDTO> list = new List<ProjectProgressDTO>();
                 foreach (var project in projectList)
                 {
-                    var classList = projectList.SelectMany(c => c.Classes);
+                    var classList = project.Classes != null ? project.Classes.ToList() : [];
                     int totalLessonClass = 0;
                     int totalPassedLessonClass = 0;
                     foreach (var classObj in classList)
@@ -212,7 +212,11 @@ namespace CPH.BLL.Services
                         totalLessonClass += classObj.LessonClasses.Count();
                         totalPassedLessonClass += classObj.LessonClasses.Where(c => c.EndTime < DateTime.Now).Count();
                     }
-                    double percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
+                    double percentageProgress = 0;
+                    if (totalLessonClass > 0)
+                    {
+                        percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
+                    }
                     list.Add(new ProjectProgressDTO
                     {
                         ProjectId = project.ProjectId,
@@ -234,7 +238,7 @@ namespace CPH.BLL.Services
                 List<ProjectProgressDTO> list = new List<ProjectProgressDTO>();
                 foreach (var project in projectList)
                 {
-                    var classList = projectList.SelectMany(c => c.Classes);
+                    var classList = project.Classes != null ? project.Classes.ToList() : [];
                     int totalLessonClass = 0;
                     int totalPassedLessonClass = 0;
                     foreach (var classObj in classList)
@@ -242,7 +246,11 @@ namespace CPH.BLL.Services
                         totalLessonClass += classObj.LessonClasses.Count();
                         totalPassedLessonClass += classObj.LessonClasses.Where(c => c.EndTime < DateTime.Now).Count();
                     }
-                    double percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
+                    double percentageProgress = 0;
+                    if (totalLessonClass > 0)
+                    {
+                        percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
+                    }
                     list.Add(new ProjectProgressDTO
                     {
                         ProjectId = project.ProjectId,
@@ -264,7 +272,7 @@ namespace CPH.BLL.Services
                 List<ProjectProgressDTO> list = new List<ProjectProgressDTO>();
                 foreach (var project in projectList)
                 {
-                    var classList = projectList.SelectMany(c => c.Classes);
+                    var classList = project.Classes != null ? project.Classes.ToList() : [];
                     int totalLessonClass = 0;
                     int totalPassedLessonClass = 0;
                     foreach (var classObj in classList)
@@ -272,7 +280,11 @@ namespace CPH.BLL.Services
                         totalLessonClass += classObj.LessonClasses.Count();
                         totalPassedLessonClass += classObj.LessonClasses.Where(c => c.EndTime < DateTime.Now).Count();
                     }
-                    double percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
+                    double percentageProgress = 0;
+                    if (totalLessonClass > 0)
+                    {
+                        percentageProgress = totalPassedLessonClass * 100 / totalLessonClass;
+                    }
                     list.Add(new ProjectProgressDTO
                     {
                         ProjectId = project.ProjectId,
