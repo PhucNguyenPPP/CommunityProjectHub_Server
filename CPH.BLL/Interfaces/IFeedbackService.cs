@@ -10,5 +10,6 @@ namespace CPH.BLL.Interfaces
     public interface IFeedbackService
     {
         Task<ResponseDTO> CreateFeedback(Guid accountId, Guid projectId, List<Guid> answerId, string ? feedbackContent);
+        Task<ResponseDTO> GetAllFeedbackOfProject(Guid projectId);
     }
 }
