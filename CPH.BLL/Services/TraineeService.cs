@@ -681,15 +681,28 @@ namespace CPH.BLL.Services
             var status = clas.Project.Status.ToString();
             if (!status.Equals(ProjectStatusConstant.InProgress))
             {
-                return new ResponseDTO($"Dự án đang ở trạng thái {status}không thể cập nhật báo cáo", 400, false);
+                return new ResponseDTO($"Dự án đang ở trạng thái {status} không thể cập nhật báo cáo", 400, false);
             }
 
-            //fix để không phải sửa DB trong lúc demo
-            //var lesson = _unitOfWork.Lesson
-            //    .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-            //    .OrderByDescending(c => c.LessonNo).ToList();
+            var lesson = _unitOfWork.Lesson
+                .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
+                .OrderByDescending(c => c.LessonNo).ToList();
 
-            //if(lesson.Count() > 1)
+            var finishTime = _unitOfWork.LessonClass
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+                .Select(c => c.StartTime)
+                .FirstOrDefault();
+
+            if(DateTime.Now > finishTime)
+            {
+                string formattedFinishTime = finishTime.HasValue
+                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+                : "Không xác định";
+
+                return new ResponseDTO($"Báo cáo chỉ được cập nhật trước giờ học của buổi học cuối cùng: {formattedFinishTime}", 400, false);
+            }
+
+            //if (lesson.Count() > 1)
             //{
             //    var finishTime = _unitOfWork.LessonClass
             //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
@@ -701,7 +714,7 @@ namespace CPH.BLL.Services
             //        .Select(c => c.EndTime)
             //        .FirstOrDefault();
 
-                
+
             //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
             //    {
             //        string formattedFinishTime = finishTime.HasValue
