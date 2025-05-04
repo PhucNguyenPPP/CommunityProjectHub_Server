@@ -38,6 +38,17 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Không tìm thấy dự án trùng khớp", 400, false);
             }
 
+            var globalConst = await _unitOfWork.GlobalConstant.GetByCondition(c => c.GlobalConstantName.Equals("MAXIMUM_TIME_FOR_FEEDBACK"));
+            if (globalConst == null)
+            {
+                return new ResponseDTO("Thời hạn chưa được cập nhật", 400, false);
+            }
+
+            if(project.EndDate.AddDays(int.Parse(globalConst.GlobalConstantValue)) < DateTime.Now)
+            {
+                return new ResponseDTO("Quá hạn đánh giá dự án", 400, false);
+            }
+
             var questionList = _unitOfWork.Question.GetAll().ToList();
             if (answerId.Count != questionList.Count)
             {
