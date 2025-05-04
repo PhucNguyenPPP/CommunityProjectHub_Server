@@ -34,6 +34,7 @@ namespace CPH.DAL.UnitOfWork
             Answer = new AnswerRepository(_context);
             Form = new FormRepository(_context);
             TraineeAnswer = new TraineeAnswerRepository(_context);
+            GlobalConstant = new GlobalConsantRepository(_context);
         }
 
 
@@ -66,5 +67,6 @@ namespace CPH.DAL.UnitOfWork
         public IAnswerRepository Answer { get; private set; }
         public IFormRepository Form { get; private set; }
         public ITraineeAnswerRepository TraineeAnswer { get; private set; }
+        public IGlobalConstantRepository GlobalConstant { get; private set; }
     }
 }
