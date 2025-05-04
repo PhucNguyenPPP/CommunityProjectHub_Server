@@ -1333,7 +1333,7 @@ namespace CPH.BLL.Services
                             (tr.TraineeAnswers == null || !tr.TraineeAnswers.Any())
                         )
                     )
-                    //&& c.Status.Equals("Kết thúc")
+                    && c.Status.Equals("Kết thúc")
                     && c.EndDate.AddDays(int.Parse(globalConst.GlobalConstantValue)) > DateTime.Now
                 )
                 .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
