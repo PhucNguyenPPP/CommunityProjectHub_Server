@@ -113,5 +113,30 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile(UpdateProfileDTO updateProfileDTO)
+        {
+            var checkValid = await _accountService.CheckValidationUpdateProfile(updateProfileDTO);
+            if (!checkValid.IsSuccess)
+            {
+                return BadRequest(checkValid);
+            }
+
+            ResponseDTO responseDTO = await _accountService.UpdateProfile(updateProfileDTO);
+            if (responseDTO.IsSuccess == false)
+            {
+                if (responseDTO.StatusCode == 400)
+                {
+                    return NotFound(responseDTO);
+                }
+                if (responseDTO.StatusCode == 500)
+                {
+                    return BadRequest(responseDTO);
+                }
+            }
+            return Ok(responseDTO);
+        }
     }
 }
