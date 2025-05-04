@@ -138,8 +138,7 @@ namespace CPH.BLL.Services
                     responseAnswerListDto.Add(responseAnswerDto);
                 }
 
-                responseAnswerListDto.OrderBy(c => c.QuestionContent);
-                responseDto.traineeFeedbackAnswers = responseAnswerListDto;
+                responseDto.traineeFeedbackAnswers = responseAnswerListDto.OrderBy(c => c.QuestionContent).ToList();
                 responseListDto.Add(responseDto);
             }
 
