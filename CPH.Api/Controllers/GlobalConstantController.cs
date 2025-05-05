@@ -1,6 +1,7 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,7 @@ namespace CPH.Api.Controllers
         {
             _globalConstantService = globalConstantService;
         }
+        [Authorize(Roles = "Admin")]
         [HttpGet("maximum-time-for-feedback")]
         public async Task<IActionResult> GetMaxTimeForFeedback()
         {
@@ -34,6 +36,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
 
         }
+        [Authorize(Roles = "Admin")]
         [HttpPut("maximum-time-for-feedback")]
         public async Task<IActionResult> UpdateMaxTimeForFeedback(int value)
         {
