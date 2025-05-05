@@ -1047,6 +1047,8 @@ namespace CPH.BLL.Services
             account.Phone = model.Phone;
             account.Address = model.Address;
             account.Gender = model.Gender;
+            account.Email = model.Email;
+            account.DateOfBirth = DateTime.Parse(model.DateOfBirth);
 
             _unitOfWork.Account.Update(account);
             var result = await _unitOfWork.SaveChangeAsync();
@@ -1073,6 +1075,21 @@ namespace CPH.BLL.Services
             {
                 return new ResponseDTO("Số điện thoại đã tồn tại", 400, false);
             }
+
+            var checkEmailExist = _unitOfWork.Account
+                .GetAllByCondition(c => c.AccountId != model.AccountId && c.Email.Equals(model.Email));
+
+            if (checkEmailExist.Any())
+            {
+                return new ResponseDTO("Email đã tồn tại", 400, false);
+            }
+
+            var checkDateOfBirth = DateTime.TryParse(model.DateOfBirth, out DateTime parsedDateOfBirth);
+            if(!checkDateOfBirth || parsedDateOfBirth > DateTime.Now)
+            {
+                return new ResponseDTO("Ngày sinh không hợp lệ", 400, false);
+            }
+
             return new ResponseDTO("Kiểm tra thành công", 200, true);
         }
     }

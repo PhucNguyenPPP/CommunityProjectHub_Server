@@ -23,10 +23,17 @@ namespace CPH.Common.DTO.Account
             ErrorMessage = "Số điện thoại không hợp lệ")]
         public string Phone { get; set; } = null!;
 
+        [Required(ErrorMessage = "Vui lòng nhập email")]
+        [EmailAddress]
+        public string Email { get; set; } = null!;
+
         [Required(ErrorMessage = "Vui lòng nhập địa chỉ")]
         public string Address { get; set; } = null!;
 
         [Required(ErrorMessage = "Vui lòng nhập giới tính")]
         public string Gender { get; set; } = null!;
+
+        [Required(ErrorMessage = "Vui lòng nhập ngày sinh")]
+        public string DateOfBirth { get; set; } = null!;
     }
 }
