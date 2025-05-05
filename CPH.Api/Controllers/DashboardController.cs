@@ -17,6 +17,7 @@ namespace CPH.Api.Controllers
             _dashboardService = dashboardService;
         }
 
+        [Authorize(Roles = "Department Head,Business Relation")]
         [HttpGet("student-amount")]
         public async Task<IActionResult> GetAllNumberOfStudent()
         {
@@ -35,6 +36,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Department Head,Business Relation")]
         [HttpGet("lecturer-amount")]
         public async Task<IActionResult> GetAllNumberOfLecturer()
         {
@@ -53,6 +55,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Department Head,Associate,Business Relation")]
         [HttpGet("trainee-amount")]
         public async Task<IActionResult> GetAllNumberOfTrainee(Guid accountId)
         {
@@ -71,6 +74,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation,Admin")]
         [HttpGet("project-amount")]
         public async Task<IActionResult> GetAllNumberOfProject(Guid accountId)
         {
@@ -89,6 +93,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation,Admin")]
         [HttpGet("project-with-status-amount")]
         public async Task<IActionResult> GetAllNumberOfProjectWithStatus(Guid accountId)
         {
@@ -107,6 +112,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("user-amount")]
         public IActionResult GetAllNumberOfUser()
         {
@@ -114,6 +120,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("user-with-role-amount")]
         public IActionResult GetAllNumberOfUserByRole()
         {
@@ -121,6 +128,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation")]
         [HttpGet("progress-all-project")]
         public async Task<IActionResult> GetProgressOfAllProject(Guid accountId)
         {
