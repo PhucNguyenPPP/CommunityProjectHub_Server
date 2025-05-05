@@ -27,5 +27,17 @@ namespace CPH.Api.Controllers
             }
             return BadRequest(result);
         }
+
+        [Authorize(Roles = "Lecturer,Department Head")]
+        [HttpGet("all-feedback-of-project")]
+        public async Task<IActionResult> GetAllFeedbackOfProject(Guid projectId)
+        {
+            var result = await _feedbackService.GetAllFeedbackOfProject(projectId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

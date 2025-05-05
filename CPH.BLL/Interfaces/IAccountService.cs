@@ -36,5 +36,7 @@ namespace CPH.BLL.Interfaces
         bool CheckAssociateNameExist(string associateName);
         Task<string> StoreFileAndGetLink(IFormFile file, string folderName);
         Task<ResponseDTO> UpdateAvatar(IFormFile avatar, Guid accountId);
+        Task<ResponseDTO> UpdateProfile(UpdateProfileDTO updateProfileDTO);
+        Task<ResponseDTO> CheckValidationUpdateProfile(UpdateProfileDTO model);
     }
 }

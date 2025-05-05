@@ -2,6 +2,7 @@
 using CPH.BLL.Interfaces;
 using CPH.Common.Constant;
 using CPH.Common.DTO.Account;
+using CPH.Common.DTO.Auth;
 using CPH.Common.DTO.Email;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Paging;
@@ -1030,6 +1031,66 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Cập nhật ảnh đại diện thành công", 200, true);
             }
             return new ResponseDTO("Cập nhật ảnh đại diện không thành công", 400, false);
+        }
+
+        public async Task<ResponseDTO> UpdateProfile(UpdateProfileDTO model)
+        {
+            var account = await _unitOfWork.Account.
+                GetByCondition(c => c.AccountId == model.AccountId);
+
+            if (account == null)
+            {
+                return new ResponseDTO("Người dùng không tồn tại", 400, false);
+            }
+
+            account.FullName = model.FullName;
+            account.Phone = model.Phone;
+            account.Address = model.Address;
+            account.Gender = model.Gender;
+            account.Email = model.Email;
+            account.DateOfBirth = DateTime.Parse(model.DateOfBirth);
+
+            _unitOfWork.Account.Update(account);
+            var result = await _unitOfWork.SaveChangeAsync();
+            if (result)
+            {
+                return new ResponseDTO("Cập nhật thành công", 200, true);
+            }
+            return new ResponseDTO("Cập nhật thất bại", 400, false);
+
+        }
+
+        public async Task<ResponseDTO> CheckValidationUpdateProfile(UpdateProfileDTO model)
+        {
+            if (model.Gender != GenderConstant.Male
+                && model.Gender != GenderConstant.Female)
+            {
+                return new ResponseDTO("Giới tính không hợp lệ", 400, false);
+            }
+
+            var checkPhoneExist = _unitOfWork.Account
+                .GetAllByCondition(c=> c.AccountId != model.AccountId && c.Phone.Equals(model.Phone));
+            
+            if (checkPhoneExist.Any())
+            {
+                return new ResponseDTO("Số điện thoại đã tồn tại", 400, false);
+            }
+
+            var checkEmailExist = _unitOfWork.Account
+                .GetAllByCondition(c => c.AccountId != model.AccountId && c.Email.Equals(model.Email));
+
+            if (checkEmailExist.Any())
+            {
+                return new ResponseDTO("Email đã tồn tại", 400, false);
+            }
+
+            var checkDateOfBirth = DateTime.TryParse(model.DateOfBirth, out DateTime parsedDateOfBirth);
+            if(!checkDateOfBirth || parsedDateOfBirth > DateTime.Now)
+            {
+                return new ResponseDTO("Ngày sinh không hợp lệ", 400, false);
+            }
+
+            return new ResponseDTO("Kiểm tra thành công", 200, true);
         }
     }
 }
