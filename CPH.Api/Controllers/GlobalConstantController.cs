@@ -34,5 +34,18 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
 
         }
+        [HttpPut("maximum-time-for-feedback")]
+        public async Task<IActionResult> UpdateMaxTimeForFeedback(int value)
+        {
+            ResponseDTO responseDTO = await _globalConstantService.UpdateMaxTimeForFeedback(value);
+            if (responseDTO.IsSuccess == false)
+            {
+                
+                    return BadRequest(responseDTO);
+                
+            }
+            return Ok(responseDTO);
+
+        }
     }
 }

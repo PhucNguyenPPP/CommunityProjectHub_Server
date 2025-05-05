@@ -10,5 +10,6 @@ namespace CPH.BLL.Interfaces
     public interface IGlobalConstantService
     {
         Task<ResponseDTO> GetMaxTimeForFeedback();
+        Task<ResponseDTO> UpdateMaxTimeForFeedback(int value);
     }
 }
