@@ -19,6 +19,8 @@ namespace CPH.Common.DTO.Trainee
 
         public int? TotalSlot { get; set; }
 
+        public bool IsAttendanceImported { get; set; }
+
         public int GroupNo { get; set; }
 
         public string? FeedbackContent { get; set; }
