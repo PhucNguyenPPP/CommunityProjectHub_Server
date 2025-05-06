@@ -87,9 +87,9 @@ namespace CPH.BLL.Services
             if (!feedbackContent.IsNullOrEmpty())
             {
                 trainee.FeedbackContent = feedbackContent;
-                trainee.FeedbackCreatedDate = DateTime.Now;
-                _unitOfWork.Trainee.Update(trainee);
             }
+            trainee.FeedbackCreatedDate = DateTime.Now;
+            _unitOfWork.Trainee.Update(trainee);
 
 
             var result = await _unitOfWork.SaveChangeAsync();
