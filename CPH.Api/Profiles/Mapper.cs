@@ -129,6 +129,7 @@ namespace CPH.Api.Profiles
             CreateMap<Trainee, GetAllTraineeOfClassDTO>()
                 .ForMember(dest => dest.TotalSlot, opt => opt.MapFrom(src => src.Class.LessonClasses.Count()))
                 .ForMember(dest => dest.TotalPresentSlot, opt => opt.MapFrom(src => src.Attendances.Where(c => c.Status == true).Count()))
+                .ForMember(dest => dest.IsAttendanceImported, opt => opt.MapFrom(src => src.Attendances.Count() != 0 ? true : false))
                 .ReverseMap();
 
             CreateMap<ProjectLogging, GetAllProjectLoggingDTO>()
