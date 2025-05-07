@@ -794,8 +794,9 @@ namespace CPH.BLL.Services
                             && c.Classes.Any(cls => cls.LecturerId == null))
                             .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                             .Include(c => c.ProjectManager)
-                            .Where(c => c.ApplicationStartDate <= DateTime.Now
+                            .Where(c => c.ApplicationStartDate.AddHours(-7) <= DateTime.Now
                                 && c.ApplicationEndDate >= DateTime.Now);
+                       
                     }
                     else
                     {
@@ -805,7 +806,7 @@ namespace CPH.BLL.Services
                             && c.Classes.Any(cls => cls.Members == null || cls.Members.Count() < cls.NumberGroup))
                             .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                             .Include(c => c.ProjectManager)
-                            .Where(c => c.ApplicationStartDate <= DateTime.Now
+                            .Where(c => c.ApplicationStartDate.AddHours(-7) <= DateTime.Now
                                 && c.ApplicationEndDate >= DateTime.Now);
                     }
                 }
