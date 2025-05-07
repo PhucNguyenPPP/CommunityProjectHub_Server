@@ -147,5 +147,15 @@ namespace CPH.Api.Controllers
             var list = await _accountService.GetAllAccounts(searchValue, pageNumber, rowsPerPage);
             return Ok(list);
         }
+
+        [HttpGet]
+        public IActionResult Get()
+        {
+            return Ok(new
+            {
+                ServerTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                UtcTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            });
+        }
     }
 }
