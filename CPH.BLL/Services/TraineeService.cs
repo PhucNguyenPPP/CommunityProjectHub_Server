@@ -681,15 +681,28 @@ namespace CPH.BLL.Services
             var status = clas.Project.Status.ToString();
             if (!status.Equals(ProjectStatusConstant.InProgress))
             {
-                return new ResponseDTO($"Dự án đang ở trạng thái {status}không thể cập nhật báo cáo", 400, false);
+                return new ResponseDTO($"Dự án đang ở trạng thái {status} không thể cập nhật báo cáo", 400, false);
             }
 
-            //fix để không phải sửa DB trong lúc demo
-            //var lesson = _unitOfWork.Lesson
-            //    .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
-            //    .OrderByDescending(c => c.LessonNo).ToList();
+            var lesson = _unitOfWork.Lesson
+                .GetAllByCondition(c => c.ProjectId == clas.ProjectId)
+                .OrderByDescending(c => c.LessonNo).ToList();
 
-            //if(lesson.Count() > 1)
+            var finishTime = _unitOfWork.LessonClass
+                .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
+                .Select(c => c.StartTime)
+                .FirstOrDefault();
+
+            if(DateTime.Now > finishTime)
+            {
+                string formattedFinishTime = finishTime.HasValue
+                ? finishTime.Value.ToString("HH:mm dd-MM-yyyy")
+                : "Không xác định";
+
+                return new ResponseDTO($"Báo cáo chỉ được cập nhật trước giờ học của buổi học cuối cùng: {formattedFinishTime}", 400, false);
+            }
+
+            //if (lesson.Count() > 1)
             //{
             //    var finishTime = _unitOfWork.LessonClass
             //    .GetAllByCondition(c => c.ClassId == classId && c.LessonId == lesson[0].LessonId)
@@ -701,7 +714,7 @@ namespace CPH.BLL.Services
             //        .Select(c => c.EndTime)
             //        .FirstOrDefault();
 
-                
+
             //    if (DateTime.Now >= finishTime || DateTime.Now <= startTime)
             //    {
             //        string formattedFinishTime = finishTime.HasValue
@@ -1207,6 +1220,44 @@ namespace CPH.BLL.Services
                 }
 
                 worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return stream;
+            }
+        }
+
+        public MemoryStream ExportTraineeClassListTemplateExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+
+                for (int i = 0; i <= 1; i++)
+                {
+                    var worksheet = package.Workbook.Worksheets.Add($"Class{i+1}");
+                    worksheet.Cells[1, 1].Value = "STT";
+                    worksheet.Cells[1, 2].Value = "Mã Số Tài Khoản";
+                    worksheet.Cells[1, 3].Value = "Tên tài khoản";
+                    worksheet.Cells[1, 4].Value = "Họ và Tên";
+                    worksheet.Cells[1, 5].Value = "Số điện thoại";
+                    worksheet.Cells[1, 6].Value = "Email";
+                    worksheet.Cells[1, 7].Value = "Địa chỉ";
+                    worksheet.Cells[1, 8].Value = "Ngày sinh";
+                    worksheet.Cells[1, 9].Value = "Giới tính";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 9])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Font.Size = 12;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+                    worksheet.Cells.AutoFitColumns();
+                }
 
                 var stream = new MemoryStream();
                 package.SaveAs(stream);

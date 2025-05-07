@@ -1,6 +1,7 @@
 ﻿using CPH.BLL.Interfaces;
 using CPH.Common.DTO.General;
 using CPH.DAL.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -69,7 +70,6 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
-
 
         [HttpGet("project-amount")]
         public async Task<IActionResult> GetAllNumberOfProject(Guid accountId)

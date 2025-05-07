@@ -2,6 +2,7 @@
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Message;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,8 @@ namespace CPH.Api.Controllers
             _messageService = messageService;
             _webSocketHandler = webSocketHandler;
         }
+
+        [Authorize(Roles = "Student,Lecturer,Trainee")]
         [HttpGet("messages")]
         public async Task<IActionResult> GetMessage(Guid accountId, Guid classId)
         {
@@ -32,6 +35,8 @@ namespace CPH.Api.Controllers
 
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Student,Lecturer,Trainee")]
         [HttpPost("message")]
         public async Task<IActionResult> CreateMessage([FromBody] MessageDTO messageDTO)
         {
@@ -51,6 +56,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee")]
         [HttpGet("chat-classes")]
         public async Task<IActionResult> GetAllClassChat(string? searchValue, Guid accountId)
         { 

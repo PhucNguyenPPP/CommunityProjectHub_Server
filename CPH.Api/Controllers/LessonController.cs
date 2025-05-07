@@ -3,6 +3,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.Project;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,8 @@ namespace CPH.Api.Controllers
         {
             _lessonService = lessonService;
         }
+
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut()]
         public async Task<IActionResult> UpdateLessonOfProject([FromBody] UpdateLessonOfProjectDTO lessonOfProjectDTO)
         {

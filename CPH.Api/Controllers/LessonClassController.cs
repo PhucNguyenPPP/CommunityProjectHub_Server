@@ -3,6 +3,7 @@ using CPH.BLL.Interfaces;
 using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.LessonClass;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,8 @@ namespace CPH.Api.Controllers
         {
             _lessonClassService = lessonClassService;
         }
+
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation")]
         [HttpGet("lessons-of-class")]
         public async Task<IActionResult> GetLessonClass(Guid classId)
         {
@@ -35,6 +38,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("lesson-of-class")]
         public async Task<IActionResult> UpdateLessonClass([Required]Guid projectId, [FromBody] List<UpdateLessonClassDTO> updateLessonClassDTO)
         {

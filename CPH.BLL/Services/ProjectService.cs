@@ -1317,13 +1317,24 @@ namespace CPH.BLL.Services
                 return new ResponseDTO("Học viên chưa tham gia dự án nào", 400, false);
             }
 
+            var globalConst = await _unitOfWork.GlobalConstant.GetByCondition(c => c.GlobalConstantName.Equals("MAXIMUM_TIME_FOR_FEEDBACK"));
+            if (globalConst == null)
+            {
+                return new ResponseDTO("Thời hạn chưa được cập nhật", 400, false);
+            }
+
+
+
             var project = _unitOfWork.Project
-                .GetAllByCondition(c => c.Classes
+                .GetAllByCondition(
+                    c => c.Classes
                     .Any(c => c.Trainees
                         .Any(tr => tr.AccountId == accountId &&
                             (tr.TraineeAnswers == null || !tr.TraineeAnswers.Any())
                         )
                     )
+                    && c.Status.Equals("Kết thúc")
+                    && c.EndDate.AddDays(int.Parse(globalConst.GlobalConstantValue)) > DateTime.Now
                 )
                 .Include(c => c.Classes).ThenInclude(c => c.Lecturer)
                 .ToList();

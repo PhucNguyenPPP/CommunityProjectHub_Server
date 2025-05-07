@@ -6,6 +6,7 @@ using CPH.BLL.Services;
 using CPH.Common.DTO.General;
 using CPH.Common.DTO.Lesson;
 using CPH.Common.DTO.Project;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,6 +22,7 @@ namespace CPH.Api.Controllers
             _projectService = projectService;
         }
 
+        [Authorize(Roles = "Department Head,Business Relation")]
         [HttpGet("all-project")]
         public async Task<IActionResult> GetAllProject([FromQuery] string? searchValue,
                                                         [FromQuery] int? pageNumber,
@@ -43,6 +45,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Associate")]
         [HttpGet("all-related-project")]
         public async Task<IActionResult> GetAllRelatedProject([FromQuery] string? searchValue,
                                                         [FromQuery] int? pageNumber,
@@ -66,6 +69,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation")]
         [HttpGet("project-detail")]
         public async Task<IActionResult> GetProjectDetail([Required] Guid projectId)
         {
@@ -83,6 +87,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("inactivated-project")]
         public async Task<IActionResult> InactivateProject([FromQuery][Required]Guid projectID)
         {
@@ -100,6 +106,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Department Head")]
         [HttpPost("new-project")]
         public async Task<IActionResult> CreateProject([FromBody]NewProjectDTO projectDTO)
         {
@@ -113,6 +121,8 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("project")]
         public async Task<IActionResult> UpdateProject([FromForm] UpdateProjectDTO projectDTO)
         {
@@ -127,6 +137,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Student,Lecturer")]
         [HttpGet("available-project")]
         public async Task<IActionResult> GetAllAvailableProject([FromQuery] Guid userId,
                                                         [FromQuery] string? searchValue,
@@ -150,6 +161,7 @@ namespace CPH.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("to-up-coming-status")]
         public async Task<IActionResult> UpdateProjectStatusUpcoming(Guid projectId)
         {
@@ -161,6 +173,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("to-in-progress-status")]
         public async Task<IActionResult> UpdateProjectStatusInProgress(Guid projectId)
         {
@@ -172,6 +185,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head")]
         [HttpPut("to-end-status")]
         public async Task<IActionResult> UpdateProjectStatusEnd(Guid projectId)
         {
@@ -183,6 +197,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Department Head")]
         [HttpPut("assign-pm-to-project")]
         public async Task<IActionResult> AssignPMToProject(Guid projectId, Guid accountId)
         {
@@ -194,6 +209,7 @@ namespace CPH.Api.Controllers
             return BadRequest(responseDTO);
         }
 
+        [Authorize(Roles = "Lecturer,Department Head,Associate,Business Relation")]
         [HttpPost("export-final-report-of-project")]
         public async Task<IActionResult> ExportFinalReportOfProject(Guid projectId)
         {
@@ -209,6 +225,7 @@ namespace CPH.Api.Controllers
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
+        [Authorize(Roles = "Department Head")]
         [HttpPut("max-absent-percentage-and-failing-score")]
         public async Task<IActionResult> UpdateMaxAbsentPercentageAndFailingScore(UpdateAbsentPercentageFailingScoreRequestDTO model)
         {
@@ -220,6 +237,7 @@ namespace CPH.Api.Controllers
             return BadRequest(result);
         }
 
+        [Authorize(Roles = "Trainee")]
         [HttpGet("all-unfeedback-project")]
         public async Task<IActionResult> GetAllUnFeedbackProject(Guid accountId, string? searchValue)
         {

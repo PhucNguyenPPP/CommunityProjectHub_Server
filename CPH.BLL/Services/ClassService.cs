@@ -684,8 +684,6 @@ namespace CPH.BLL.Services
                     {
                         ClassId = c.Class.ClassId,
                         ClassCode = c.Class.ClassCode,
-                        ReportContent = c.Class.ReportContent,
-                        ReportCreatedDate = c.Class.ReportCreatedDate,
                         TraineeScore = c.Score,
                         TraineeResult = c.Result,
                         TraineeTotalPresentSlot = c.Attendances.Where(t => t.TraineeId == c.TraineeId && t.Status == true).Count(),
@@ -723,8 +721,6 @@ namespace CPH.BLL.Services
                     {
                         ClassId = c.Class.ClassId,
                         ClassCode = c.Class.ClassCode,
-                        ReportContent = c.Class.ReportContent,
-                        ReportCreatedDate = c.Class.ReportCreatedDate,
                         TraineeScore = c.Score,
                         TraineeResult = c.Result,
                         TraineeTotalPresentSlot = c.Attendances.Where(t => t.TraineeId == c.TraineeId && t.Status == true).Count(),

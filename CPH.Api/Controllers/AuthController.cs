@@ -103,6 +103,7 @@ namespace CPH.Api.Controllers
                 new ResponseDTO("Tạo refresh token thành công", 201, true, result));
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
         [HttpGet("/account/access-token/{accessToken}")]
         public async Task<IActionResult> GetUserByToken(string accessToken)
         {
@@ -117,6 +118,7 @@ namespace CPH.Api.Controllers
             }
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([Required] string rfToken)
         {
@@ -131,6 +133,7 @@ namespace CPH.Api.Controllers
             return BadRequest(new ResponseDTO("Đăng xuất thất bại", 400, false));
         }
 
+        [Authorize(Roles = "Student,Lecturer,Trainee,Department Head,Associate,Business Relation,Admin")]
         [HttpPost("old-password")]
         public IActionResult CheckOldPassword(CheckOldPasswordDTO model)
         {

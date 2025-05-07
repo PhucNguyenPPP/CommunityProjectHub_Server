@@ -30,6 +30,6 @@ namespace CPH.DAL.UnitOfWork
         IAnswerRepository Answer { get; }
         IFormRepository Form { get; }
         ITraineeAnswerRepository TraineeAnswer { get; }
-
+        IGlobalConstantRepository GlobalConstant { get; }
     }
 }
