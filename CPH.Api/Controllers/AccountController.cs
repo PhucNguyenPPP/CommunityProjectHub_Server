@@ -138,5 +138,14 @@ namespace CPH.Api.Controllers
             }
             return Ok(responseDTO);
         }
+
+        [HttpGet("all-accounts-test")]
+        public async Task<IActionResult> GetAllAccountsTest([FromQuery] string? searchValue,
+                                            [FromQuery] int? pageNumber,
+                                            [FromQuery] int? rowsPerPage)
+        {
+            var list = await _accountService.GetAllAccounts(searchValue, pageNumber, rowsPerPage);
+            return Ok(list);
+        }
     }
 }
